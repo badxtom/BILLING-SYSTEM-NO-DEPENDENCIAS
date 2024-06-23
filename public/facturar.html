@@ -868,6 +868,16 @@
             const doc = new jsPDF();
             const progressContainer = document.getElementById('progress-container');
 
+            const searchInput = document.getElementById('searchInput');
+            const descripcionInput = document.getElementById('desp');
+            const disponibleInput = document.getElementById('disp');
+            const precioInput = document.getElementById('precio');
+            const ITBISInput = document.getElementById('itbis');
+            const cantidadFacturarInput = document.getElementById('cantidadFacturar');
+            const facturaTableBody = document.getElementById('facturaTableBody');
+            const searchResults = document.getElementById('searchResults');
+            const totalLabel = document.getElementById('totalLabel');
+
             if (facturaTableBody.querySelectorAll('tr').length === 0) {
                 showAlert('La tabla está vacía. Por favor, agregue productos antes de generar la factura.', 'alert-warning');
                 return;
@@ -1001,10 +1011,15 @@
 
                     // Limpiar campos y tabla
                     facturaTableBody.innerHTML = '';
-                    FnameInp.value = '';
-                    numberInput.value = '';
-                    locationInput.value = '';
                     document.getElementById('searchPatientInput').value = '';
+                    searchInput.value = '';
+                    descripcionInput.value = '';
+                    disponibleInput.value = '';
+                    precioInput.value = '';
+                    ITBISInput.value = '';
+                    cantidadFacturarInput.value = '';
+                    searchResults.innerHTML = ''; 
+                    totalLabel.innerText = 'Total a pagar: $0.00';
 
                 } catch (error) {
                     // showAlert('Error al guardar la factura.', 'alert-danger');
