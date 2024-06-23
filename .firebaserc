@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "billing-system-fbfb3",
+    "Billing-System": "billing-system-fbfb3"
+  },
+  "targets": {},
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}
