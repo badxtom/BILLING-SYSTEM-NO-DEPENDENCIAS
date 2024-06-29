@@ -376,7 +376,7 @@
                 <div class="col-sm-12">
                     <div class="card">
                         <div class="card-header">
-                            <h5>Faturación</h5>
+                            <h5>Facturación</h5>
                             <div class="card-header" style="margin-top: 10px;">
                                 <form id="MainFormSE" class="d-flex" style="max-width: 400px; margin-bottom: 10px;">
                                     <input id="searchInput" class="form-control me-sm-2" type="search"
@@ -388,6 +388,11 @@
                                         placeholder="Buscar paciente" style="flex: 1 0 auto;">
                                 </form>
                                 <div id="searchPatientResults" class="dropdown-menu" style="display: none;"></div>
+                                <form id="MainFormDO" class="d-flex" style="max-width: 400px; margin-bottom: 20px;">
+                                    <input id="searchDoctorInput" class="form-control me-sm-2" type="search"
+                                        placeholder="Buscar médico" style="flex: 1 0 auto;">
+                                </form>
+                                <div id="searchDoctorResults" class="dropdown-menu" style="display: none;"></div>
                             </div>
                         </div>
                         <div class="card-body">
@@ -448,8 +453,15 @@
                                 <label id="totalLabel">Total a pagar: $0.00</label>
                                 <br>
                             </div>
-                            <button id="generatePDFButton" type="button" class="btn btn-primary mt-3">Generar
-                                Factura</button>
+                            <button id="generatePDFButton" type="button" class="btn btn-primary mr-3">Generar Factura</button>
+                            <div class="form-check d-inline-block">
+                                <input class="form-check-input" type="checkbox" id="comprobanteCheckbox">
+                                <label class="form-check-label" for="comprobanteCheckbox">
+                                 Comprobante Fiscal
+                                </label>
+                            </div>
+
+
                         </div>
                     </div>
                 </div>
@@ -648,13 +660,17 @@
             const searchResults = document.getElementById('searchResults');
             const totalLabel = document.getElementById('totalLabel');
 
+            const searchDoctorInput = document.getElementById('searchDoctorInput');
+            const searchDoctorResults = document.getElementById('searchDoctorResults');
+
             descripcionInput.disabled = true;
             disponibleInput.disabled = true;
-            precioInput.disabled = true;
+            // precioInput.disabled = true;
             ITBISInput.disabled = true;
 
             let productos = [];
             let pacientes = [];
+            let empleados = [];
 
 
 
@@ -663,21 +679,41 @@
                 resultsElement.style.display = 'none';
 
                 items.forEach(item => {
-                    const searchField = isProduct ? item.descripcion : `${item.fname} ${item.lname}`; // Usar 'descripcion' para productos y 'fname lname' para pacientes
-                    if (searchField.toLowerCase().includes(query.toLowerCase())) {
-                        const dropdownItem = document.createElement('button');
-                        dropdownItem.classList.add('dropdown-item');
-                        dropdownItem.type = 'button';
-                        dropdownItem.textContent = searchField;
-                        dropdownItem.addEventListener('click', function () {
-                            callback(item);
-                            resultsElement.style.display = 'none';
-                        });
-                        resultsElement.appendChild(dropdownItem);
-                        resultsElement.style.display = 'block';
+                    if (isProduct) {
+                        // Para productos, buscar por descripción
+                        const searchField = item.descripcion;
+                        if (searchField.toLowerCase().includes(query.toLowerCase())) {
+                            const dropdownItem = document.createElement('button');
+                            dropdownItem.classList.add('dropdown-item');
+                            dropdownItem.type = 'button';
+                            dropdownItem.textContent = searchField;
+                            dropdownItem.addEventListener('click', function () {
+                                callback(item);
+                                resultsElement.style.display = 'none';
+                            });
+                            resultsElement.appendChild(dropdownItem);
+                            resultsElement.style.display = 'block';
+                        }
+                    } else {
+                        // Para pacientes y médicos, buscar por nombre completo (fname + lname)
+                        const searchField = `${item.fname} ${item.lname}`;
+                        if (searchField.toLowerCase().includes(query.toLowerCase())) {
+                            const dropdownItem = document.createElement('button');
+                            dropdownItem.classList.add('dropdown-item');
+                            dropdownItem.type = 'button';
+                            dropdownItem.textContent = searchField;
+                            dropdownItem.addEventListener('click', function () {
+                                callback(item);
+                                resultsElement.style.display = 'none';
+                            });
+                            resultsElement.appendChild(dropdownItem);
+                            resultsElement.style.display = 'block';
+                        }
                     }
                 });
             }
+
+
 
             async function getAllProductos() {
                 const querySnapshot = await getDocs(collection(db, 'productos'));
@@ -687,6 +723,11 @@
             async function getAllPacientes() {
                 const querySnapshot = await getDocs(collection(db, 'pacientes'));
                 pacientes = querySnapshot.docs.map(doc => doc.data());
+            }
+
+            async function getAllEmpleados() {
+                const querySnapshot = await getDocs(collection(db, 'empleados'));
+                empleados = querySnapshot.docs.filter(doc => doc.data().role === 'Doctor').map(doc => doc.data());
             }
 
 
@@ -763,7 +804,7 @@
                     searchInput.value = producto.descripcion;
                     descripcionInput.value = producto.descripcion;
                     disponibleInput.value = producto.disponible;
-                    precioInput.value = producto.precio;
+                    precioInput.value = producto.precioVenta;
                     ITBISInput.value = producto.itbis;
                     cantidadFacturarInput.value = '';
                 });
@@ -776,6 +817,14 @@
                 });
             });
 
+            searchDoctorInput.addEventListener('input', function () {
+                const query = searchDoctorInput.value.trim();
+                updateDropdown(query, searchDoctorResults, empleados, false, function (doctor) {
+                    searchDoctorInput.value = `${doctor.fname} ${doctor.lname}`;
+                    // You can also populate other fields with the doctor's information
+                });
+            });
+
 
             document.addEventListener('click', function (event) {
                 if (!searchResults.contains(event.target) && !searchInput.contains(event.target)) {
@@ -783,6 +832,9 @@
                 }
                 if (!searchPatientResults.contains(event.target) && !searchPatientInput.contains(event.target)) {
                     searchPatientResults.style.display = 'none';
+                }
+                if (!searchDoctorResults.contains(event.target) && !searchDoctorInput.contains(event.target)) {
+                    searchDoctorResults.style.display = 'none';
                 }
             });
 
@@ -798,6 +850,7 @@
 
             getAllProductos();
             getAllPacientes();
+            getAllEmpleados();
 
 
         });
@@ -877,6 +930,11 @@
             const facturaTableBody = document.getElementById('facturaTableBody');
             const searchResults = document.getElementById('searchResults');
             const totalLabel = document.getElementById('totalLabel');
+            const searchDoctorInput = document.getElementById('searchDoctorInput');
+            const comprobanteCheckbox = document.getElementById('comprobanteCheckbox');
+
+            let numeroFactura = '';
+            let fechaVencimiento = '';
 
             if (facturaTableBody.querySelectorAll('tr').length === 0) {
                 showAlert('La tabla está vacía. Por favor, agregue productos antes de generar la factura.', 'alert-warning');
@@ -888,6 +946,64 @@
                 showAlert('El campo del paciente está vacío. Por favor, seleccione un paciente antes de generar la factura.', 'alert-warning');
                 return;
             }
+
+            const DoctorSeleccionado = document.getElementById('searchDoctorInput').value;
+            if (DoctorSeleccionado.trim() === '') {
+                showAlert('El campo del médico está vacío. Por favor, seleccione un paciente antes de generar la factura.', 'alert-warning');
+                return;
+            }
+
+            doc.setFontSize(12);
+
+            // Obtener datos del comprobante fiscal si está seleccionado
+            if (comprobanteCheckbox.checked) {
+                try {
+                    const comprobantesSnapshot = await get(ref(db, 'comprobantes/'));
+                    if (comprobantesSnapshot.exists()) {
+                        const comprobantesData = comprobantesSnapshot.val();
+                        const desde = comprobantesData.desde || '';
+                        const hasta = comprobantesData.hasta || '';
+                        fechaVencimiento = comprobantesData.fechaVencimiento || '';
+
+                        // Obtener el último número de factura generado
+                        let lastFacturaNumber = await getLastFacturaNumber();
+
+                        // Generar el próximo número de factura
+                        let nextFacturaNumber = lastFacturaNumber + 1;
+
+                        // Validar que el próximo número esté dentro del rango permitido
+                        if (nextFacturaNumber > parseInt(hasta.substring(1))) {
+                            showAlert('Se ha alcanzado el límite máximo de facturas para este comprobante.', 'alert-warning');
+                            return;
+                        }
+
+                        // Formatear el número de factura
+                        const formattedNextFacturaNumber = `${desde.substring(0, 1)}${nextFacturaNumber.toString().padStart(hasta.length - 1, '0')}`;
+
+                        // Guardar el nuevo número de factura en la base de datos
+                        await updateLastFacturaNumber(nextFacturaNumber);
+
+                        // Asignar el número de factura al documento PDF
+                        numeroFactura = formattedNextFacturaNumber;
+                    } else {
+                        showAlert('No se encontraron datos de comprobantes válidos.', 'alert-danger');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error al obtener datos de comprobantes:', error);
+                    showAlert('Error al obtener datos de comprobantes.', 'alert-danger');
+                    return;
+                }
+            }
+
+            if (numeroFactura !== '') {
+                const facturaX = 200 - doc.getTextWidth(`NCF: ${numeroFactura}`);
+                doc.text(`NCF: ${numeroFactura}`, facturaX, 40);
+
+                const fechaVencimientoX = 200 - doc.getTextWidth(`Vencimiento Secuencia: ${fechaVencimiento}`);
+                doc.text(`Vencimiento Secuencia: ${fechaVencimiento}`, fechaVencimientoX, 50);
+            }
+
 
             progressContainer.style.display = 'block';
             fondoDesenfocado.style.display = 'block';
@@ -939,19 +1055,34 @@
                 const fechaX = 200 - doc.getTextWidth(`Fecha: ${fechaActual}`);
                 doc.text(`Fecha: ${fechaActual}`, fechaX, 70);
 
+                const facturadoPor = doc.internal.pageSize.width - 14 - doc.getTextWidth("Doctor:");
+                const nombreDoctorX = facturadoPor;
+                const nombreDoctorWidth = doc.getTextWidth(DoctorSeleccionado);
+
+                doc.text("Doctor:", facturadoPor, 80);
+
+                const nombreDoctorStartX = facturadoPor + doc.getTextWidth("Doctor:");
+                const nombreDoctorEndX = nombreDoctorStartX + nombreDoctorWidth;
+
+                if (nombreDoctorEndX > doc.internal.pageSize.width - 14) {
+                    doc.text(`${DoctorSeleccionado}`, doc.internal.pageSize.width - 14 - nombreDoctorWidth, 85);
+                } else {
+                    doc.text(`${DoctorSeleccionado}`, nombreDoctorStartX, 85);
+                }
+
                 const facturadoAX = doc.internal.pageSize.width - 14 - doc.getTextWidth("Facturado a:");
                 const nombrePacienteX = facturadoAX;
                 const nombrePacienteWidth = doc.getTextWidth(pacienteSeleccionado);
 
-                doc.text("Facturado a:", facturadoAX, 90);
+                doc.text("Facturado a:", facturadoAX, 95);
 
                 const nombrePacienteStartX = facturadoAX + doc.getTextWidth("Facturado a:");
                 const nombrePacienteEndX = nombrePacienteStartX + nombrePacienteWidth;
 
                 if (nombrePacienteEndX > doc.internal.pageSize.width - 14) {
-                    doc.text(`${pacienteSeleccionado}`, doc.internal.pageSize.width - 14 - nombrePacienteWidth, 95);
+                    doc.text(`${pacienteSeleccionado}`, doc.internal.pageSize.width - 14 - nombrePacienteWidth, 100);
                 } else {
-                    doc.text(`${pacienteSeleccionado}`, nombrePacienteStartX, 95);
+                    doc.text(`${pacienteSeleccionado}`, nombrePacienteStartX, 100);
                 }
 
                 doc.line(14, 110, 200, 110);
@@ -1009,6 +1140,7 @@
                         }
                     });
 
+
                     // Limpiar campos y tabla
                     facturaTableBody.innerHTML = '';
                     document.getElementById('searchPatientInput').value = '';
@@ -1018,7 +1150,9 @@
                     precioInput.value = '';
                     ITBISInput.value = '';
                     cantidadFacturarInput.value = '';
-                    searchResults.innerHTML = ''; 
+                    searchResults.innerHTML = '';
+                    searchDoctorInput.value = '';
+                    document.getElementById('comprobanteCheckbox').checked = false;
                     totalLabel.innerText = 'Total a pagar: $0.00';
 
                 } catch (error) {
@@ -1033,7 +1167,31 @@
             };
         }
 
+        async function getLastFacturaNumber() {
+            try {
+                const facturaSnapshot = await get(ref(db, 'facturaNumber'));
+                if (facturaSnapshot.exists()) {
+                    const facturaData = facturaSnapshot.val();
+                    return facturaData.lastNumber || 0;
+                } else {
+                    console.warn('No se encontró un número de factura previo.');
+                    return 0;
+                }
+            } catch (error) {
+                console.error('Error al obtener el último número de factura:', error);
+                return 0;
+            }
+        }
 
+        async function updateLastFacturaNumber(newNumber) {
+            try {
+                const facturaRef = ref(db, 'facturaNumber/lastNumber');
+                await set(facturaRef, newNumber);
+                // console.log('Número de factura actualizado correctamente:', newNumber);
+            } catch (error) {
+                console.error('Error al actualizar el número de factura:', error);
+            }
+        }
         async function getPacienteIdFromDatabase(pacienteName) {
             const pacientesSnapshot = await getDocs(collection(getFirestore(), 'pacientes'));
 

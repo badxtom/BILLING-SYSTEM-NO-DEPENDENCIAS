@@ -278,6 +278,39 @@
 
                         </div>
                     </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Comprobante Fiscal</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="MainFormE">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="desde" placeholder="Desde"
+                                                value="B" maxlength="11">
+                                            <label for="desde">*Desde</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="hasta" placeholder="Hasta"
+                                                value="B" maxlength="11">
+                                            <label for="hasta">*Hasta</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="date" class="form-control" id="fechaVencimiento"
+                                                placeholder="Fecha de Vencimiento">
+                                            <label for="fechaVencimiento">*Fecha de vencimiento</label>
+                                        </div>
+                                        <div class="d-grid mt-4">
+                                            <button type="submit" class="btn btn-dark-blue" id="updateButtonC">Registrar
+                                                datos</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
@@ -451,6 +484,7 @@
             }
         }
 
+
         function registerData() {
 
             const name = document.getElementById('name').value.trim();
@@ -488,6 +522,67 @@
             event.preventDefault();
             registerData();
         });
+
+        document.getElementById('desde').addEventListener('input', limitInput);
+        document.getElementById('hasta').addEventListener('input', limitInput);
+
+        function limitInput(event) {
+            const input = event.target;
+            let value = input.value.trim();
+
+            // Asegurarse de que comience con "B" y tenga solo números después
+            if (!/^B\d{0,10}$/.test(value)) {
+                // Si no cumple con el formato deseado, restablecer a "B"
+                input.value = 'B';
+                return;
+            }
+
+            // Limitar a 11 caracteres en total
+            if (value.length > 11) {
+                input.value = value.slice(0, 11); // Recortar a 11 caracteres
+            }
+        }
+
+        function registerDataC() {
+            const desde = document.getElementById('desde').value.trim();
+            const hasta = document.getElementById('hasta').value.trim();
+            const fechaVencimiento = document.getElementById('fechaVencimiento').value.trim();
+
+            // Validación de campos
+            if (desde === '' || hasta === '' || fechaVencimiento === '') {
+                showAlert('Por favor, complete todos los campos obligatorios.', 'alert-warning');
+                return;
+            }
+            const formatToSpanishDate = (dateString) => {
+                const dateParts = dateString.split('-');
+                return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+            };
+
+            const formattedfechaVencimiento = formatToSpanishDate(fechaVencimiento);
+
+            // Aquí puedes continuar con el código para guardar los datos en Firebase u otro proceso necesario
+            const newData = {
+                desde: desde,
+                hasta: hasta,
+                fechaVencimiento: formattedfechaVencimiento
+            };
+
+            // Ejemplo para guardar en Firebase Realtime Database
+            set(ref(db, 'comprobantes/'), newData)
+                .then(() => {
+                    showSuccessAlert('Datos registrados exitosamente', 'alert-success');
+                })
+                .catch((error) => {
+                    console.error('Error al registrar datos: ', error);
+                    showErrorAlert('Error al registrar datos', 'alert-danger');
+                });
+        }
+
+        document.getElementById('updateButtonC').addEventListener('click', (event) => {
+            event.preventDefault();
+            registerDataC();
+        });
+
 
         const nameInput = document.getElementById('name');
 
@@ -534,6 +629,11 @@
         rncInput.addEventListener('input', validateRNC);
 
         function loadCompanyData() {
+
+            const desde = document.getElementById('desde').value.trim();
+            const hasta = document.getElementById('hasta').value.trim();
+            const fechaVencimiento = document.getElementById('fechaVencimiento').value.trim();
+
             const dbRef = ref(db);
             get(child(dbRef, 'datos/')).then((snapshot) => {
                 if (snapshot.exists()) {
@@ -559,6 +659,32 @@
                 console.error('Error al cargar los datos de la empresa:', error);
             });
 
+            const formatToSpanishDate = (dateString) => {
+                const dateParts = dateString.split('/');
+                const day = dateParts[0];
+                const month = dateParts[1];
+                const year = dateParts[2];
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            };
+
+
+            get(child(dbRef, 'comprobantes/')).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const invoiceData = snapshot.val();
+
+
+                    document.getElementById('desde').value = invoiceData.desde || 'B';
+                    document.getElementById('hasta').value = invoiceData.hasta || 'B';
+                    const formattedFechaVencimiento = formatToSpanishDate(invoiceData.fechaVencimiento);
+                    document.getElementById('fechaVencimiento').value = formattedFechaVencimiento;
+                } else {
+                    console.log('No se encontraron datos del comprobante fiscal.');
+                }
+            }).catch((error) => {
+                console.error('Error al cargar los datos del comprobante fiscal:', error);
+            });
+
+
 
             const userCreds = JSON.parse(sessionStorage.getItem("user-creds"));
             if (userCreds) {
@@ -574,6 +700,11 @@
                             document.getElementById('location').disabled = true;
                             document.getElementById('updateButton').disabled = true;
                             document.getElementById('logoInput').disabled = true;
+
+                            document.getElementById('desde').disabled = true;
+                            document.getElementById('hasta').disabled = true;
+                            document.getElementById('fechaVencimiento').disabled = true;
+                            document.getElementById('updateButtonC').disabled = true;
                         }
                     } else {
                         console.log('No se encontraron datos del usuario.');

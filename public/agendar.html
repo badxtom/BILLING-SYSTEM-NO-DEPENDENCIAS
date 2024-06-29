@@ -3,7 +3,7 @@
 
 
 <head>
-    <title>Pacientes</title>
+    <title>Agendar</title>
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
@@ -60,6 +60,19 @@
 
         .btn-dark-blue:hover {
             background-color: navy;
+
+        }
+
+        .btn-dark-alert {
+            background-color: rgb(243, 191, 22);
+            color: white;
+            border: none;
+            transition: background-color 0.3s ease;
+
+        }
+
+        .btn-dark-alert:hover {
+            background-color: rgb(197, 165, 20);
 
         }
 
@@ -352,7 +365,7 @@
                 <div class="col">
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="home">Sistema</a></li>
-                        <li class="breadcrumb-item" aria-current="page">Pacientes</li>
+                        <li class="breadcrumb-item" aria-current="page">Citas</li>
                     </ul>
                 </div>
             </div>
@@ -360,7 +373,7 @@
                 <div class="col-sm-12">
                     <div class="card">
                         <div class="card-header">
-                            <h5>Registro de Pacientes</h5>
+                            <h5>Agendar citas</h5>
                             <div class="card-header">
                                 <a href="#" class="pc-link" id="nuevo" style="margin-right: 10px;">
                                     <span class="pc-micon"><i class="ti ti-crosshair"></i></span>
@@ -384,13 +397,12 @@
                                     <table class="table table-hover" style="overflow-x: auto;">
                                         <thead>
                                             <tr>
-                                                <th scope="col">Nombre(s)</th>
-                                                <th scope="col">Apellido(s)</th>
+                                                <th scope="col">Paciente</th>
                                                 <th scope="col">Teléfono</th>
-                                                <th scope="col">Cédula</th>
-                                                <th scope="col">Dirección</th>
-                                                <th scope="col">Especialista(s)</th>
-                                                <th scope="col">Fecha de registro</th>
+                                                <th scope="col">Correo Electrónico</th>
+                                                <th scope="col">Doctor</th>
+                                                <th scope="col">Fecha</th>
+                                                <th scope="col">Hora</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -404,74 +416,37 @@
             </div>
         </div>
         <div id="nuevoFormulario" class="formulario-container" style="display: none;">
-            <h3 class="mb-3">Registrar Paciente</h3>
+            <h3 class="mb-3">Programar cita</h3>
             <form id="MainForm">
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="fnameInp" placeholder="Nombre">
-                            <label for="floatingInput">*Nombre(s)</label>
-                        </div>
+                    <div class="form-floating mb-3">
+                        <input id="searchPatientInput" class="form-control" type="search" placeholder="Buscar paciente">
+                        <label for="floatingInput">*Buscar paciente</label>
+
+                        <div id="searchPatientResults" class="dropdown-menu" style="display: none;"></div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="lnameInp" placeholder="Apellido">
-                            <label for="floatingInput1">*Apellido(s)</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="dni" placeholder="Cédula">
-                    <label for="floatingInput">*Cédula</label>
                 </div>
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="number" placeholder="Teléfono">
                     <label for="floatingInput">*Teléfono</label>
                 </div>
                 <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="nEmergencia" placeholder="Teléfono">
-                    <label for="floatingInput">*Contacto de emergencia</label>
-                </div>
-                <div class="form-floating mb-3">
                     <input type="email" class="form-control" id="emailInp" placeholder="Correo Electrónico">
                     <label for="floatingInput2">*Correo Electrónico</label>
                 </div>
                 <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="location" placeholder="Dirección">
-                    <label for="floatingInput2">*Dirección</label>
-                </div>
-                <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="provincia" placeholder="Provincia">
-                    <label for="floatingInput2">*Provincia</label>
-                </div>
-                <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="edad" placeholder="Edad">
-                    <label for="floatingInput2">*Edad</label>
-                </div>
-                <div class="form-floating mb-3">
-                    <input type="date" class="form-control" id="fechaNac" placeholder="Fecha de nacimiento">
-                    <label for="fechaNac">*Fecha de nacimiento</label>
-                </div>
-                <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="searchInputM" placeholder="Buscar médico">
-                    <label for="searchInputM">*Buscar médico</label>
+                    <input type="text" class="form-control" id="searchDoctorInput" placeholder="Buscar médico">
+                    <label for="searchDoctorInput">*Buscar médico</label>
 
-                    <div id="searchResultsM" class="dropdown-menu" style="display: none;"></div>
-                </div>
-                <div class="mb-3">
-                    <label>*ARS</label>
-                    <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="ars" placeholder="ARS">
-                        <label for="floatingInput2">*ARS</label>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="npoliza" placeholder="Número de poliza">
-                        <label for="floatingInput2">*Número de poliza</label>
-                    </div>
+                    <div id="searchDoctorResults" class="dropdown-menu" style="display: none;"></div>
                 </div>
                 <div class="form-floating mb-3">
-                    <input type="date" class="form-control" id="fechaEntrada" placeholder="Fecha de entrada">
-                    <label for="fechaEntrada">*Fecha de entrada</label>
+                    <input type="date" class="form-control" id="fechaEntrada" placeholder="Fecha">
+                    <label for="fechaEntrada">*Fecha</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="time" class="form-control" id="hora" placeholder="Hora">
+                    <label for="hora">*Hora</label>
                 </div>
                 <div class="d-grid mt-4">
                     <button type="submit" class="btn btn-success" id="updateButton">Registrar datos</button>
@@ -483,75 +458,38 @@
         </div>
 
         <div id="EditarFormulario" class="formulario-container" style="display: none;">
-            <h3 class="mb-3">Editar Paciente</h3>
+            <h3 class="mb-3">Editar Cita</h3>
             <form id="MainFormE">
                 <input type="hidden" id="docId">
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="fnameInpE" placeholder="Nombre">
-                            <label for="floatingInput">*Nombre(s)</label>
-                        </div>
+                    <div class="form-floating mb-3">
+                        <input id="searchPatientInputE" class="form-control" type="search" placeholder="Buscar paciente">
+                        <label for="floatingInput">*Buscar paciente</label>
+
+                        <div id="searchPatientResultsE" class="dropdown-menu" style="display: none;"></div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="lnameInpE" placeholder="Apellido">
-                            <label for="floatingInput1">*Apellido(s)</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="dniE" placeholder="Cédula">
-                    <label for="floatingInput">*Cédula</label>
                 </div>
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="numberE" placeholder="Teléfono">
                     <label for="floatingInput">*Teléfono</label>
                 </div>
                 <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="nEmergenciaE" placeholder="Teléfono">
-                    <label for="floatingInput">*Contacto de emergencia</label>
-                </div>
-                <div class="form-floating mb-3">
                     <input type="email" class="form-control" id="emailInpE" placeholder="Correo Electrónico">
                     <label for="floatingInput2">*Correo Electrónico</label>
                 </div>
                 <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="locationE" placeholder="Dirección">
-                    <label for="floatingInput2">*Dirección</label>
-                </div>
-                <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="provinciaE" placeholder="Provincia">
-                    <label for="floatingInput2">*Provincia</label>
-                </div>
-                <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="edadE" placeholder="Edad">
-                    <label for="floatingInput2">*Edad</label>
-                </div>
-                <div class="form-floating mb-3">
-                    <input type="date" class="form-control" id="fechaNacE" placeholder="Fecha de nacimiento">
-                    <label for="fechaNac">*Fecha de nacimiento</label>
-                </div>
-                <div class="form-floating mb-3">
-                    <input type="text" class="form-control" id="searchInputME" placeholder="Buscar médico">
-                    <label for="searchInputME">*Buscar médico</label>
+                    <input type="text" class="form-control" id="searchDoctorInputE" placeholder="Buscar médico">
+                    <label for="searchDoctorInputE">*Buscar médico</label>
 
-                    <div id="searchResultsME" class="dropdown-menu" style="display: none;"></div>
-                </div>
-                <div class="mb-3">
-                    <label>*ARS</label>
-                    <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="arsE" placeholder="ARS">
-                        <label for="floatingInput2">*ARS</label>
-                    </div>
-                    <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="npolizaE" placeholder="Número de poliza">
-                        <label for="floatingInput2">*Número de poliza</label>
-                    </div>
+                    <div id="searchDoctorResultsE" class="dropdown-menu" style="display: none;"></div>
                 </div>
                 <div class="form-floating mb-3">
-                    <input type="date" class="form-control" id="fechaEntradaE" placeholder="Fecha de entrada">
-                    <label for="fechaEntradaE">*Fecha de entrada</label>
+                    <input type="date" class="form-control" id="fechaEntradaE" placeholder="Fecha">
+                    <label for="fechaEntradaE">*Fecha</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="time" class="form-control" id="horaE" placeholder="Hora">
+                    <label for="horaE">*Hora</label>
                 </div>
                 <div class="d-grid mt-4">
                     <button type="submit" class="btn btn-success" id="actuaButton"> Actualizar</button>
@@ -614,6 +552,7 @@
         const db = getDatabase();
         const auth = getAuth();
         const storage = getStorage(app);
+        const dba = getFirestore(app);
 
         window.addEventListener('DOMContentLoaded', () => {
             const userCreds = sessionStorage.getItem("user-creds");
@@ -675,8 +614,8 @@
 
         let FnameInp = document.getElementById('fnameInp');
         let LnameInp = document.getElementById('lnameInp')
-        const EmailInp = document.getElementById('emailInp');;
-        const EmailInpE = document.getElementById('emailInpE');;
+        const EmailInp = document.getElementById('emailInp');
+        const EmailInpE = document.getElementById('emailInpE');
         const dniInput = document.getElementById('dni');
         const numberInput = document.getElementById('number');
         const locationInput = document.getElementById('location');
@@ -692,185 +631,138 @@
         const locationInputE = document.getElementById('locationE');
         const searchInputME = document.getElementById('searchInputME');
         const searchResultsME = document.getElementById('searchResultsME');
+        const searchPatientInput = document.getElementById('searchPatientInput');
+        const searchPatientResults = document.getElementById('searchPatientResults');
+        const searchDoctorInput = document.getElementById('searchDoctorInput');
+        const searchDoctorResults = document.getElementById('searchDoctorResults');
+        const searchResults = document.getElementById('searchResults');
 
-        const ARS = document.getElementById('ars');
-        const Npoliza = document.getElementById('npoliza');
-        const ARSE = document.getElementById('arsE');
-        const NpolizaE = document.getElementById('npolizaE');
+        document.addEventListener('DOMContentLoaded', function () {
+            const db = getFirestore(app);
 
-        const nEmergencia = document.getElementById('nEmergencia');
-        const Provincia = document.getElementById('provincia');
-        const Edad = document.getElementById('edad');
-        const fechaNac = document.getElementById('fechaNac');
+            const searchPatientInput = document.getElementById('searchPatientInput');
+            const searchDoctorInput = document.getElementById('searchDoctorInput');
+            const searchPatientResults = document.getElementById('searchPatientResults');
+            const searchDoctorResults = document.getElementById('searchDoctorResults');
+            const numberInput = document.getElementById('number');
+            const EmailInp = document.getElementById('emailInp');
 
-        const nEmergenciaE = document.getElementById('nEmergenciaE');
-        const ProvinciaE = document.getElementById('provinciaE');
-        const EdadE = document.getElementById('edadE');
-        const fechaNacE = document.getElementById('fechaNacE');
+            const searchPatientInputE = document.getElementById('searchPatientInputE');
+            const searchDoctorInputE = document.getElementById('searchDoctorInputE');
+            const searchPatientResultsE = document.getElementById('searchPatientResultsE');
+            const searchDoctorResultsE = document.getElementById('searchDoctorResultsE');
+            const numberInputE = document.getElementById('numberE');
+            const EmailInpE = document.getElementById('emailInpE');
 
+            let empleados = [];
+            let pacientes = [];
 
-        let selectedDoctors = [];
+            function updateDropdown(query, resultsElement, items, isProduct, callback) {
+                resultsElement.innerHTML = '';
+                resultsElement.style.display = 'none';
 
+                items.forEach(item => {
+                    if (isProduct) {
+                        // Para productos, buscar por descripción
+                        const searchField = item.descripcion;
+                        if (searchField.toLowerCase().includes(query.toLowerCase())) {
+                            const dropdownItem = document.createElement('button');
+                            dropdownItem.classList.add('dropdown-item');
+                            dropdownItem.type = 'button';
+                            dropdownItem.textContent = searchField;
+                            dropdownItem.addEventListener('click', function () {
+                                callback(item);
+                                resultsElement.style.display = 'none';
+                            });
+                            resultsElement.appendChild(dropdownItem);
+                            resultsElement.style.display = 'block';
+                        }
+                    } else {
+                        // Para pacientes y médicos, buscar por nombre completo (fname + lname)
+                        const searchField = `${item.fname} ${item.lname}`;
+                        if (searchField.toLowerCase().includes(query.toLowerCase())) {
+                            const dropdownItem = document.createElement('button');
+                            dropdownItem.classList.add('dropdown-item');
+                            dropdownItem.type = 'button';
+                            dropdownItem.textContent = searchField;
+                            dropdownItem.addEventListener('click', function () {
+                                callback(item);
+                                resultsElement.style.display = 'none';
+                            });
+                            resultsElement.appendChild(dropdownItem);
+                            resultsElement.style.display = 'block';
+                        }
+                    }
+                });
+            }
 
-        const searchDoctors = async (searchTerm) => {
-            const empleadosCollection = collection(getFirestore(app), 'empleados');
+            async function getAllPacientes() {
+                const querySnapshot = await getDocs(collection(db, 'pacientes'));
+                pacientes = querySnapshot.docs.map(doc => doc.data());
+            }
 
-            searchResultsM.innerHTML = '';
+            async function getAllEmpleados() {
+                const querySnapshot = await getDocs(collection(db, 'empleados'));
+                empleados = querySnapshot.docs.filter(doc => doc.data().role === 'Doctor').map(doc => doc.data());
+            }
 
+            searchPatientInput.addEventListener('input', function () {
+                const query = searchPatientInput.value.trim();
+                updateDropdown(query, searchPatientResults, pacientes, false, function (paciente) {
+                    searchPatientInput.value = `${paciente.fname} ${paciente.lname}`;
+                    numberInput.value = paciente.number || '';
+                    EmailInp.value = paciente.email || '';
+                });
+            });
 
-            const querySnapshot = await getDocs(query(empleadosCollection, where('role', '==', 'Doctor')));
+            searchDoctorInput.addEventListener('input', function () {
+                const query = searchDoctorInput.value.trim();
+                updateDropdown(query, searchDoctorResults, empleados, false, function (doctor) {
+                    searchDoctorInput.value = `${doctor.fname} ${doctor.lname}`;
+                    // Puedes también rellenar otros campos con la información del doctor
+                });
+            });
 
+            searchDoctorInputE.addEventListener('input', function () {
+                const query = searchDoctorInputE.value.trim();
+                updateDropdown(query, searchDoctorResultsE, empleados, false, function (doctor) {
+                    searchDoctorInputE.value = `${doctor.fname} ${doctor.lname}`;
+                    // Puedes también rellenar otros campos con la información del doctor
+                });
+            });
 
-            const filteredResults = [];
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
+            searchPatientInputE.addEventListener('input', function () {
+                const query = searchPatientInputE.value.trim();
+                updateDropdown(query, searchPatientResultsE, pacientes, false, function (paciente) {
+                    searchPatientInputE.value = `${paciente.fname} ${paciente.lname}`;
+                    numberInputE.value = paciente.number || '';
+                    EmailInpE.value = paciente.email || '';
+                });
+            });
 
-                if (data.fname.toLowerCase().includes(searchTerm.toLowerCase()) || data.lname.toLowerCase().includes(searchTerm.toLowerCase())) {
-                    filteredResults.push({ id: doc.id, ...data });
+            document.addEventListener('click', function (event) {
+                if (!searchPatientResults.contains(event.target) && !searchPatientInput.contains(event.target)) {
+                    searchPatientResults.style.display = 'none';
+                }
+                if (!searchDoctorResults.contains(event.target) && !searchDoctorInput.contains(event.target)) {
+                    searchDoctorResults.style.display = 'none';
+                }
+
+                if (!searchPatientResultsE.contains(event.target) && !searchPatientInput.contains(event.target)) {
+                    searchPatientResultsE.style.display = 'none';
+                }
+                if (!searchDoctorResultsE.contains(event.target) && !searchDoctorInput.contains(event.target)) {
+                    searchDoctorResultsE.style.display = 'none';
                 }
             });
 
 
-            filteredResults.forEach((result) => {
-                const listItem = document.createElement('div');
-                listItem.textContent = `${result.fname} ${result.lname}`;
-                listItem.classList.add('dropdown-item');
-                listItem.addEventListener('click', () => {
-
-                    if (!selectedDoctors.includes(`${result.fname} ${result.lname}`)) {
-                        selectedDoctors.push(`${result.fname} ${result.lname}`);
-                        searchInputM.value = selectedDoctors.join(', ');
-                    }
-
-                    searchResultsM.innerHTML = '';
-                    searchResultsM.style.display = 'none';
-                });
-                searchResultsM.appendChild(listItem);
-            });
-
-
-            searchResultsM.style.display = 'block';
-        };
-
-        searchInputM.addEventListener('input', (event) => {
-            const searchTerm = event.target.value;
-            if (searchTerm.length >= 3) {
-
-                searchDoctors(searchTerm);
-            } else {
-
-                searchResultsM.innerHTML = '';
-                searchResultsM.style.display = 'none';
-            }
+            getAllPacientes();
+            getAllEmpleados();
         });
 
 
-        searchInputM.addEventListener('keydown', (event) => {
-            if (event.key === ' ') {
-                event.preventDefault();
-                searchInputM.value = '';
-            }
-        });
-
-        let selectedDoctorsE = [];
-
-
-        const searchDoctorsE = async (searchTerm) => {
-            const empleadosCollection = collection(getFirestore(app), 'empleados');
-
-            searchResultsME.innerHTML = '';
-
-
-            const querySnapshot = await getDocs(query(empleadosCollection, where('role', '==', 'Doctor')));
-
-
-            const filteredResults = [];
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-
-                if (data.fname.toLowerCase().includes(searchTerm.toLowerCase()) || data.lname.toLowerCase().includes(searchTerm.toLowerCase())) {
-                    filteredResults.push({ id: doc.id, ...data });
-                }
-            });
-
-
-            filteredResults.forEach((result) => {
-                const listItem = document.createElement('div');
-                listItem.textContent = `${result.fname} ${result.lname}`;
-                listItem.classList.add('dropdown-item');
-                listItem.addEventListener('click', () => {
-
-                    if (!selectedDoctorsE.includes(`${result.fname} ${result.lname}`)) {
-                        selectedDoctorsE.push(`${result.fname} ${result.lname}`);
-                        searchInputME.value = selectedDoctorsE.join(', ');
-                    }
-
-                    searchResultsME.innerHTML = '';
-                    searchResultsME.style.display = 'none';
-                });
-                searchResultsME.appendChild(listItem);
-            });
-
-
-            searchResultsME.style.display = 'block';
-        };
-
-
-        searchInputME.addEventListener('input', (event) => {
-            const searchTerm = event.target.value;
-            if (searchTerm.length >= 3) {
-
-                searchDoctorsE(searchTerm);
-            } else {
-
-                searchResultsME.innerHTML = '';
-                searchResultsME.style.display = 'none';
-            }
-        });
-
-
-        searchInputME.addEventListener('keydown', (event) => {
-            if (event.key === ' ') {
-                event.preventDefault();
-                searchInputME.value = '';
-            }
-        });
-
-
-        LnameInp.addEventListener('input', () => {
-            let inputValue = LnameInp.value;
-
-            inputValue = inputValue.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
-
-            LnameInp.value = inputValue;
-        });
-
-        FnameInp.addEventListener('input', () => {
-            let inputValue = FnameInp.value;
-
-            inputValue = inputValue.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
-
-            FnameInp.value = inputValue;
-        });
-
-        FnameInpE.addEventListener('input', () => {
-            let inputValue = FnameInpE.value;
-
-            inputValue = inputValue.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
-
-            FnameInpE.value = inputValue;
-        });
-
-
-        LnameInpE.addEventListener('input', () => {
-            let inputValue = LnameInpE.value;
-
-            inputValue = inputValue.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
-
-            LnameInpE.value = inputValue;
-        });
-
-
+        let currentUserRole = '';
 
         function showUserData(userId) {
             const dbRef = ref(db);
@@ -883,6 +775,8 @@
                     if (userData.roleselect === 'Asistente') {
                         registerButton.disabled = true;
                     }
+                    currentUserRole = userData.roleselect;
+                    loadCitas();
                 } else {
                     console.log("No data available");
                 }
@@ -958,18 +852,6 @@
         const HistorialFacturas = document.getElementById('HistorialFacturas');
         const closeHistorialButton = document.getElementById('closeHistorialButton');
 
-
-        function toggleFormularioH() {
-            const historialContainer = document.getElementById('HistorialFacturas');
-            const fondoDesenfocado = document.getElementById('fondoDesenfocado');
-            if (historialContainer.style.display === 'none' || historialContainer.style.display === '') {
-                historialContainer.style.display = 'block';
-                fondoDesenfocado.style.display = 'block';
-            } else {
-                historialContainer.style.display = 'none';
-                fondoDesenfocado.style.display = 'none';
-            }
-        }
         function toggleFormulario() {
             if (nuevoFormulario.style.display === 'none') {
                 nuevoFormulario.style.display = 'block';
@@ -996,20 +878,14 @@
 
             fondoDesenfocado.style.display = 'none';
 
-            document.getElementById('fnameInp').value = '';
-            document.getElementById('lnameInp').value = '';
-            document.getElementById('dni').value = '';
+            document.getElementById('searchPatientInput').value = '';
+            document.getElementById('searchPatientResults').value = '';
+            document.getElementById('emailInp').value = '';
             document.getElementById('number').value = '';
-            document.getElementById('location').value = '';
+            document.getElementById('searchDoctorInput').value = '';
             document.getElementById('fechaEntrada').value = '';
-            document.getElementById('searchInputM').value = '';
-            document.getElementById('searchResultsM').value = '';
-            document.getElementById('nEmergencia').value = '';
-            document.getElementById('provincia').value = '';
-            document.getElementById('edad').value = '';
-            document.getElementById('fechaNac').value = '';
-            document.getElementById('ars').value = '';
-            document.getElementById('npoliza').value = '';
+            document.getElementById('searchDoctorResults').value = '';
+            document.getElementById('hora').value = '';
 
         });
 
@@ -1019,66 +895,19 @@
 
             fondoDesenfocado.style.display = 'none';
 
-            document.getElementById('fnameInpE').value = '';
-            document.getElementById('lnameInpE').value = '';
-            document.getElementById('dniE').value = '';
+            document.getElementById('searchPatientInputE').value = '';
+            document.getElementById('searchPatientResultsE').value = '';
+            document.getElementById('emailInpE').value = '';
             document.getElementById('numberE').value = '';
-            document.getElementById('locationE').value = '';
-            document.getElementById('fechaEntrada').value = '';
-            document.getElementById('searchInputME').value = '';
-            document.getElementById('searchResultsME').value = '';
-            document.getElementById('nEmergenciaE').value = '';
-            document.getElementById('provinciaE').value = '';
-            document.getElementById('edadE').value = '';
-            document.getElementById('fechaNacE').value = '';
-            document.getElementById('arsE').value = '';
-            document.getElementById('npolizaE').value = '';
+            document.getElementById('searchDoctorInputE').value = '';
+            document.getElementById('fechaEntradaE').value = '';
+            document.getElementById('searchDoctorResultsE').value = '';
+            document.getElementById('horaE').value = '';
 
 
         });
 
-        function formatCedula(input) {
 
-            const cleaned = input.value.replace(/\D/g, '');
-
-            const match = cleaned.match(/^(\d{3})(\d{7})(\d{1})$/);
-            if (match) {
-                input.value = match[1] + '-' + match[2] + '-' + match[3];
-            } else {
-                input.value = cleaned.substring(0, 10);
-            }
-        }
-
-        function validatePhoneNumber(event) {
-            const input = event.target;
-            let inputValue = input.value;
-
-            const numericValue = inputValue.replace(/\D/g, '');
-
-            const trimmedValue = numericValue.slice(0, 10);
-
-            const formattedValue = trimmedValue.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-
-            input.value = formattedValue;
-        }
-
-        const phoneNumberInput = document.getElementById('number');
-        phoneNumberInput.addEventListener('input', validatePhoneNumber);
-        numberInputE.addEventListener('input', validatePhoneNumber);
-
-        nEmergencia.addEventListener('input', validatePhoneNumber);
-        nEmergenciaE.addEventListener('input', validatePhoneNumber);
-
-
-        const cedulaInput = document.getElementById('dni');
-
-        cedulaInput.addEventListener('input', function () {
-            formatCedula(this);
-        });
-
-        dniInputE.addEventListener('input', function () {
-            formatCedula(this);
-        });
 
         Nuevo.addEventListener('click', toggleFormulario);
 
@@ -1107,70 +936,41 @@
         }
 
         form.addEventListener('submit', async (event) => {
-            // Prevenir el comportamiento predeterminado del formulario
             event.preventDefault();
-            function formatDateToSpanish(dateString) {
-                const date = new Date(dateString);
-                const day = String(date.getUTCDate()).padStart(2, '0');
-                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-                const year = date.getUTCFullYear();
-                return `${day}/${month}/${year}`;
-            }
 
-            // Obtener los valores de los campos del formulario
-            const fname = document.getElementById('fnameInp').value;
-            const lname = document.getElementById('lnameInp').value;
-            const dni = document.getElementById('dni').value;
-            const EmailInp = document.getElementById('emailInp').value;
-            const number = document.getElementById('number').value;
-            const location = document.getElementById('location').value;
-            const medico = document.getElementById('searchInputM').value;
-            const nEmergencia = document.getElementById('nEmergencia');
-            const Provincia = document.getElementById('provincia');
-            const Edad = document.getElementById('edad');
-            const fechaNac = document.getElementById('fechaNac');
-            const ARS = document.getElementById('ars');
-            const Npoliza = document.getElementById('npoliza');
-            const fechaEntradaValue = (fechaEntrada.value) ? formatDateToSpanish(fechaEntrada.value) : null;
-            const fechaNacValue = (fechaNac.value) ? formatDateToSpanish(fechaNac.value) : null;
+            const formatToSpanishDate = (dateString) => {
+                const dateParts = dateString.split('-');
+                return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+            };
 
+            const pacienteSeleccionado = searchPatientInput.value;
+            const telefono = numberInput.value;
+            const correoElectronico = EmailInp.value;
+            const doctorSeleccionado = searchDoctorInput.value;
+            const fecha = fechaEntrada.value;
+            const horaCita = hora.value;
 
-            // Verificar que todos los campos obligatorios estén completos
-            if (!fname || !lname || !dni || !number || !EmailInp || !location || !medico || !fechaEntrada || !ARS || !Npoliza || !nEmergencia || !Provincia || !Edad || !fechaNac) {
-                // Mostrar una alerta si algún campo obligatorio está vacío
-                showAlert('Por favor complete todos los campos obligatorios.', 'alert-warning');
+            if (!pacienteSeleccionado || !telefono || !correoElectronico || !doctorSeleccionado || !fecha || !horaCita) {
+                alert('Por favor, complete todos los campos obligatorios.');
                 return;
             }
-
+            const formattedEntryDate = formatToSpanishDate(fecha);
             try {
-                // Guardar los datos del formulario en Firestore
-                await addDoc(collection(getFirestore(), 'pacientes'), {
-                    fname: fname,
-                    lname: lname,
-                    dni: dni,
-                    number: number,
-                    email: EmailInp,
-                    location: location,
-                    medico: medico,
-                    nEmergencia: nEmergencia,
-                    provincia: Provincia,
-                    edad: Edad,
-                    fechaNac: fechaNacValue,
-                    ars: ARS,
-                    npoliza: Npoliza,
-                    fechaEntrada: fechaEntradaValue
-
+                await addDoc(collection(dba, 'CitasAgendas'), {
+                    paciente: pacienteSeleccionado,
+                    telefono: telefono,
+                    email: correoElectronico,
+                    doctor: doctorSeleccionado,
+                    fecha: formattedEntryDate,
+                    hora: horaCita
                 });
 
-                // Mostrar una alerta de éxito
-                showSuccessAlert('Datos del paciente registrados correctamente.', 'alert-success');
-
-                // Restablecer el formulario después de enviar los datos
+                showSuccessAlert('Cita registrada correctamente.');
                 form.reset();
+                loadCitas();
             } catch (error) {
-                // Mostrar una alerta si ocurre un error al guardar los datos
-                console.error('Error al guardar los datos:', error);
-                showAlert('Se produjo un error al guardar los datos. Inténtelo de nuevo más tarde.', 'alert-danger');
+                console.error('Error al guardar la cita:', error);
+                alert('Se produjo un error al guardar la cita. Inténtelo de nuevo más tarde.');
             }
         });
 
@@ -1178,50 +978,40 @@
 
         const tableBody = document.querySelector('tbody');
 
-        async function loadPacientes() {
+        async function loadCitas() {
             tableBody.innerHTML = '';
 
-            const pacientesSnapshot = await getDocs(collection(getFirestore(), 'pacientes'));
+            const citasSnapshot = await getDocs(collection(getFirestore(), 'CitasAgendas'));
 
-            pacientesSnapshot.forEach((doc) => {
-                const pacienteData = doc.data();
-                const { fname, lname, number, dni, fechaEntrada, location, medico, email, ars, npoliza, nEmergencia, provincia, edad, fechaNac } = pacienteData;
+            citasSnapshot.forEach((doc) => {
+                const citaData = doc.data();
+                const { paciente, telefono, email, doctor, fechaEntrada, hora } = citaData;
 
                 const dateParts = fechaEntrada.split('/');
                 const formattedFechaEntrada = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
 
-                const datePartsE = fechaNac.split('/');
-                const formattedFechaNac = `${datePartsE[2]}-${datePartsE[1]}-${datePartsE[0]}`;
-
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${fname}</td>
-            <td>${lname}</td>
-            <td>${number}</td>
-            <td>${dni}</td>
-            <td>${location}</td>
-            <td>${medico}</td>
+            <td>${paciente}</td>
+            <td>${telefono}</td>
+            <td>${email}</td>
+            <td>${doctor}</td>
             <td>${fechaEntrada}</td>
+            <td>${hora}</td>
             <td>
-                <button class="btn btn-primary"  onclick="verHistorial('${doc.id}')">Ver historial</button>
+            <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}" ${currentUserRole === 'Asistente' ? 'disabled' : ''}>
+                <i class="fas fa-trash-alt"></i>
+            </button>
             </td>
         `;
 
                 row.addEventListener('dblclick', () => {
-                    fnameInpE.value = fname;
-                    LnameInpE.value = lname
-                    numberE.value = number;
+                    searchPatientInputE.value = paciente;
+                    numberE.value = telefono;
                     EmailInpE.value = email;
-                    dniE.value = dni;
-                    locationE.value = location;
-                    searchInputME.value = medico;
-                    nEmergenciaE.value = nEmergencia;
-                    ProvinciaE.value = provincia;
-                    EdadE.value = edad;
-                    fechaNacE.value = formattedFechaNac;
-                    ARSE.value = ars;
-                    NpolizaE.value = npoliza;
+                    searchDoctorInputE.value = doctor;
                     fechaEntradaE.value = formattedFechaEntrada;
+                    horaE.value = hora;
 
                     EditarFormulario.dataset.docId = doc.id;
                     toggleFormularioE();
@@ -1229,38 +1019,68 @@
 
                 tableBody.appendChild(row);
             });
-        }
 
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const docId = button.dataset.id;
 
-        loadPacientes();
-
-        window.verHistorial = async function (docId) {
-            toggleFormularioH();
-
-            const listaFacturas = document.getElementById('listaFacturas');
-            listaFacturas.innerHTML = '';
-
-            const pacienteFolderRef = storageRef(storage, `facturas/${docId}`);
-            const listaFacturasSnapshot = await listAll(pacienteFolderRef);
-
-            listaFacturasSnapshot.items.forEach(async (itemRef) => {
-                const facturaURL = await getDownloadURL(itemRef);
-                const facturaLink = document.createElement('a');
-                facturaLink.href = facturaURL;
-                facturaLink.textContent = itemRef.name;
-                facturaLink.target = '_blank';
-                const listItem = document.createElement('div');
-                listItem.appendChild(facturaLink);
-                listaFacturas.appendChild(listItem);
+                    showAlert('¿Estás seguro de que deseas eliminar esta cita?', 'alert-warning', true, async () => {
+                        try {
+                            await deleteDoc(doc(getFirestore(), 'CitasAgendas', docId));
+                            showAlert('Cita eliminada correctamente', 'alert-success');
+                            loadCitas();
+                        } catch (error) {
+                            console.error('Error al eliminar la cita:', error);
+                        }
+                    });
+                });
             });
         }
 
 
+        function showAlert(message, alertType, isConfirmation = false, onConfirm = null) {
+            const alertDiv = document.createElement('div');
+            alertDiv.classList.add('alert', 'alert-dismissible', alertType, 'position-fixed', 'top-50', 'start-50', 'translate-middle');
 
-        closeHistorialButton.addEventListener('click', function () {
-            toggleFormularioH();
-        });
+            if (isConfirmation) {
+                alertDiv.innerHTML = `
+            <h4 class="alert-heading">¡Advertencia!</h4>
+            <p class="mb-0">${message}</p>
+            <div class="mt-2 d-flex justify-content-end">
+                <button type="button" class="btn btn-dark-alert me-2" id="confirmYes">Sí</button>
+                <button type="button" class="btn btn-dark-alert" id="confirmNo">No</button>
+            </div>
+        `;
+                document.body.appendChild(alertDiv);
 
+                const confirmYes = document.getElementById('confirmYes');
+                const confirmNo = document.getElementById('confirmNo');
+
+                confirmYes.addEventListener('click', () => {
+                    if (onConfirm) onConfirm();
+                    alertDiv.remove();
+                });
+
+                confirmNo.addEventListener('click', () => {
+                    alertDiv.remove();
+                });
+            } else {
+                alertDiv.innerHTML = `
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <h4 class="alert-heading">¡Advertencia!</h4>
+            <p class="mb-0">${message}</p>
+        `;
+
+                const formContainer = document.getElementById('nuevoFormulario');
+                formContainer.appendChild(alertDiv);
+
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+            }
+        }
 
         async function saveChanges() {
             const docId = EditarFormulario.dataset.docId;
@@ -1277,30 +1097,21 @@
             }
 
             const fechaEntradaValue = (fechaEntradaE.value) ? formatDateToSpanish(fechaEntradaE.value) : null;
-            const fechaNacValue = (fechaNacE.value) ? formatDateToSpanish(fechaNacE.value) : null;
 
             const updatedData = {
-                fname: FnameInpE.value,
-                lname: LnameInpE.value,
-                dni: dniInputE.value,
-                number: numberInputE.value,
+                paciente: searchPatientInputE.value,
+                telefono: numberE.value,
                 email: EmailInpE.value,
-                location: locationInputE.value,
-                medico: searchInputME.value,
-                nEmergencia: nEmergenciaE.value,
-                provincia: ProvinciaE.value,
-                edad: EdadE.value,
-                fechaNac: fechaNacValue,
-                ars: ARSE.value,
-                npoliza: NpolizaE.value,
-                fechaEntrada: fechaEntradaValue
+                doctor: searchDoctorInputE.value,
+                fechaEntrada: fechaEntradaValue,
+                hora: horaE.value
             };
 
             try {
-                await setDoc(doc(getFirestore(), 'pacientes', docId), updatedData);
-                showSuccessAlert('Empleado actualizado correctamente"', 'alert-success');
+                await setDoc(doc(getFirestore(), 'CitasAgendas', docId), updatedData);
+                showSuccessAlert('Cita actualizada correctamente"', 'alert-success');
                 EditarFormulario.style.disinedplay = 'none';
-                loadPacientes();
+                loadCitas();
             } catch (error) {
                 console.error('Error actualizando documento: ', error);
             }
@@ -1311,22 +1122,6 @@
             saveChanges();
         });
 
-        function showAlert(message, alertType) {
-            const alertDiv = document.createElement('div');
-            alertDiv.classList.add('alert', 'alert-dismissible', alertType, 'position-fixed', 'top-50', 'start-50', 'translate-middle');
-            alertDiv.innerHTML = `
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        <h4 class="alert-heading">¡Advertencia!</h4>
-        <p class="mb-0">${message}</p>
-    `;
-
-            const formContainer = document.getElementById('nuevoFormulario');
-            formContainer.appendChild(alertDiv);
-
-            setTimeout(() => {
-                alertDiv.remove();
-            }, 5000);
-        }
 
 
 
@@ -1371,7 +1166,7 @@
                     doc.addImage(logoImage, 'PNG', doc.internal.pageSize.width - logoWidth - marginRight, marginTop, logoWidth, logoHeight);
 
                     doc.setFontSize(20);
-                    doc.text('Registro de Pacientes', 15, 10);
+                    doc.text('Citas agendadas', 15, 10);
 
                     const empresaSnapshot = await get(ref(db, 'datos/'));
                     const empresaData = empresaSnapshot.val();
@@ -1399,7 +1194,7 @@
                         }
                     }
                     doc.autoTable({
-                        head: [['Nombre', 'Apellido', 'Teléfono', 'Cédula', 'Dirección', 'Especialista(s)', 'Fecha de registro']],
+                        head: [['Paciente', 'Teléfono', 'Correo Electrónico', 'Doctor', 'Fecha', 'Hora']],
                         body: Array.from(tableBody.querySelectorAll('tr')).map(row =>
                             Array.from(row.querySelectorAll('td')).map(cell => cell.innerText)
                         ),
@@ -1407,7 +1202,7 @@
                     });
 
                     const pdfBlob = await doc.output('blob');
-                    saveAs(pdfBlob, 'Pacientes.pdf');
+                    saveAs(pdfBlob, 'CitasAgendadas.pdf');
 
                     // doc.save('empleados.pdf');
                 };

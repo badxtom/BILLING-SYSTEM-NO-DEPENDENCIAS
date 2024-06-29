@@ -392,12 +392,12 @@
                                     <table class="table table-hover" style="overflow-x: auto;">
                                         <thead>
                                             <tr>
-                                                <th scope="col">Nombre</th>
-                                                <th scope="col">Apellido</th>
+                                                <th scope="col">Nombre(s)</th>
+                                                <th scope="col">Apellido(s)</th>
                                                 <th scope="col">Teléfono</th>
                                                 <th scope="col">Cédula</th>
                                                 <th scope="col">Ocupación</th>
-                                                <th scope="col">Especialidad/es</th>
+                                                <th scope="col">Especialidad(es)</th>
                                                 <th scope="col">Fecha de Entrada</th>
                                                 <th scope="col">Estatus</th>
                                             </tr>
@@ -419,13 +419,13 @@
                     <div class="col-md-6">
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="fnameInp" placeholder="Nombre">
-                            <label for="floatingInput">*Nombre</label>
+                            <label for="floatingInput">*Nombre(s)</label>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="lnameInp" placeholder="Apellido">
-                            <label for="floatingInput1">*Apellido</label>
+                            <label for="floatingInput1">*Apellido(s)</label>
                         </div>
                     </div>
                 </div>
@@ -456,7 +456,7 @@
                 </div>
                 <div class="form-floating mb-3" id="exequaturContainer" style="display: none;">
                     <input type="text" class="form-control" id="exequaturInput" placeholder="Exequatur">
-                    <label for="exequaturInput">Exequatur</label>
+                    <label for="exequaturInput">Exequátur</label>
                 </div>
                 <div class="form-floating mb-3">
                     <input type="date" class="form-control" id="fechaEntrada" placeholder="Fecha de entrada">
@@ -472,7 +472,7 @@
                 </div>
                 <div class="form-floating mb-3">
                     <fieldset>
-                        <legend class="mb-3" id="espselect">*Especialidad/es</legend>
+                        <legend class="mb-3" id="espselect">*Especialidad(es)</legend>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="checkboxNA" value="N/A">
                             <label class="form-check-label" for="checkboxNA">N/A</label>
@@ -545,13 +545,13 @@
                     <div class="col-md-6">
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="fnameInpE" placeholder="Nombre">
-                            <label for="floatingInput">*Nombre</label>
+                            <label for="floatingInput">*Nombre(s)</label>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="lnameInpE" placeholder="Apellido">
-                            <label for="floatingInput1">*Apellido</label>
+                            <label for="floatingInput1">*Apellido(s)</label>
                         </div>
                     </div>
                 </div>
@@ -582,7 +582,7 @@
                 </div>
                 <div class="form-floating mb-3" id="exequaturContainerE" style="display: none;">
                     <input type="text" class="form-control" id="exequaturInputE" placeholder="Exequatur">
-                    <label for="exequaturInputE">Exequatur</label>
+                    <label for="exequaturInputE">Exequátur</label>
                 </div>
                 <div class="form-floating mb-3">
                     <input type="date" class="form-control" id="fechaEntradaE" placeholder="Fecha de entrada">
@@ -598,7 +598,7 @@
                 </div>
                 <div class="form-floating mb-3">
                     <fieldset>
-                        <legend class="mb-3" id="espselectE">*Especialidad/es</legend>
+                        <legend class="mb-3" id="espselectE">*Especialidad(es)</legend>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="checkboxNAE" value="N/A">
                             <label class="form-check-label" for="checkboxNAE">N/A</label>
@@ -1053,6 +1053,31 @@
             }
         }
 
+        document.getElementById('exequaturInput').addEventListener('input', function (e) {
+            const input = e.target;
+            const value = input.value.replace(/\D/g, ''); 
+            const formattedValue = value.replace(/(\d{3})(\d{2})/, '$1-$2');
+
+            if (value.length > 5) {
+                input.value = formattedValue.substring(0, 6);
+            } else {
+                input.value = formattedValue;
+            }
+        });
+
+        document.getElementById('exequaturInputE').addEventListener('input', function (e) {
+            const input = e.target;
+            const value = input.value.replace(/\D/g, ''); 
+            const formattedValue = value.replace(/(\d{3})(\d{2})/, '$1-$2');
+
+            if (value.length > 5) {
+                input.value = formattedValue.substring(0, 6);
+            } else {
+                input.value = formattedValue;
+            }
+        });
+
+
         function validatePhoneNumber(event) {
             const input = event.target;
             let inputValue = input.value;
@@ -1444,7 +1469,7 @@
                         }
                     }
                     doc.autoTable({
-                        head: [['Nombre', 'Apellido', 'Teléfono', 'Cédula', 'Ocupación', 'Especialidad/es', 'Fecha de Entrada', 'Estatus']],
+                        head: [['Nombre', 'Apellido', 'Teléfono', 'Cédula', 'Ocupación', 'Especialidad(es)', 'Fecha de Entrada', 'Estatus']],
                         body: Array.from(tableBody.querySelectorAll('tr')).map(row =>
                             Array.from(row.querySelectorAll('td')).map(cell => cell.innerText)
                         ),
@@ -1470,36 +1495,36 @@
 
     </script>
 
-<script src="popper.min.js"></script>
-<script src="simplebar.min.js"></script>
-<script src="bootstrap.min.js"></script>
-<script src="custom-font.js"></script>
-<script src="pcoded.js"></script> 
-<script src="feather.min.js"></script>
+    <script src="popper.min.js"></script>
+    <script src="simplebar.min.js"></script>
+    <script src="bootstrap.min.js"></script>
+    <script src="custom-font.js"></script>
+    <script src="pcoded.js"></script>
+    <script src="feather.min.js"></script>
 
 
 
 
-<script>layout_change('light');</script>
+    <script>layout_change('light');</script>
 
 
 
 
-<script>font_change("Roboto");</script>
+    <script>font_change("Roboto");</script>
 
 
-<script>change_box_container('false');</script>
+    <script>change_box_container('false');</script>
 
 
-<script>layout_caption_change('true');</script>
+    <script>layout_caption_change('true');</script>
 
 
 
 
-<script>layout_rtl_change('false');</script>
+    <script>layout_rtl_change('false');</script>
 
 
-<script>preset_change("preset-1");</script>
+    <script>preset_change("preset-1");</script>
 
 
 </body>

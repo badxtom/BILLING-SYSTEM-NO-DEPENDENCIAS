@@ -373,6 +373,10 @@
                                     <span class="pc-micon"><i class="ti ti-crosshair"></i></span>
                                     <span class="pc-mtext">Nuevo</span>
                                 </a>
+                                <a href="#" class="pc-link" id="cargarFac" style="margin-right: 10px;">
+                                    <span class="pc-micon"><i class="ti ti-crosshair"></i></span>
+                                    <span class="pc-mtext">Cargar factura</span>
+                                </a>
                             </div>
                             <div class="card-header">
                                 <form id="MainFormSE" class="d-flex" style="max-width: 400px;">
@@ -394,6 +398,8 @@
                                                 <th scope="col">Nombre</th>
                                                 <th scope="col">Teléfono</th>
                                                 <th scope="col">RNC</th>
+                                                <th scope="col">Banco</th>
+                                                <th scope="col">Cuenta de banco</th>
                                                 <th scope="col">Dirección</th>
                                             </tr>
                                         </thead>
@@ -421,6 +427,14 @@
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="rnc" placeholder="RNC">
                     <label for="rnc">*RNC</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="banco" placeholder="Banco">
+                    <label for="banco">*Banco</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="cuentaBanco" placeholder="Cuenta de banco">
+                    <label for="cuentaBanco">*Cuenta de banco</label>
                 </div>
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="location" placeholder="Dirección">
@@ -452,6 +466,14 @@
                     <label for="rncE">*RNC</label>
                 </div>
                 <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="bancoE" placeholder="Banco">
+                    <label for="bancoE">*Banco</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="cuentaBancoE" placeholder="Cuenta de banco">
+                    <label for="cuentaBancoE">*Cuenta de banco</label>
+                </div>
+                <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="locationE" placeholder="Dirección">
                     <label for="locationE">*Dirección</label>
                 </div>
@@ -463,6 +485,40 @@
                 </div>
             </form>
         </div>
+
+        <div id="CargarFactura" class="formulario-container" style="display: none;">
+            <h3 class="mb-3">Subir factura</h3>
+            <div class="form-floating mb-3">
+                <select class="form-select" id="roleSelect" aria-label="Floating label select example">
+                    <option selected>Elige un suplidor</option>
+                </select>
+                <label for="roleSelect">*Suplidor</label>
+            </div>
+            <div class="mb-3">
+                <input type="file" class="form-control" id="facturaFile">
+                <label for="facturaFile">Subir archivo de factura</label>
+            </div>
+            <div class="mb-3">
+                <input type="text" class="form-control" id="nombreFactura" placeholder="Nombre de la factura">
+                <label for="nombreFactura">Nombre de la factura</label>
+            </div>
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-success" id="subirButton">Registrar datos</button>
+            </div>
+            <div class="d-grid mt-2">
+                <button type="button" class="btn btn-danger" id="closeButtonF">Cerrar</button>
+            </div>
+        </div>
+        <div id="HistorialFacturas" class="formulario-container" style="display: none;">
+            <h3 class="mb-3">Historial de Facturas</h3>
+            <div id="listaFacturas" class="lista-facturas">
+
+            </div>
+            <div class="d-grid mt-2">
+                <button type="button" class="btn btn-danger" id="closeHistorialButton">Cerrar</button>
+            </div>
+        </div>
+
     </div>
     <div id="fondoDesenfocado"></div>
     <footer class="pc-footer">
@@ -515,7 +571,7 @@
         import { getDatabase, set, ref, get, child, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
         import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, setDoc, serverTimestamp, deleteDoc, Timestamp, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable, listAll } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCknSaxVHB10B_v-4yD9UtNj1dmZZKVRe4",
@@ -541,6 +597,7 @@
         const settingsButton = document.getElementById('settingsButton');
         const nuevoFormulario = document.getElementById('nuevoFormulario');
         const Nuevo = document.getElementById('nuevo');
+        const CargarFac = document.getElementById('cargarFac');
         const Editar = document.getElementById('editar');
         const fondoDesenfocado = document.getElementById('fondoDesenfocado');
         const closeButton = document.getElementById('closeButton');
@@ -549,6 +606,14 @@
         const numberInput = document.getElementById('number');
         const locationInput = document.getElementById('location');
 
+        const Banco = document.getElementById('banco');
+        const cuentaBanco = document.getElementById('cuentaBanco');
+        const BancoE = document.getElementById('bancoE');
+        const cuentaBancoE = document.getElementById('cuentaBancoE');
+        const CargarFactura = document.getElementById('CargarFactura');
+        const closeButtonF = document.getElementById('closeButtonF');
+        const HistorialFacturas = document.getElementById('HistorialFacturas');
+        const closeHistorialButton = document.getElementById('closeHistorialButton');
 
         function toggleFormulario() {
             if (nuevoFormulario.style.display === 'none') {
@@ -570,6 +635,27 @@
             }
         }
 
+        function toggleFormularioF() {
+            if (CargarFactura.style.display === 'none') {
+                CargarFactura.style.display = 'block';
+                fondoDesenfocado.style.display = 'block';
+            } else {
+                CargarFactura.style.display = 'none';
+                fondoDesenfocado.style.display = 'none';
+            }
+        }
+        function toggleFormularioH() {
+            const historialContainer = document.getElementById('HistorialFacturas');
+            const fondoDesenfocado = document.getElementById('fondoDesenfocado');
+            if (historialContainer.style.display === 'none' || historialContainer.style.display === '') {
+                historialContainer.style.display = 'block';
+                fondoDesenfocado.style.display = 'block';
+            } else {
+                historialContainer.style.display = 'none';
+                fondoDesenfocado.style.display = 'none';
+            }
+        }
+
         closeButton.addEventListener('click', function () {
             nuevoFormulario.style.display = 'none';
             fondoDesenfocado.style.display = 'none';
@@ -578,6 +664,8 @@
             document.getElementById('number').value = '';
             document.getElementById('rnc').value = '';
             document.getElementById('location').value = '';
+            document.getElementById('banco').value = '';
+            document.getElementById('cuentaBanco').value = '';
         });
 
         closeEButton.addEventListener('click', function () {
@@ -588,6 +676,77 @@
             document.getElementById('numberE').value = '';
             document.getElementById('rncE').value = '';
             document.getElementById('locationE').value = '';
+            document.getElementById('bancoE').value = '';
+            document.getElementById('cuentaBancoE').value = '';
+        });
+
+        closeButtonF.addEventListener('click', function () {
+            toggleFormularioF();
+            document.getElementById('roleSelect').selectedIndex = 0;
+            document.getElementById('facturaFile').value = '';
+            document.getElementById('nombreFactura').value = '';
+        });
+        closeHistorialButton.addEventListener('click', function () {
+            toggleFormularioH();
+        });
+
+        document.getElementById('subirButton').addEventListener('click', async () => {
+            const suplidorSelect = document.getElementById('roleSelect');
+            const suplidor = suplidorSelect.value;
+            const facturaFile = document.getElementById('facturaFile').files[0];
+            const nombreFactura = document.getElementById('nombreFactura').value;
+
+            if (!suplidor || !facturaFile || !nombreFactura) {
+                alert('Por favor, complete todos los campos.');
+                return;
+            }
+
+            try {
+                // Crear una referencia a la carpeta del suplidor
+                const suplidorFolderRef = storageRef(storage, `facturasSuplidores/${suplidor}/`);
+
+                // Crear una referencia al archivo de la factura
+                let facturaStorageRef = storageRef(suplidorFolderRef, `${nombreFactura}.pdf`);
+
+                // Verificar si ya existe un archivo con el mismo nombre
+                let i = 1;
+                while (await getDownloadURL(facturaStorageRef).then(() => true).catch(() => false)) {
+                    facturaStorageRef = storageRef(suplidorFolderRef, `${nombreFactura} (${i}).pdf`);
+                    i++;
+                }
+
+                // Subir el archivo
+                await uploadBytes(facturaStorageRef, facturaFile);
+                showAlert('Factura subida con éxito.', 'alert-success');
+                loadSuplidores();
+
+            } catch (error) {
+                console.error('Error al subir la factura:', error);
+                alert('Hubo un error al subir la factura. Inténtelo de nuevo.');
+            }
+        });
+
+
+        async function loadSuppliers() {
+            const roleSelect = document.getElementById('roleSelect');
+            roleSelect.innerHTML = '<option selected>Elige un suplidor</option>';
+
+
+            const suppliersSnapshot = await getDocs(collection(getFirestore(), 'suplidores'));
+
+
+            suppliersSnapshot.forEach((doc) => {
+                const supplierData = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = supplierData.nombre;
+                roleSelect.appendChild(option);
+            });
+        }
+
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSuppliers().catch(error => console.error('Error al cargar suplidores:', error));
         });
 
         function showUserData(userId) {
@@ -644,6 +803,8 @@
         });
 
         Nuevo.addEventListener('click', toggleFormulario);
+        CargarFac.addEventListener('click', toggleFormularioF);
+
         let UserCreds = JSON.parse(sessionStorage.getItem("user-creds"));
         let UserInfo = JSON.parse(sessionStorage.getItem("user-info"));
         let UserName = JSON.parse(sessionStorage.getItem("username"));
@@ -685,8 +846,10 @@
             const number = document.getElementById('number').value;
             const rnc = document.getElementById('rnc').value;
             const location = document.getElementById('location').value;
+            const Banco = document.getElementById('banco').value;
+            const cuentaBanco = document.getElementById('cuentaBanco').value;
 
-            if (fname === '' || number === '' || rnc === '' || location === '') {
+            if (fname === '' || number === '' || rnc === '' || location === '' || Banco === '' || cuentaBanco === '') {
                 showAlert('Por favor complete todos los campos obligatorios marcados con *.', 'alert-warning');
                 return;
             }
@@ -695,6 +858,8 @@
                 nombre: fname,
                 telefono: number,
                 rnc: rnc,
+                banco: Banco,
+                cuentaBanco: cuentaBanco,
                 direccion: location
             };
 
@@ -773,6 +938,18 @@
 
         rncInputE.addEventListener('input', validateRNC);
 
+        function validateCuentaNumber(event) {
+            const input = event.target;
+            const inputValue = input.value;
+
+            const numericValue = inputValue.replace(/\D/g, '');
+            const trimmedValue = numericValue.slice(0, 12);
+            input.value = trimmedValue;
+        }
+
+        cuentaBanco.addEventListener('input', validateCuentaNumber);
+        cuentaBancoE.addEventListener('input', validateCuentaNumber);
+
         function filterTable() {
             const searchTerm = searchInput.value.toLowerCase();
             const rows = tableBody.getElementsByTagName('tr');
@@ -806,20 +983,27 @@
 
             suplidoresSnapshot.forEach((doc) => {
                 const suplidorData = doc.data();
-                const { nombre, telefono, rnc, direccion } = suplidorData;
+                const { nombre, telefono, rnc, direccion, banco, cuentaBanco } = suplidorData;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
             <td>${nombre}</td>
             <td>${telefono}</td>
             <td>${rnc}</td>
+            <td>${banco}</td>
+            <td>${cuentaBanco}</td>
             <td>${direccion}</td>
+                        <td>
+                <button class="btn btn-primary"  onclick="verHistorial('${doc.id}')">Ver historial</button>
+            </td>
         `;
 
                 row.addEventListener('dblclick', () => {
                     fnameInpE.value = nombre;
                     numberE.value = telefono;
                     rncE.value = rnc;
+                    BancoE.value = banco;
+                    cuentaBancoE.value = cuentaBanco;
                     locationE.value = direccion;
 
                     EditarFormulario.dataset.docId = doc.id;
@@ -831,6 +1015,28 @@
         }
 
         loadSuplidores();
+
+        window.verHistorial = async function (docId) {
+            toggleFormularioH();
+
+            const listaFacturas = document.getElementById('listaFacturas');
+            listaFacturas.innerHTML = '';
+
+            const pacienteFolderRef = storageRef(storage, `facturasSuplidores/${docId}`);
+            const listaFacturasSnapshot = await listAll(pacienteFolderRef);
+
+            listaFacturasSnapshot.items.forEach(async (itemRef) => {
+                const facturaURL = await getDownloadURL(itemRef);
+                const facturaLink = document.createElement('a');
+                facturaLink.href = facturaURL;
+                facturaLink.textContent = itemRef.name;
+                facturaLink.target = '_blank';
+                const listItem = document.createElement('div');
+                listItem.appendChild(facturaLink);
+                listaFacturas.appendChild(listItem);
+            });
+        }
+
 
         document.getElementById('generatePDFbutton').addEventListener('click', async (event) => {
             event.preventDefault();
@@ -880,7 +1086,7 @@
                         }
                     }
                     doc.autoTable({
-                        head: [['Nombre', 'Teléfono', 'RNC', 'Dirección']],
+                        head: [['Nombre', 'Teléfono', 'RNC','Banco','Cuenta de banco', 'Dirección']],
                         body: Array.from(tableBody.querySelectorAll('tr')).map(row =>
                             Array.from(row.querySelectorAll('td')).map(cell => cell.innerText)
                         ),
@@ -906,6 +1112,8 @@
                 nombre: fnameInpE.value,
                 telefono: numberE.value,
                 rnc: rncE.value,
+                banco: BancoE.value,
+                cuentaBanco: cuentaBancoE.value,
                 direccion: locationE.value,
                 // Aquí puedes seguir agregando los campos y valores actualizados del suplidor según corresponda
             };

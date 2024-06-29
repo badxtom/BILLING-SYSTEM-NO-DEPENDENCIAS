@@ -428,7 +428,8 @@
                                             <tr>
                                                 <th scope="col">Descripción</th>
                                                 <th scope="col">Disponible</th>
-                                                <th scope="col">Precio</th>
+                                                <th scope="col">Precio de compra</th>
+                                                <th scope="col">Precio de venta</th>
                                                 <th scope="col">Categoría</th>
                                                 <th scope="col">ITBIS</th>
                                                 <th scope="col">Vencimiento</th>
@@ -457,15 +458,23 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-floating mb-3">
+                    <div class="form-floating mb-3" id="disponibleContainer">
                         <input type="text" class="form-control" id="disp" placeholder="Disponible">
                         <label for="disp">*Disponible</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="naDisponibleCheckbox">
+                        <label class="form-check-label" for="naDisponibleCheckbox">N/A</label>
                     </div>
                 </div>
             </div>
             <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="precio" placeholder="Precio">
-                <label for="precio">*Precio</label>
+                <input type="text" class="form-control" id="precio" placeholder="Precio de compra">
+                <label for="precio">*Precio de compra</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="precioventa" placeholder="Precio de venta">
+                <label for="precio">*Precio de venta</label>
             </div>
             <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="categoria" placeholder="Categoría">
@@ -527,15 +536,23 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-floating mb-3">
+                    <div class="form-floating mb-3" id="disponibleContainer">
                         <input type="text" class="form-control" id="dispE" placeholder="Disponible">
-                        <label for="floatingInput1">*Disponible</label>
+                        <label for="dispE">*Disponible</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="naDisponibleCheckboxE">
+                        <label class="form-check-label" for="naDisponibleCheckboxE">N/A</label>
                     </div>
                 </div>
             </div>
             <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="precioE" placeholder="Precio">
-                <label for="floatingInput">*Precio</label>
+                <input type="text" class="form-control" id="precioE" placeholder="Precio de compra">
+                <label for="precio">*Precio de compra</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="precioventaE" placeholder="Precio de venta">
+                <label for="precio">*Precio de venta</label>
             </div>
             <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="categoriaE" placeholder="Categoría">
@@ -682,6 +699,21 @@
         });
 
 
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const disponibleInput = document.getElementById('disp');
+            const naDisponibleCheckbox = document.getElementById('naDisponibleCheckbox');
+
+            naDisponibleCheckbox.addEventListener('change', () => {
+                if (naDisponibleCheckbox.checked) {
+                    disponibleInput.disabled = true; // Deshabilitar el campo
+                    disponibleInput.value = ''; // Opcional: Limpiar el valor del campo si se deshabilita
+                } else {
+                    disponibleInput.disabled = false; // Habilitar el campo
+                }
+            });
+        });
+
+
 
         const generatePdfButton = document.getElementById('generatePDFbutton');
         const generateExcelButton = document.getElementById('generateExcelButton');
@@ -719,6 +751,9 @@
 
         const EditarFormulario = document.getElementById('EditarFormulario');
         const actuButton = document.getElementById('actuButton');
+
+        const precioventa = document.getElementById('precioventa');
+        const precioventaE = document.getElementById('precioventaE');
 
         function toggleFormulario() {
             if (nuevoFormulario.style.display === 'none') {
@@ -837,6 +872,7 @@
             document.getElementById('desp').value = '';
             document.getElementById('disp').value = '';
             document.getElementById('precio').value = '';
+            document.getElementById('precioventa').value = '';
             document.getElementById('categoria').value = '';
             document.getElementById('roleSelect').selectedIndex = 0;
             document.getElementById('fechaVencimiento').value = '';
@@ -853,6 +889,7 @@
             document.getElementById('despE').value = '';
             document.getElementById('dispE').value = '';
             document.getElementById('precioE').value = '';
+            document.getElementById('precioventaE').value = '';
             document.getElementById('categoriaE').value = '';
             document.getElementById('roleSelectE').selectedIndex = 0;
             document.getElementById('fechaVencimientoE').value = '';
@@ -965,11 +1002,14 @@
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('MainForm');
             const fechaVencimiento = document.getElementById('fechaVencimiento');
+            const naDisponibleCheckbox = document.getElementById('naDisponibleCheckbox');
             const fechaEntrada = document.getElementById('fechaEntrada');
             const establecerFechaCheckbox = document.getElementById('establecerFechaCheckbox');
             const naCheckbox = document.getElementById('naCheckbox');
             const fechaVencimientoContainer = document.getElementById('fechaVencimientoContainer');
             const naCheckboxN = document.getElementById('naCheckboxN');
+            const precioInput = document.getElementById('precio');
+            const precioVentaInput = document.getElementById('precioventa');
 
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -1010,10 +1050,36 @@
                 }
             });
 
+            naDisponibleCheckbox.addEventListener('change', () => {
+                if (naDisponibleCheckbox.checked) {
+                    disponibleInput.disabled = true; // Deshabilitar el campo
+                    disponibleInput.value = 'N/A'; // Establecer el valor a 'N/A'
+                } else {
+                    disponibleInput.disabled = false; // Habilitar el campo
+                    disponibleInput.value = ''; // Limpiar el valor del campo
+                }
+            });
+
+            precioInput.addEventListener('input', () => {
+                const precio = parseFloat(precioInput.value.trim());
+
+                if (!isNaN(precio)) {
+                    // Calcular el 40% del precio y sumarlo al precio original
+                    const precioVenta = precio + (precio * 0.4); // 40% de incremento
+
+                    // Actualizar el campo de precioVenta con el resultado formateado
+                    precioVentaInput.value = precioVenta.toFixed(2); // Asegurar dos decimales
+                } else {
+                    precioVentaInput.value = ''; // Limpiar el campo si el precio no es válido
+                }
+            });
+
+
             async function registerProduct() {
                 const description = document.getElementById('desp').value;
-                const available = document.getElementById('disp').value;
-                const price = document.getElementById('precio').value;
+                const available = naDisponibleCheckbox.checked ? 'N/A' : document.getElementById('disp').value;
+                const price = parseFloat(precioInput.value.trim());
+                const precioventa = parseFloat(precioVentaInput.value.trim());
                 const type = document.getElementById('categoria').value;
                 const supplierId = document.getElementById('roleSelect').value;
                 const entryDate = fechaEntrada.value;
@@ -1023,7 +1089,7 @@
 
 
 
-                if (description.trim() === '' || available.trim() === '' || price.trim() === '' || entryDate.trim() === '') {
+                if (description.trim() === '' || available.trim() === '' || price.trim() === '' || entryDate.trim() === '' || isNaN(price) || isNaN(precioventa)) {
                     showAlert('Por favor complete todos los campos obligatorios.', 'alert-warning');
                     return;
                 }
@@ -1045,6 +1111,7 @@
                     descripcion: description,
                     disponible: available,
                     precio: price,
+                    precioVenta: precioventa,
                     categoria: type,
                     suplidorId: supplierId,
                     fechaVencimiento: formattedExpirationDate,
@@ -1075,6 +1142,8 @@
                 form.reset();
                 fechaVencimientoContainer.style.display = 'none';
                 naCheckbox.checked = true;
+                disponibleInput.disabled = true; // Mantener el campo deshabilitado
+                disponibleInput.value = 'N/A'; // Mantener el valor a 'N/A'
             }
         });
 
@@ -1090,12 +1159,30 @@
             const fechaVencimientoContainerE = document.getElementById('fechaVencimientoContainerE');
             const naCheckboxIE = document.getElementById('naCheckboxIE');
             const itbisCheckboxE = document.getElementById('itbisCheckboxE');
+            const naDisponibleCheckboxE = document.getElementById('naDisponibleCheckboxE');
+            const precioventaE = document.getElementById('precioventaE');
+            const precioInputE = document.getElementById('precioE');
+            const precioVentaInputE = document.getElementById('precioventaE');
+
+            precioInputE.addEventListener('input', () => {
+                const precio = parseFloat(precioInputE.value.trim());
+
+                if (!isNaN(precio)) {
+
+                    const precioVenta = precio + (precio * 0.4);
+
+
+                    precioVentaInputE.value = precioVenta.toFixed(2);
+                } else {
+                    precioVentaInputE.value = '';
+                }
+            });
 
             const suplidoresSnapshot = await getDocs(collection(getFirestore(), 'productos'));
 
             suplidoresSnapshot.forEach((doc) => {
                 const suplidorData = doc.data();
-                const { descripcion, disponible, fechaVencimiento, precio, suplidorId, categoria, fechaEntrada, itbis } = suplidorData;
+                const { descripcion, disponible, fechaVencimiento, precio, suplidorId, categoria, fechaEntrada, itbis, precioVenta } = suplidorData;
 
                 let formattedFechaVencimiento = '';
                 if (fechaVencimiento !== 'N/A') {
@@ -1111,6 +1198,7 @@
             <td>${descripcion}</td>
             <td>${disponible}</td>
             <td>${precio}</td>
+            <td>${precioVenta}</td>
             <td>${categoria}</td>
             <td>${itbis}</td>
             <td>${fechaVencimiento}</td>
@@ -1126,6 +1214,7 @@
                     despE.value = descripcion;
                     dispE.value = disponible;
                     precioE.value = precio;
+                    precioventaE.value = precioVenta;
                     categoriaE.value = categoria;
                     fechaVencimientoE.value = formattedFechaVencimiento;
                     fechaEntradaE.value = formattedfechaEntradaE;
@@ -1151,7 +1240,23 @@
                         naCheckboxE.checked = false;
                     }
 
+                    if (disponible === 'N/A') {
+                        naDisponibleCheckboxE.checked = true;
+                        dispE.disabled = true;
+                        dispE.value = '';
+                    } else {
+                        naDisponibleCheckboxE.checked = false;
+                        dispE.disabled = false;
+                    }
 
+                    naDisponibleCheckboxE.addEventListener('change', () => {
+                        if (naDisponibleCheckboxE.checked) {
+                            dispE.disabled = true;
+                            dispE.value = '';
+                        } else {
+                            dispE.disabled = false;
+                        }
+                    });
 
                     EditarFormulario.dataset.docId = doc.id;
                     toggleFormularioE();
@@ -1241,6 +1346,7 @@
             const naCheckbox = document.getElementById('naCheckboxE');
             const fechaVencimientoContainer = document.getElementById('fechaVencimientoContainerE');
             const naCheckboxIE = document.getElementById('naCheckboxIE');
+            const precioventaE = document.getElementById('precioventaE');
 
 
             const today = new Date();
@@ -1279,15 +1385,16 @@
                 if (!docId) return;
 
                 const description = document.getElementById('despE').value;
-                const available = document.getElementById('dispE').value;
+                const available = naDisponibleCheckboxE.checked ? 'N/A' : document.getElementById('dispE').value;
                 const price = document.getElementById('precioE').value;
+                const precioventaE = document.getElementById('precioventaE').value;
                 const type = document.getElementById('categoriaE').value;
                 const supplierId = document.getElementById('roleSelectE').value;
                 const expirationDate = fechaVencimientoE.value;
                 const entryDate = fechaEntradaE.value;
                 const itbis = document.getElementById('itbisCheckboxE').checked ? '18%' : 'N/A';
 
-                if (description.trim() === '' || available.trim() === '' || price.trim() === '' || entryDate.trim() === '') {
+                if (description.trim() === '' || available.trim() === '' || price.trim() === '' || entryDate.trim() === '' || precioventaE.trim() === '') {
                     showAlert('Por favor complete todos los campos obligatorios.', 'alert-warning');
                     return;
                 }
@@ -1313,6 +1420,7 @@
                     descripcion: description,
                     disponible: available,
                     precio: price,
+                    precioVenta: precioventaE,
                     categoria: type,
                     suplidorId: supplierId,
                     fechaVencimiento: formattedExpirationDateE,
@@ -1470,7 +1578,7 @@
                     ['Teléfono', empresaData.number],
                     ['Dirección', empresaData.location],
                     [],
-                    ['Descripción', 'Disponible', 'Precio', 'Categoría', 'ITBIS', 'Vencimiento', 'Fecha de Entrada']
+                    ['Descripción', 'Disponible', 'Precio de compra','Precio de venta', 'Categoría', 'ITBIS', 'Vencimiento', 'Fecha de Entrada']
                 ];
 
                 // Obtener el cuerpo de la tabla
