@@ -220,6 +220,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx-style/0.8.13/xlsx-style.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.1/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+
 
 
 </head>
@@ -469,6 +471,10 @@
                 </div>
             </div>
             <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="moneda" placeholder="Moneda">
+                <label for="moneda">*Moneda</label>
+            </div>
+            <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="precio" placeholder="Precio de compra">
                 <label for="precio">*Precio de compra</label>
             </div>
@@ -545,6 +551,10 @@
                         <label class="form-check-label" for="naDisponibleCheckboxE">N/A</label>
                     </div>
                 </div>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="monedaE" placeholder="Moneda">
+                <label for="monedaE">*Moneda</label>
             </div>
             <div class="form-floating mb-3">
                 <input type="text" class="form-control" id="precioE" placeholder="Precio de compra">
@@ -658,6 +668,7 @@
         import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, setDoc, serverTimestamp, deleteDoc, Timestamp, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
+
         const firebaseConfig = {
             apiKey: "AIzaSyCknSaxVHB10B_v-4yD9UtNj1dmZZKVRe4",
             authDomain: "billing-system-fbfb3.firebaseapp.com",
@@ -747,6 +758,9 @@
         const categoriaE = document.getElementById('categoriaE');
         const fechaVencimientoE = document.getElementById('fechaVencimientoE');
         const fechaEntradaE = document.getElementById('fechaEntradaE');
+
+        const Moneda = document.getElementById('moneda');
+        const MonedaE = document.getElementById('monedaE');
 
 
         const EditarFormulario = document.getElementById('EditarFormulario');
@@ -1011,6 +1025,7 @@
             const precioInput = document.getElementById('precio');
             const precioVentaInput = document.getElementById('precioventa');
 
+
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -1052,11 +1067,11 @@
 
             naDisponibleCheckbox.addEventListener('change', () => {
                 if (naDisponibleCheckbox.checked) {
-                    disponibleInput.disabled = true; // Deshabilitar el campo
-                    disponibleInput.value = 'N/A'; // Establecer el valor a 'N/A'
+                    disp.disabled = true; // Deshabilitar el campo
+                    disp.value = 'N/A'; // Establecer el valor a 'N/A'
                 } else {
-                    disponibleInput.disabled = false; // Habilitar el campo
-                    disponibleInput.value = ''; // Limpiar el valor del campo
+                    disp.disabled = false; // Habilitar el campo
+                    disp.value = ''; // Limpiar el valor del campo
                 }
             });
 
@@ -1084,12 +1099,9 @@
                 const supplierId = document.getElementById('roleSelect').value;
                 const entryDate = fechaEntrada.value;
                 const itbis = document.getElementById('itbisCheckbox').checked ? '18%' : 'N/A';
-                const naCheckbox = document.getElementById('naCheckbox');
-                const itbisCheckbox = document.getElementById('itbisCheckbox');
+                const Moneda = document.getElementById('moneda').value;
 
-
-
-                if (description.trim() === '' || available.trim() === '' || price.trim() === '' || entryDate.trim() === '' || isNaN(price) || isNaN(precioventa)) {
+                if (description.trim() === '' || available.trim() === '' || Moneda.trim() === '' || entryDate.trim() === '' || isNaN(price) || isNaN(precioventa)) {
                     showAlert('Por favor complete todos los campos obligatorios.', 'alert-warning');
                     return;
                 }
@@ -1104,12 +1116,12 @@
                     formattedExpirationDate = formatToSpanishDate(expirationDate);
                 }
 
-
                 const formattedEntryDate = formatToSpanishDate(entryDate);
 
                 const productData = {
                     descripcion: description,
                     disponible: available,
+                    moneda: Moneda,
                     precio: price,
                     precioVenta: precioventa,
                     categoria: type,
@@ -1141,9 +1153,9 @@
             function resetForm() {
                 form.reset();
                 fechaVencimientoContainer.style.display = 'none';
-                naCheckbox.checked = true;
-                disponibleInput.disabled = true; // Mantener el campo deshabilitado
-                disponibleInput.value = 'N/A'; // Mantener el valor a 'N/A'
+                naDisponibleCheckbox.checked = true;
+                disp.disabled = true; // Mantener el campo deshabilitado
+                disp.value = 'N/A'; // Mantener el valor a 'N/A'
             }
         });
 
@@ -1163,6 +1175,7 @@
             const precioventaE = document.getElementById('precioventaE');
             const precioInputE = document.getElementById('precioE');
             const precioVentaInputE = document.getElementById('precioventaE');
+            const MonedaE = document.getElementById('monedaE').value;
 
             precioInputE.addEventListener('input', () => {
                 const precio = parseFloat(precioInputE.value.trim());
@@ -1182,7 +1195,7 @@
 
             suplidoresSnapshot.forEach((doc) => {
                 const suplidorData = doc.data();
-                const { descripcion, disponible, fechaVencimiento, precio, suplidorId, categoria, fechaEntrada, itbis, precioVenta } = suplidorData;
+                const { descripcion, disponible, fechaVencimiento, precio, suplidorId, categoria, fechaEntrada, itbis, precioVenta, moneda } = suplidorData;
 
                 let formattedFechaVencimiento = '';
                 if (fechaVencimiento !== 'N/A') {
@@ -1197,8 +1210,8 @@
                 row.innerHTML = `
             <td>${descripcion}</td>
             <td>${disponible}</td>
-            <td>${precio}</td>
-            <td>${precioVenta}</td>
+            <td>${moneda} ${precio}</td>
+            <td>${moneda} ${precioVenta}</td>
             <td>${categoria}</td>
             <td>${itbis}</td>
             <td>${fechaVencimiento}</td>
@@ -1393,8 +1406,9 @@
                 const expirationDate = fechaVencimientoE.value;
                 const entryDate = fechaEntradaE.value;
                 const itbis = document.getElementById('itbisCheckboxE').checked ? '18%' : 'N/A';
+                const Moneda = document.getElementById('monedaE').value;
 
-                if (description.trim() === '' || available.trim() === '' || price.trim() === '' || entryDate.trim() === '' || precioventaE.trim() === '') {
+                if (description.trim() === '' || available.trim() === '' || Moneda.trim() === '' || price.trim() === '' || entryDate.trim() === '' || precioventaE.trim() === '') {
                     showAlert('Por favor complete todos los campos obligatorios.', 'alert-warning');
                     return;
                 }
@@ -1419,6 +1433,7 @@
                 const updatedData = {
                     descripcion: description,
                     disponible: available,
+                    moneda: Moneda,
                     precio: price,
                     precioVenta: precioventaE,
                     categoria: type,
@@ -1558,61 +1573,102 @@
             event.preventDefault();
 
             try {
-                // Obtener los datos de la empresa desde la base de datos
-                const empresaSnapshot = await get(ref(db, 'datos/'));
-                const empresaData = empresaSnapshot.val();
+                // Crear una nueva instancia de workbook (libro de Excel)
+                const workbook = new ExcelJS.Workbook();
+
+                // Agregar una nueva hoja al libro
+                const worksheet = workbook.addWorksheet('Registro de Productos');
+
+                // Establecer estilos para el encabezado
+                const headerStyle = {
+                    font: { bold: true, color: { argb: 'FFFFFF' } },
+                    alignment: { vertical: 'middle', horizontal: 'center' },
+                    border: { top: { style: 'thin' }, bottom: { style: 'thin' } },
+                    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '0074D9' } }
+                };
+
+                // Obtener datos de la empresa
+                const empresaData = await getEmpresaData();
 
                 if (!empresaData) {
                     throw new Error('No se encontraron datos de la empresa.');
                 }
 
-                // Crear una nueva hoja de cálculo
-                const wb = XLSX.utils.book_new();
+                // Agregar datos de la empresa al inicio del archivo
+                worksheet.addRow(['Nombre', empresaData.name]);
+                worksheet.addRow(['RNC', empresaData.rnc]);
+                worksheet.addRow(['Teléfono', empresaData.number]);
+                worksheet.addRow(['Dirección', empresaData.location]);
 
-                // Crear datos para la hoja de cálculo
-                const data = [
-                    ['Registro de Productos'],
-                    [],
-                    ['Nombre', empresaData.name],
-                    ['RNC', empresaData.rnc],
-                    ['Teléfono', empresaData.number],
-                    ['Dirección', empresaData.location],
-                    [],
-                    ['Descripción', 'Disponible', 'Precio de compra','Precio de venta', 'Categoría', 'ITBIS', 'Vencimiento', 'Fecha de Entrada']
-                ];
+                // Espacio en blanco entre empresa y tabla de productos
+                worksheet.addRow([]);
 
-                // Obtener el cuerpo de la tabla
-                const tableBody = document.querySelector('tbody');
+                // Encabezado de la tabla de productos
+                const headerRow = worksheet.addRow([
+                    'Descripción',
+                    'Disponible',
+                    'Precio de compra',
+                    'Precio de venta',
+                    'Categoría',
+                    'ITBIS',
+                    'Vencimiento',
+                    'Fecha de Entrada'
+                ]);
 
-                if (!tableBody) {
-                    throw new Error('No se encontró el cuerpo de la tabla.');
-                }
+                // Aplicar estilo al encabezado
+                headerRow.eachCell((cell) => {
+                    cell.style = headerStyle;
+                });
 
-                // Agregar datos de la tabla
-                const tableData = Array.from(tableBody.querySelectorAll('tr')).map(row =>
-                    Array.from(row.querySelectorAll('td')).map(cell => cell.innerText)
-                );
+                // Agregar datos de la tabla de productos
+                const tableRows = await getTableRows();
+                tableRows.forEach((row) => {
+                    const rowData = [];
+                    row.querySelectorAll('td').forEach((cell) => {
+                        rowData.push(cell.innerText);
+                    });
+                    worksheet.addRow(rowData);
+                });
 
-                if (tableData.length === 0) {
-                    throw new Error('No se encontraron datos en la tabla.');
-                }
+                // Establecer anchos de columna automático
+                worksheet.columns.forEach((column) => {
+                    let maxWidth = 0;
+                    column.eachCell({ includeEmpty: true }, (cell) => {
+                        const cellLength = cell.value ? cell.value.toString().length : 10;
+                        maxWidth = Math.max(maxWidth, cellLength);
+                    });
+                    column.width = maxWidth < 20 ? 20 : maxWidth;
+                });
 
-                data.push(...tableData);
+                // Guardar el archivo Excel
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-                // Crear una hoja de cálculo a partir de los datos
-                const ws = XLSX.utils.aoa_to_sheet(data);
+                // Descargar el archivo Excel
+                saveAs(blob, 'productos.xlsx');
 
-                // Agregar la hoja de cálculo al libro
-                XLSX.utils.book_append_sheet(wb, ws, 'Suplidores');
-
-                // Generar el archivo de Excel y guardarlo
-                XLSX.writeFile(wb, 'productos.xlsx');
+                // Mostrar mensaje de éxito
+                showAlertExcel('Archivo de Excel generado correctamente.', 'alert-success');
             } catch (error) {
                 console.error('Error al generar el archivo de Excel:', error);
                 showAlertExcel(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
             }
-        })
+        });
 
+        // Función para obtener datos de la empresa desde Firestore
+        async function getEmpresaData() {
+            const empresaSnapshot = await get(ref(db, 'datos/'));
+            return empresaSnapshot.val();
+        }
+
+        // Función para obtener filas de la tabla desde el DOM
+        async function getTableRows() {
+            const tableBody = document.querySelector('tbody');
+            if (!tableBody) {
+                throw new Error('No se encontró el cuerpo de la tabla.');
+            }
+            return Array.from(tableBody.querySelectorAll('tr'));
+        }
 
         function showAlertExcel(message, alertType) {
             const alertBox = document.createElement('div');

@@ -22,16 +22,16 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
     id="main-font-link">
 
-    <link rel="stylesheet" href="tabler-icons.min.css">
+  <link rel="stylesheet" href="tabler-icons.min.css">
 
-    <link rel="stylesheet" href="feather.css">
+  <link rel="stylesheet" href="feather.css">
 
-    <link rel="stylesheet" href="fontawesome.css">
+  <link rel="stylesheet" href="fontawesome.css">
 
-    <link rel="stylesheet" href="material.css">
+  <link rel="stylesheet" href="material.css">
 
-    <link rel="stylesheet" href="style.css" id="main-style-link">
-    <link rel="stylesheet" href="style-preset.css">
+  <link rel="stylesheet" href="style.css" id="main-style-link">
+  <link rel="stylesheet" href="style-preset.css">
 
   <style>
     .bg-green {
@@ -120,8 +120,7 @@
     <div class="navbar-wrapper">
       <div class="m-header">
         <a href="home" class="b-brand text-primary">
-          <img src="Designer (7).jpeg" style="width: 90px; height: 90px; border-radius: 5px;"
-            alt="...">
+          <img src="Designer (7).jpeg" style="width: 90px; height: 90px; border-radius: 5px;" alt="...">
         </a>
       </div>
 
@@ -613,6 +612,7 @@
 
     async function checkLowStockAndExpiry() {
       const productosSnapshot = await getDocs(collection(dba, 'productos'));
+      const comprobantesSnapshot = await get(ref(db, 'comprobantes/'));
       notificationList.innerHTML = '';
 
       const today = new Date();
@@ -652,6 +652,22 @@
           }
         }
       });
+
+      if (comprobantesSnapshot.exists()) {
+        const comprobantesData = comprobantesSnapshot.val();
+        const desde = comprobantesData.desde || '';
+        const hasta = comprobantesData.hasta || '';
+
+        const lastFacturaNumber = await getLastFacturaNumber();
+        const nextFacturaNumber = lastFacturaNumber + 1;
+        const comprobanteLimit = parseInt(hasta.substring(1));
+
+        if (comprobanteLimit - nextFacturaNumber <= 20) {
+          addNotification('Comprobantes', `Quedan ${comprobanteLimit - nextFacturaNumber} disponibles`, 'comprobante');
+          notificationsExist = true;
+        }
+      }
+
       if (!notificationsExist) {
         showNoNotificationsMessage();
       }
@@ -688,6 +704,9 @@
       } else if (tipo === 'vencido') {
         notificationItem.classList.add('expired');
         messageText = `Producto: ${descripcion} - ¡Producto vencido! Fecha de vencimiento: ${detalle}`;
+      } else if (tipo === 'comprobante') {
+        notificationItem.classList.add('expiry-warning');
+        messageText = `${descripcion} - ${detalle}`;
       }
 
       message.textContent = messageText;
@@ -704,41 +723,57 @@
 
     window.addEventListener('load', checkLowStockAndExpiry);
 
+    async function getLastFacturaNumber() {
+      try {
+        const facturaSnapshot = await get(ref(db, 'facturaNumber'));
+        if (facturaSnapshot.exists()) {
+          const facturaData = facturaSnapshot.val();
+          return facturaData.lastNumber || 0;
+        } else {
+          console.warn('No se encontró un número de factura previo.');
+          return 0;
+        }
+      } catch (error) {
+        console.error('Error al obtener el último número de factura:', error);
+        return 0;
+      }
+    }
+
 
   </script>
 
 
-<script src="popper.min.js"></script>
-<script src="simplebar.min.js"></script>
-<script src="bootstrap.min.js"></script>
-<script src="custom-font.js"></script>
-<script src="pcoded.js"></script>
-<script src="feather.min.js"></script>
+  <script src="popper.min.js"></script>
+  <script src="simplebar.min.js"></script>
+  <script src="bootstrap.min.js"></script>
+  <script src="custom-font.js"></script>
+  <script src="pcoded.js"></script>
+  <script src="feather.min.js"></script>
 
 
 
 
 
-<script>layout_change('light');</script>
+  <script>layout_change('light');</script>
 
 
 
 
-<script>font_change("Roboto");</script>
+  <script>font_change("Roboto");</script>
 
 
-<script>change_box_container('false');</script>
+  <script>change_box_container('false');</script>
 
 
-<script>layout_caption_change('true');</script>
+  <script>layout_caption_change('true');</script>
 
 
 
 
-<script>layout_rtl_change('false');</script>
+  <script>layout_rtl_change('false');</script>
 
 
-<script>preset_change("preset-1");</script>
+  <script>preset_change("preset-1");</script>
 
 
 

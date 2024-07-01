@@ -543,7 +543,7 @@
             }
         }
 
-        function registerDataC() {
+        async function registerDataC() {
             const desde = document.getElementById('desde').value.trim();
             const hasta = document.getElementById('hasta').value.trim();
             const fechaVencimiento = document.getElementById('fechaVencimiento').value.trim();
@@ -553,6 +553,7 @@
                 showAlert('Por favor, complete todos los campos obligatorios.', 'alert-warning');
                 return;
             }
+
             const formatToSpanishDate = (dateString) => {
                 const dateParts = dateString.split('-');
                 return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
@@ -567,21 +568,35 @@
                 fechaVencimiento: formattedfechaVencimiento
             };
 
-            // Ejemplo para guardar en Firebase Realtime Database
-            set(ref(db, 'comprobantes/'), newData)
-                .then(() => {
-                    showSuccessAlert('Datos registrados exitosamente', 'alert-success');
-                })
-                .catch((error) => {
-                    console.error('Error al registrar datos: ', error);
-                    showErrorAlert('Error al registrar datos', 'alert-danger');
-                });
+            try {
+                // Guardar en Firebase Realtime Database
+                await set(ref(db, 'comprobantes/'), newData);
+
+                // Actualizar lastNumber para que parta desde "desde"
+                const lastNumber = parseInt(desde.substring(1)) - 1;
+                await updateLastFacturaNumber(lastNumber);
+
+                showSuccessAlert('Datos registrados exitosamente', 'alert-success');
+            } catch (error) {
+                console.error('Error al registrar datos: ', error);
+                showErrorAlert('Error al registrar datos', 'alert-danger');
+            }
         }
 
         document.getElementById('updateButtonC').addEventListener('click', (event) => {
             event.preventDefault();
             registerDataC();
         });
+
+        async function updateLastFacturaNumber(newNumber) {
+            try {
+                const facturaRef = ref(db, 'facturaNumber/lastNumber');
+                await set(facturaRef, newNumber);
+                console.log('Número de factura actualizado correctamente:', newNumber);
+            } catch (error) {
+                console.error('Error al actualizar el número de factura:', error);
+            }
+        }
 
 
         const nameInput = document.getElementById('name');

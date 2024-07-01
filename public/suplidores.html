@@ -358,7 +358,7 @@
                 <div class="col">
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="home">Sistema</a></li>
-                        <li class="breadcrumb-item" aria-current="page">Suplidor</li>
+                        <li class="breadcrumb-item" aria-current="page">Suplidores</li>
                     </ul>
                 </div>
             </div>
@@ -375,7 +375,11 @@
                                 </a>
                                 <a href="#" class="pc-link" id="cargarFac" style="margin-right: 10px;">
                                     <span class="pc-micon"><i class="ti ti-crosshair"></i></span>
-                                    <span class="pc-mtext">Cargar factura</span>
+                                    <span class="pc-mtext">Registrar compra</span>
+                                </a>
+                                <a href="#" class="pc-link" id="cargarFacH" style="margin-right: 10px;">
+                                    <span class="pc-micon"><i class="ti ti-history"></i></span>
+                                    <span class="pc-mtext">Historico general</span>
                                 </a>
                             </div>
                             <div class="card-header">
@@ -487,38 +491,151 @@
         </div>
 
         <div id="CargarFactura" class="formulario-container" style="display: none;">
-            <h3 class="mb-3">Subir factura</h3>
-            <div class="form-floating mb-3">
-                <select class="form-select" id="roleSelect" aria-label="Floating label select example">
-                    <option selected>Elige un suplidor</option>
-                </select>
-                <label for="roleSelect">*Suplidor</label>
-            </div>
-            <div class="mb-3">
-                <input type="file" class="form-control" id="facturaFile">
-                <label for="facturaFile">Subir archivo de factura</label>
-            </div>
-            <div class="mb-3">
-                <input type="text" class="form-control" id="nombreFactura" placeholder="Nombre de la factura">
-                <label for="nombreFactura">Nombre de la factura</label>
-            </div>
-            <div class="d-grid mt-4">
-                <button type="submit" class="btn btn-success" id="subirButton">Registrar datos</button>
-            </div>
-            <div class="d-grid mt-2">
-                <button type="button" class="btn btn-danger" id="closeButtonF">Cerrar</button>
-            </div>
+            <h3 class="mb-3">Registrar Compra</h3>
+            <form id="FacturaForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <select class="form-select" id="roleSelect" aria-label="Floating label select example">
+                                <option selected>Elige un suplidor</option>
+                            </select>
+                            <label for="roleSelect">*Suplidor</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="rncC" placeholder="RNC">
+                            <label for="rnc">RNC</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="date" class="form-control" id="fecha" placeholder="Fecha">
+                            <label for="fecha">Fecha</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="moneda" placeholder="Moneda">
+                            <label for="moneda">Moneda</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="numeroComprobante"
+                                placeholder="Número de comprobante fiscal">
+                            <label for="numeroComprobante">Número de comprobante fiscal</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="tipoGasto" placeholder="Tipo de gasto o costo">
+                            <label for="tipoGasto">Tipo de gasto o costo</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label>*ITBIS</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="itbisCheckbox">
+                        <label class="form-check-label" for="itbisCheckbox">ITBIS 18%</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="naCheckbox" checked>
+                        <label class="form-check-label" for="naCheckbox">N/A</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="cuenta" placeholder="Cuenta">
+                            <label for="cuenta">Cuenta</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="condicionpago" placeholder="Condición de pago">
+                            <label for="condicionpago">Condición de pago</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="montoFactura" placeholder="Monto en factura">
+                            <label for="montoFactura">Monto en factura</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="file" class="form-control" id="facturaFile">
+                    <label for="facturaFile">Subir archivo de factura</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="nombreFactura" placeholder="Nombre de la factura">
+                    <label for="nombreFactura">Nombre de la factura</label>
+                </div>
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-success" id="subirButton">Registrar datos</button>
+                </div>
+                <div class="d-grid mt-2">
+                    <button type="button" class="btn btn-danger" id="closeButtonF">Cerrar</button>
+                </div>
+            </form>
         </div>
-        <div id="HistorialFacturas" class="formulario-container" style="display: none;">
-            <h3 class="mb-3">Historial de Facturas</h3>
-            <div id="listaFacturas" class="lista-facturas">
 
+
+        <div id="HistorialFacturas" class="formulario-container" style="display: none; width: 60%; margin: 0 auto;">
+            <h3 class="mb-3">Historial de Facturas</h3>
+            <div class="card-header">
+                <form id="MainFormSE" class="d-flex" style="max-width: 400px;">
+                    <input id="searchInput" class="form-control me-sm-2" type="search" placeholder="Buscar"
+                        style="flex: 1 0 auto;">
+                </form>
+            </div>
+            <div id="listaFacturas" class="lista-facturas"></div>
+            <div>
+                <ul class="pagination" id="paginationH">
+                    <li class="page-item" id="previousPageH"><a class="page-link" href="#">&laquo;</a></li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">4</a></li>
+                    <li class="page-item"><a class="page-link" href="#">5</a></li>
+                    <li class="page-item" id="nextPageH"><a class="page-link" href="#">&raquo;</a></li>
+                </ul>
             </div>
             <div class="d-grid mt-2">
                 <button type="button" class="btn btn-danger" id="closeHistorialButton">Cerrar</button>
             </div>
         </div>
 
+        <div id="HistorialFacturasG" class="formulario-container" style="display: none; width: 60%; margin: 0 auto;">
+            <h3 class="mb-3">Historial General de Facturas</h3>
+            <div class="card-header">
+                <form id="MainFormSEG" class="d-flex" style="max-width: 400px;">
+                    <input id="searchInputG" class="form-control me-sm-2" type="search" placeholder="Buscar"
+                        style="flex: 1 0 auto;">
+                </form>
+            </div>
+            <div id="listaFacturasG" class="lista-facturas"></div>
+            <div>
+                <ul class="pagination" id="paginationG">
+                    <li class="page-item" id="previousPageG"><a class="page-link" href="#">&laquo;</a></li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">4</a></li>
+                    <li class="page-item"><a class="page-link" href="#">5</a></li>
+                    <li class="page-item" id="nextPageG"><a class="page-link" href="#">&raquo;</a></li>
+                </ul>
+            </div>
+            <div class="d-grid mt-2">
+                <button type="button" class="btn btn-danger" id="closeHistorialButtonG">Cerrar</button>
+            </div>
+        </div>
     </div>
     <div id="fondoDesenfocado"></div>
     <footer class="pc-footer">
@@ -583,6 +700,7 @@
         };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase();
+        const dba = getFirestore();
         const auth = getAuth();
         const storage = getStorage(app);
 
@@ -598,6 +716,7 @@
         const nuevoFormulario = document.getElementById('nuevoFormulario');
         const Nuevo = document.getElementById('nuevo');
         const CargarFac = document.getElementById('cargarFac');
+        const CargarFacH = document.getElementById('cargarFacH');
         const Editar = document.getElementById('editar');
         const fondoDesenfocado = document.getElementById('fondoDesenfocado');
         const closeButton = document.getElementById('closeButton');
@@ -613,7 +732,11 @@
         const CargarFactura = document.getElementById('CargarFactura');
         const closeButtonF = document.getElementById('closeButtonF');
         const HistorialFacturas = document.getElementById('HistorialFacturas');
+        const HistorialFacturasG = document.getElementById('HistorialFacturasG');
         const closeHistorialButton = document.getElementById('closeHistorialButton');
+        const closeHistorialButtonG = document.getElementById('closeHistorialButtonG');
+
+        const rncC = document.getElementById('rncC').value;
 
         function toggleFormulario() {
             if (nuevoFormulario.style.display === 'none') {
@@ -656,6 +779,20 @@
             }
         }
 
+        function toggleFormularioG() {
+            const historialContainerG = document.getElementById('HistorialFacturasG');
+            const fondoDesenfocado = document.getElementById('fondoDesenfocado');
+            if (historialContainerG.style.display === 'none' || historialContainerG.style.display === '') {
+                historialContainerG.style.display = 'block';
+                fondoDesenfocado.style.display = 'block';
+            } else {
+                historialContainerG.style.display = 'none';
+                fondoDesenfocado.style.display = 'none';
+            }
+        }
+
+
+
         closeButton.addEventListener('click', function () {
             nuevoFormulario.style.display = 'none';
             fondoDesenfocado.style.display = 'none';
@@ -683,20 +820,51 @@
         closeButtonF.addEventListener('click', function () {
             toggleFormularioF();
             document.getElementById('roleSelect').selectedIndex = 0;
+            document.getElementById('rncC').value = '';
+            document.getElementById('fecha').value = '';
+            document.getElementById('moneda').value = '';
+            document.getElementById('numeroComprobante').value = '';
+            document.getElementById('tipoGasto').value = '';
+            document.getElementById('itbisCheckbox').checked = false;
+            document.getElementById('naCheckbox').checked = true;
+            document.getElementById('cuenta').value = '';
+            document.getElementById('montoFactura').value = '';
             document.getElementById('facturaFile').value = '';
             document.getElementById('nombreFactura').value = '';
         });
+
         closeHistorialButton.addEventListener('click', function () {
             toggleFormularioH();
         });
 
-        document.getElementById('subirButton').addEventListener('click', async () => {
+        closeHistorialButtonG.addEventListener('click', function () {
+            toggleFormularioG();
+        });
+
+
+        document.getElementById('subirButton').addEventListener('click', async (event) => {
+            event.preventDefault();
+
             const suplidorSelect = document.getElementById('roleSelect');
             const suplidor = suplidorSelect.value;
+            const rnc = document.getElementById('rncC').value;
+            const fecha = document.getElementById('fecha').value;
+            const moneda = document.getElementById('moneda').value.trim();
+            const numeroComprobante = document.getElementById('numeroComprobante').value.trim();
+            const tipoGasto = document.getElementById('tipoGasto').value.trim();
+            const itbisCheckbox = document.getElementById('itbisCheckbox').checked;
+            const naCheckbox = document.getElementById('naCheckbox').checked;
+            const cuenta = document.getElementById('cuenta').value.trim();
+            const montoFactura = parseFloat(document.getElementById('montoFactura').value);
+            const condicionpago = parseFloat(document.getElementById('condicionpago').value);
             const facturaFile = document.getElementById('facturaFile').files[0];
-            const nombreFactura = document.getElementById('nombreFactura').value;
+            const nombreFactura = document.getElementById('nombreFactura').value.trim();
 
-            if (!suplidor || !facturaFile || !nombreFactura) {
+
+            const allFieldsFilled = suplidor && rnc && fecha && moneda && numeroComprobante && tipoGasto && cuenta && !isNaN(montoFactura) && facturaFile && nombreFactura;
+            const itbisChecked = itbisCheckbox || naCheckbox;
+
+            if (!allFieldsFilled || !itbisChecked) {
                 alert('Por favor, complete todos los campos.');
                 return;
             }
@@ -715,16 +883,55 @@
                     i++;
                 }
 
+                const formatToSpanishDate = (dateString) => {
+                    const dateParts = dateString.split('-');
+                    return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+                };
+
                 // Subir el archivo
                 await uploadBytes(facturaStorageRef, facturaFile);
-                showAlert('Factura subida con éxito.', 'alert-success');
+                const formattedDate = formatToSpanishDate(fecha);
+
+                // Guardar los datos en Firestore
+                const registroDeCompra = {
+                    suplidor,
+                    rnc,
+                    fecha: formattedDate,
+                    moneda,
+                    numeroComprobante,
+                    tipoGasto,
+                    itbis: itbisCheckbox ? '18%' : naCheckbox ? 'N/A' : '',
+                    cuenta,
+                    montoFactura,
+                    condicionpago,
+                    nombreFactura,
+                    facturaURL: await getDownloadURL(facturaStorageRef)
+                };
+
+                await addDoc(collection(dba, 'RegistroDeCompras'), registroDeCompra);
+
+                showAlert('Factura subida y datos registrados con éxito.', 'alert-success');
+                document.getElementById('roleSelect').selectedIndex = 0;
+                document.getElementById('rncC').value = '';
+                document.getElementById('fecha').value = '';
+                document.getElementById('moneda').value = '';
+                document.getElementById('numeroComprobante').value = '';
+                document.getElementById('tipoGasto').value = '';
+                document.getElementById('itbisCheckbox').checked = false;
+                document.getElementById('naCheckbox').checked = true;
+                document.getElementById('cuenta').value = '';
+                document.getElementById('montoFactura').value = '';
+                document.getElementById('condicionpago').value = '';
+                document.getElementById('facturaFile').value = '';
+                document.getElementById('nombreFactura').value = '';
                 loadSuplidores();
 
             } catch (error) {
-                console.error('Error al subir la factura:', error);
-                alert('Hubo un error al subir la factura. Inténtelo de nuevo.');
+                console.error('Error al subir la factura y registrar los datos:', error);
+                alert('Hubo un error al subir la factura y registrar los datos. Inténtelo de nuevo.');
             }
         });
+
 
 
         async function loadSuppliers() {
@@ -743,6 +950,36 @@
                 roleSelect.appendChild(option);
             });
         }
+
+        document.getElementById('roleSelect').addEventListener('change', async () => {
+            const selectedSupplierId = document.getElementById('roleSelect').value;
+            if (selectedSupplierId !== 'Elige un suplidor') {
+                const docRef = doc(getFirestore(), 'suplidores', selectedSupplierId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const rncC = document.getElementById('rncC');
+                    if (rncC) { // Verificar si el elemento existe
+                        rncC.value = docSnap.data().rnc;
+                        rncC.disabled = true; // Aquí se deshabilita el campo
+                    } else {
+                        console.log('Elemento rncC no encontrado en el DOM.');
+                    }
+                } else {
+                    console.log('No existe el documento.');
+                }
+            } else {
+                const rncC = document.getElementById('rncC');
+                if (rncC) { // Verificar si el elemento existe
+                    rncC.value = '';
+                    rncC.disabled = false; // Asegúrate de habilitarlo si es necesario
+                } else {
+                    console.log('Elemento rncC no encontrado en el DOM.');
+                }
+            }
+        });
+
+
 
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -804,6 +1041,7 @@
 
         Nuevo.addEventListener('click', toggleFormulario);
         CargarFac.addEventListener('click', toggleFormularioF);
+        // CargarFacH.addEventListener('click', toggleFormularioG);
 
         let UserCreds = JSON.parse(sessionStorage.getItem("user-creds"));
         let UserInfo = JSON.parse(sessionStorage.getItem("user-info"));
@@ -813,6 +1051,7 @@
         let MainFormE = document.getElementById('MainFormE');
         let MainFormSE = document.getElementById('MainFormSE');
         const searchInput = document.getElementById('searchInput');
+        const searchInputG = document.getElementById('searchInputG');
 
         let SignoutBtn = document.getElementById('signoutbutton');
 
@@ -972,7 +1211,32 @@
                 }
             }
         }
-        searchInput.addEventListener('input', filterTable)
+
+        // function filterTableG() {
+        //     const searchTerm = searchInputG.value.toLowerCase();
+        //     const rows = listaFacturasG.getElementsByTagName('tr');
+
+        //     for (let i = 0; i < rows.length; i++) {
+        //         const cells = rows[i].getElementsByTagName('td');
+        //         let match = false;
+
+        //         for (let j = 0; j < cells.length; j++) {
+        //             if (cells[j].innerText.toLowerCase().includes(searchTerm)) {
+        //                 match = true;
+        //                 break;
+        //             }
+        //         }
+
+        //         if (match) {
+        //             rows[i].style.display = '';
+        //         } else {
+        //             rows[i].style.display = 'none';
+        //         }
+        //     }
+        // }
+
+        searchInput.addEventListener('input', filterTable);
+        // searchInputG.addEventListener('input', filterTableG);
 
         const tableBody = document.querySelector('tbody');
 
@@ -1016,26 +1280,347 @@
 
         loadSuplidores();
 
+
         window.verHistorial = async function (docId) {
             toggleFormularioH();
 
             const listaFacturas = document.getElementById('listaFacturas');
             listaFacturas.innerHTML = '';
 
-            const pacienteFolderRef = storageRef(storage, `facturasSuplidores/${docId}`);
-            const listaFacturasSnapshot = await listAll(pacienteFolderRef);
+            try {
+                const registroDeComprasRef = collection(dba, 'RegistroDeCompras');
+                const querySnapshot = await getDocs(query(registroDeComprasRef, where('suplidor', '==', docId)));
 
-            listaFacturasSnapshot.items.forEach(async (itemRef) => {
-                const facturaURL = await getDownloadURL(itemRef);
-                const facturaLink = document.createElement('a');
-                facturaLink.href = facturaURL;
-                facturaLink.textContent = itemRef.name;
-                facturaLink.target = '_blank';
-                const listItem = document.createElement('div');
-                listItem.appendChild(facturaLink);
-                listaFacturas.appendChild(listItem);
-            });
+                if (querySnapshot.empty) {
+                    const noDataMessage = document.createElement('p');
+                    noDataMessage.textContent = 'No se encontraron registros de compras para este suplidor.';
+                    listaFacturas.appendChild(noDataMessage);
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.classList.add('table', 'table-striped');
+
+                // Crear encabezados de tabla
+                const tableHeader = document.createElement('thead');
+                tableHeader.innerHTML = `
+        <tr>
+            <th>Fecha</th>
+            <th>Moneda</th>
+            <th>Número de Comprobante</th>
+            <th>Tipo de Gasto</th>
+            <th>ITBIS</th>
+            <th>Cuenta</th>
+            <th>Monto en Factura</th>
+            <th>Nombre de la Factura</th>
+            <th>Factura</th>
+        </tr>
+    `;
+                table.appendChild(tableHeader);
+
+                const tableBody = document.createElement('tbody');
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL } = data;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+            <td>${fecha}</td>
+            <td>${moneda}</td>
+            <td>${numeroComprobante}</td>
+            <td>${tipoGasto}</td>
+            <td>${itbis}</td>
+            <td>${cuenta}</td>
+            <td>${montoFactura}</td>
+            <td>${nombreFactura}</td>
+            <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>
+        `;
+
+                    tableBody.appendChild(row);
+                });
+
+                table.appendChild(tableBody);
+                listaFacturas.appendChild(table);
+
+            } catch (error) {
+                console.error('Error al cargar el historial de facturas:', error);
+                const errorMessage = document.createElement('p');
+                errorMessage.textContent = 'Hubo un error al cargar el historial de facturas. Por favor, inténtelo de nuevo más tarde.';
+                listaFacturas.appendChild(errorMessage);
+            }
+        };
+
+
+        const listaFacturasG = document.getElementById('listaFacturasG');
+        async function listarFacturasDeSuplidores(pageSize = 10, page = 1) {
+            const listaFacturas = document.getElementById('listaFacturasG');
+            listaFacturas.innerHTML = '';
+
+            try {
+                const registroDeComprasRef = collection(dba, 'RegistroDeCompras');
+                const snapshot = await getDocs(registroDeComprasRef);
+
+                if (snapshot.empty) {
+                    const noDataMessage = document.createElement('p');
+                    noDataMessage.textContent = 'No se encontraron registros de compras.';
+                    listaFacturas.appendChild(noDataMessage);
+                    return;
+                }
+
+                const totalDocs = snapshot.docs.length;
+                const totalPages = Math.ceil(totalDocs / pageSize);
+                const startIndex = (page - 1) * pageSize;
+                const endIndex = startIndex + pageSize;
+
+                const docsToShow = snapshot.docs.slice(startIndex, endIndex);
+
+                const table = document.createElement('table');
+                table.classList.add('table', 'table-striped');
+
+                // Crear encabezados de tabla
+                const tableHeader = document.createElement('thead');
+                tableHeader.innerHTML = `
+    <tr>
+        <th>Suplidor</th>
+        <th>Fecha</th>
+        <th>Moneda</th>
+        <th>Número de Comprobante</th>
+        <th>Tipo de Gasto</th>
+        <th>ITBIS</th>
+        <th>Cuenta</th>
+        <th>Monto en Factura</th>
+        <th>Nombre de la Factura</th>
+        <th>Factura</th>
+    </tr>`;
+                table.appendChild(tableHeader);
+
+                const tableBody = document.createElement('tbody');
+
+                // Función para obtener el nombre del suplidor
+                async function obtenerNombreSuplidor(suplidorId) {
+                    try {
+                        const suplidorDoc = await getDoc(doc(dba, 'suplidores', suplidorId));
+                        if (suplidorDoc.exists()) {
+                            return suplidorDoc.data().nombre; // Devuelve el nombre del suplidor
+                        } else {
+                            return 'Desconocido'; // Si no se encuentra el suplidor
+                        }
+                    } catch (error) {
+                        console.error('Error al obtener el nombre del suplidor:', error);
+                        return 'Desconocido';
+                    }
+                }
+
+                // Iterar sobre cada factura y crear filas de tabla
+                await Promise.all(docsToShow.map(async (doc) => {
+                    const data = doc.data();
+                    const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor } = data;
+
+                    const suplidorNombre = await obtenerNombreSuplidor(suplidor);
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+        <td>${suplidorNombre}</td>
+        <td>${fecha}</td>
+        <td>${moneda}</td>
+        <td>${numeroComprobante}</td>
+        <td>${tipoGasto}</td>
+        <td>${itbis}</td>
+        <td>${cuenta}</td>
+        <td>${montoFactura}</td>
+        <td>${nombreFactura}</td>
+        <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>`;
+
+                    tableBody.appendChild(row);
+                }));
+
+                table.appendChild(tableBody);
+                listaFacturas.appendChild(table);
+
+                // Actualizar la paginación
+                actualizarPaginacion(totalPages, page, 'paginationG');
+
+            } catch (error) {
+                console.error('Error al cargar el historial de facturas:', error);
+                const errorMessage = document.createElement('p');
+                errorMessage.textContent = 'Hubo un error al cargar el historial de facturas. Por favor, inténtelo de nuevo más tarde.';
+                listaFacturas.appendChild(errorMessage);
+            }
         }
+
+        function actualizarPaginacion(totalPages, currentPage, paginationId) {
+            const paginationContainer = document.getElementById(paginationId);
+            paginationContainer.innerHTML = '';
+
+            // Botón anterior
+            const prevButton = document.createElement('li');
+            prevButton.classList.add('page-item', 'prev-button');
+            if (currentPage === 1) {
+                prevButton.classList.add('disabled');
+            }
+            const prevLink = document.createElement('a');
+            prevLink.classList.add('page-link');
+            prevLink.href = '#';
+            prevLink.textContent = '«';
+            prevLink.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    listarFacturasDeSuplidores(2, currentPage - 1);
+                }
+            });
+            prevButton.appendChild(prevLink);
+            paginationContainer.appendChild(prevButton);
+
+            // Números de página
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('li');
+                pageButton.classList.add('page-item');
+                if (i === currentPage) {
+                    pageButton.classList.add('active');
+                }
+                const pageLink = document.createElement('a');
+                pageLink.classList.add('page-link');
+                pageLink.href = '#';
+                pageLink.textContent = i;
+                pageLink.addEventListener('click', () => {
+                    listarFacturasDeSuplidores(2, i);
+                });
+                pageButton.appendChild(pageLink);
+                paginationContainer.appendChild(pageButton);
+            }
+
+            // Botón siguiente
+            const nextButton = document.createElement('li');
+            nextButton.classList.add('page-item', 'next-button');
+            if (currentPage === totalPages) {
+                nextButton.classList.add('disabled');
+            }
+            const nextLink = document.createElement('a');
+            nextLink.classList.add('page-link');
+            nextLink.href = '#';
+            nextLink.textContent = '»';
+            nextLink.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    listarFacturasDeSuplidores(2, currentPage + 1);
+                }
+            });
+            nextButton.appendChild(nextLink);
+            paginationContainer.appendChild(nextButton);
+        }
+
+        async function filterTableG() {
+            const searchTerm = searchInputG.value.toLowerCase();
+
+            try {
+                const registroDeComprasRef = collection(dba, 'RegistroDeCompras');
+                const snapshot = await getDocs(registroDeComprasRef);
+
+                if (snapshot.empty) {
+                    console.log('No hay documentos encontrados.');
+                    return;
+                }
+
+                const filteredData = snapshot.docs.filter(doc => {
+                    const data = doc.data();
+                    for (const key in data) {
+                        if (typeof data[key] === 'string' && data[key].toLowerCase().includes(searchTerm)) {
+                            return true; // Si encuentra una coincidencia en cualquier campo, devolver true
+                        }
+                    }
+                    return false; // Si no se encuentra ninguna coincidencia en ningún campo, devolver false
+                });
+
+                actualizarTabla(filteredData); // Actualiza la tabla con los datos filtrados
+
+            } catch (error) {
+                console.error('Error al filtrar datos:', error);
+            }
+        }
+
+        function actualizarTabla(filteredData) {
+            const listaFacturas = document.getElementById('listaFacturasG');
+            listaFacturas.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                const noDataMessage = document.createElement('p');
+                noDataMessage.textContent = 'No se encontraron registros que coincidan con la búsqueda.';
+                listaFacturas.appendChild(noDataMessage);
+                return;
+            }
+
+            async function obtenerNombreSuplidor(suplidorId) {
+                try {
+                    const suplidorDoc = await getDoc(doc(dba, 'suplidores', suplidorId));
+                    if (suplidorDoc.exists()) {
+                        return suplidorDoc.data().nombre; // Devuelve el nombre del suplidor
+                    } else {
+                        return 'Desconocido'; // Si no se encuentra el suplidor
+                    }
+                } catch (error) {
+                    console.error('Error al obtener el nombre del suplidor:', error);
+                    return 'Desconocido';
+                }
+            }
+
+            const table = document.createElement('table');
+            table.classList.add('table', 'table-striped');
+
+            // Crear encabezados de tabla
+            const tableHeader = document.createElement('thead');
+            tableHeader.innerHTML = `
+        <tr>
+            <th>Suplidor</th>
+            <th>Fecha</th>
+            <th>Moneda</th>
+            <th>Número de Comprobante</th>
+            <th>Tipo de Gasto</th>
+            <th>ITBIS</th>
+            <th>Cuenta</th>
+            <th>Monto en Factura</th>
+            <th>Nombre de la Factura</th>
+            <th>Factura</th>
+        </tr>`;
+            table.appendChild(tableHeader);
+
+            const tableBody = document.createElement('tbody');
+
+
+            filteredData.forEach(async doc => {
+                const data = doc.data();
+                const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor } = data;
+
+                const suplidorNombre = await obtenerNombreSuplidor(suplidor);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${suplidorNombre}</td>
+            <td>${fecha}</td>
+            <td>${moneda}</td>
+            <td>${numeroComprobante}</td>
+            <td>${tipoGasto}</td>
+            <td>${itbis}</td>
+            <td>${cuenta}</td>
+            <td>${montoFactura}</td>
+            <td>${nombreFactura}</td>
+            <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>`;
+
+                tableBody.appendChild(row);
+            });
+
+            table.appendChild(tableBody);
+            listaFacturas.appendChild(table);
+        }
+
+
+        document.getElementById('searchInputG').addEventListener('input', filterTableG);
+
+        // Llamar a la función para cargar el historial al hacer clic en el enlace
+        document.getElementById('cargarFacH').addEventListener('click', async () => {
+            toggleFormularioG(); // Oculta el formulario antes de cargar las facturas
+
+            await listarFacturasDeSuplidores(2, 1); // Llama a la función para cargar las facturas con los parámetros deseados
+        });
+
 
 
         document.getElementById('generatePDFbutton').addEventListener('click', async (event) => {
@@ -1086,7 +1671,7 @@
                         }
                     }
                     doc.autoTable({
-                        head: [['Nombre', 'Teléfono', 'RNC','Banco','Cuenta de banco', 'Dirección']],
+                        head: [['Nombre', 'Teléfono', 'RNC', 'Banco', 'Cuenta de banco', 'Dirección']],
                         body: Array.from(tableBody.querySelectorAll('tr')).map(row =>
                             Array.from(row.querySelectorAll('td')).map(cell => cell.innerText)
                         ),
