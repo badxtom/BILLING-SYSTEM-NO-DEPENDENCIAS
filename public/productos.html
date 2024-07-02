@@ -1175,7 +1175,7 @@
             const precioventaE = document.getElementById('precioventaE');
             const precioInputE = document.getElementById('precioE');
             const precioVentaInputE = document.getElementById('precioventaE');
-            const MonedaE = document.getElementById('monedaE').value;
+            const MonedaE = document.getElementById('monedaE');
 
             precioInputE.addEventListener('input', () => {
                 const precio = parseFloat(precioInputE.value.trim());
@@ -1227,6 +1227,7 @@
                     despE.value = descripcion;
                     dispE.value = disponible;
                     precioE.value = precio;
+                    MonedaE.value = moneda;
                     precioventaE.value = precioVenta;
                     categoriaE.value = categoria;
                     fechaVencimientoE.value = formattedFechaVencimiento;

@@ -461,8 +461,12 @@
                                     Comprobante Fiscal
                                 </label>
                             </div>
-
-
+                            <div class="form-check d-inline-block">
+                                <input class="form-check-input mr-3" type="checkbox" id="EstatusCheckbox">
+                                <label class="form-check-label" for="EstatusCheckbox">
+                                    Abierta
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -939,6 +943,8 @@
             }, 5000);
         }
 
+        let numeroFacturaGlobal = '';
+
         async function generatePDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -955,9 +961,13 @@
             const totalLabel = document.getElementById('totalLabel');
             const searchDoctorInput = document.getElementById('searchDoctorInput');
             const comprobanteCheckbox = document.getElementById('comprobanteCheckbox');
+            const estatusCheckbox = document.getElementById('EstatusCheckbox');
 
             let numeroFactura = '';
+            let numeroComprobante = '';
             let fechaVencimiento = '';
+            let gananciaTotal = 0;
+            let totalFactura = 0;
 
             if (facturaTableBody.querySelectorAll('tr').length === 0) {
                 showAlert('La tabla está vacía. Por favor, agregue productos antes de generar la factura.', 'alert-warning');
@@ -1008,6 +1018,7 @@
 
                         // Asignar el número de factura al documento PDF
                         numeroFactura = formattedNextFacturaNumber;
+                        numeroComprobante = formattedNextFacturaNumber;
                     } else {
                         showAlert('No se encontraron datos de comprobantes válidos.', 'alert-danger');
                         return;
@@ -1026,6 +1037,34 @@
                 const fechaVencimientoX = 200 - doc.getTextWidth(`Vencimiento Secuencia: ${fechaVencimiento}`);
                 doc.text(`Vencimiento Secuencia: ${fechaVencimiento}`, fechaVencimientoX, 45);
             }
+
+            const productosEnFactura = facturaTableBody.querySelectorAll('tr');
+
+            for (let i = 0; i < productosEnFactura.length; i++) {
+                const descripcionProducto = productosEnFactura[i].querySelector('td:nth-child(1)').textContent;
+                const cantidadProducto = parseInt(productosEnFactura[i].querySelector('td:nth-child(2)').textContent);
+
+                try {
+                    const querySnapshot = await getDocs(query(collection(dba, 'productos'), where('descripcion', '==', descripcionProducto)));
+                    querySnapshot.forEach(doc => {
+                        const productoData = doc.data();
+                        const precioCompra = productoData.precio; // Precio de compra del producto
+                        const precioVenta = productoData.precioVenta; // Precio de venta del producto
+
+                        if (precioVenta !== precioCompra) {
+                            gananciaTotal += (precioVenta - precioCompra) * cantidadProducto;
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error al obtener datos del producto:', error);
+                }
+            }
+
+            const rows = facturaTableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const totalProducto = parseFloat(row.cells[4].textContent);
+                totalFactura += totalProducto;
+            });
 
 
             progressContainer.style.display = 'block';
@@ -1072,6 +1111,8 @@
                 const numeroFactura = await obtenerNumeroFactura();
                 const facturaX = marginLeft; // Ajusta la posición X para alinear a la izquierda
                 doc.text(`No. Factura: ${numeroFactura}`, facturaX, 60);
+
+                numeroFacturaGlobal = numeroFactura;
 
                 const fechaActual = obtenerFechaActual();
                 const fechaActualF = obtenerFechaActualF();
@@ -1153,6 +1194,26 @@
 
                     await uploadBytes(facturaStorageRef, pdfBlob);
 
+                    const facturaData = {
+                        paciente: pacienteSeleccionado,
+                        doctor: DoctorSeleccionado,
+                        numeroFactura: numeroFactura,
+                        fecha: fechaActual,
+                        items: Array.from(facturaTableBody.querySelectorAll('tr')).map(row => ({
+                            descripcion: row.cells[0].textContent,
+                            cantidad: parseInt(row.cells[1].textContent),
+                            precioUnitario: parseFloat(row.cells[2].textContent),
+                            itbis: row.cells[3].textContent,
+                            total: parseFloat(row.cells[4].textContent)
+                        })),
+                        total: totalFactura,
+                        estatus: estatusCheckbox.checked ? 'Abierta' : 'Cerrada',
+                        comprobante: comprobanteCheckbox.checked ? numeroComprobante : null,
+                        ganancia: gananciaTotal
+                    };
+
+                    await addDoc(collection(dba, 'facturas'), facturaData);
+
                     // Actualizar la cantidad disponible del producto en la base de datos
                     const rows = facturaTableBody.querySelectorAll('tr');
                     rows.forEach(async (row) => {
@@ -1172,7 +1233,11 @@
                         }
                     });
 
-                    await generatePDFHorizontal();
+
+                    if (!estatusCheckbox.checked) {
+    
+                        await generatePDFHorizontal(numeroFacturaGlobal);
+                    }
                     // Limpiar campos y tabla
                     // facturaTableBody.innerHTML = '';
                     // document.getElementById('searchPatientInput').value = '';
@@ -1248,7 +1313,7 @@
         generatePDFButton.addEventListener('click', generatePDF);
 
 
-        async function generatePDFHorizontal() {
+        async function generatePDFHorizontal(numeroFacturaR) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape'); // Crear documento PDF en formato horizontal
             const progressContainer = document.getElementById('progress-container');
@@ -1317,11 +1382,13 @@
                 const numeroFactura = await obtenerNumeroRecibo();
                 const facturaX = marginLeft; // Ajusta la posición X para alinear a la izquierda
                 doc.text(`No. Recibo: ${numeroFactura}`, facturaX, 60);
+                // doc.text(`Referencia:`, 65);
+                doc.text(`No. Factura: ${numeroFacturaR}`, facturaX, 65);
 
                 const fechaActual = obtenerFechaActual();
                 const fechaActualF = obtenerFechaActualF();
                 const fechaX = marginLeft; // Ajusta la posición X para alinear a la izquierda
-                doc.text(`Fecha: ${fechaActual}`, fechaX, 65);
+                doc.text(`Fecha: ${fechaActual}`, fechaX, 70);
 
                 const nombreDoctorX = marginLeft; // Ajusta la posición X para alinear a la izquierda
                 const nombreDoctorWidth = doc.getTextWidth(DoctorSeleccionado);
