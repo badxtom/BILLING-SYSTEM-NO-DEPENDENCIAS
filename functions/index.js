@@ -32,7 +32,7 @@ const formatDateToSpanish = (date) => {
     return `${day}/${month}/${year}`;
 };
 
-exports.sendAppointmentReminders = functions.pubsub.schedule('0 11 * * *').onRun(async (context) => {
+exports.sendAppointmentReminders = functions.pubsub.schedule('0 4 * * *').onRun(async (context) => {
     const currentDate = new Date();
     const tomorrowDate = new Date();
     tomorrowDate.setDate(currentDate.getDate() + 1);

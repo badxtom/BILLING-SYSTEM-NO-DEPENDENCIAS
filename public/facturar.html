@@ -467,6 +467,11 @@
                                     Abierta
                                 </label>
                             </div>
+                            <div id="condicionPagoContainer" style="display: none;">
+                                <label for="condicionPago">Condición de Pago</label>
+                                <input type="number" class="form-control" id="condicionPago" min="1"
+                                    placeholder="Número de pagos" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -915,11 +920,13 @@
 
         function obtenerFechaActual() {
             const fecha = new Date();
-            const dia = fecha.getDate();
-            const mes = fecha.getMonth() + 1;
-            const año = fecha.getFullYear();
+            const dia = String(fecha.getDate()).padStart(2, '0'); // Obtener el día, y asegurarse de que tenga 2 dígitos
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // Obtener el mes (los meses van de 0 a 11 en JavaScript)
+            const año = fecha.getFullYear(); // Obtener el año
+
             return `${dia}/${mes}/${año}`;
         }
+
 
         function obtenerFechaActualF() {
             const fecha = new Date();
@@ -942,6 +949,15 @@
                 alertDiv.remove();
             }, 5000);
         }
+
+        document.getElementById('EstatusCheckbox').addEventListener('change', function () {
+            const condicionPagoContainer = document.getElementById('condicionPagoContainer');
+            if (this.checked) {
+                condicionPagoContainer.style.display = 'block';
+            } else {
+                condicionPagoContainer.style.display = 'none';
+            }
+        });
 
         let numeroFacturaGlobal = '';
 
@@ -1194,6 +1210,8 @@
 
                     await uploadBytes(facturaStorageRef, pdfBlob);
 
+                    const facturaURL = await getDownloadURL(facturaStorageRef);
+
                     const facturaData = {
                         paciente: pacienteSeleccionado,
                         doctor: DoctorSeleccionado,
@@ -1209,10 +1227,11 @@
                         total: totalFactura,
                         estatus: estatusCheckbox.checked ? 'Abierta' : 'Cerrada',
                         comprobante: comprobanteCheckbox.checked ? numeroComprobante : null,
-                        ganancia: gananciaTotal
+                        ganancia: gananciaTotal,
+                        urlFactura: facturaURL
                     };
 
-                    await addDoc(collection(dba, 'facturas'), facturaData);
+                    const facturaRef = await addDoc(collection(dba, 'facturas'), facturaData);
 
                     // Actualizar la cantidad disponible del producto en la base de datos
                     const rows = facturaTableBody.querySelectorAll('tr');
@@ -1233,10 +1252,47 @@
                         }
                     });
 
+                    if (estatusCheckbox.checked) {
+                        const condicionPago = parseInt(document.getElementById('condicionPago').value);
+                        if (isNaN(condicionPago) || condicionPago <= 0) {
+                            showAlert('Ingrese una condición de pago válida.', 'alert-danger');
+                            return;
+                        }
+
+                        const gananciaPorPago = gananciaTotal / condicionPago;
+                        const totalPorPago = totalFactura / condicionPago;
+                        for (let j = 1; j <= condicionPago; j++) {
+                            const pagoData = {
+                                numeroPago: j,
+                                ganancia: gananciaPorPago,
+                                total: totalPorPago,
+                                estatus: 'Pendiente'
+                            };
+                            // Guardar cada pago en la subcolección "pagos" del documento de factura
+                            await addDoc(collection(dba, `facturas/${facturaRef.id}/pagos`), pagoData);
+                        }
+                    }
+
 
                     if (!estatusCheckbox.checked) {
-    
+
                         await generatePDFHorizontal(numeroFacturaGlobal);
+                    } else {
+
+                        facturaTableBody.innerHTML = '';
+                        document.getElementById('searchPatientInput').value = '';
+                        searchInput.value = '';
+                        descripcionInput.value = '';
+                        disponibleInput.value = '';
+                        precioInput.value = '';
+                        ITBISInput.value = '';
+                        cantidadFacturarInput.value = '';
+                        searchResults.innerHTML = '';
+                        searchDoctorInput.value = '';
+                        document.getElementById('condicionPago').value = '';
+                        document.getElementById('comprobanteCheckbox').checked = false;
+                        document.getElementById('EstatusCheckbox').checked = false;
+                        totalLabel.innerText = 'Total a pagar: RD$0.00';
                     }
                     // Limpiar campos y tabla
                     // facturaTableBody.innerHTML = '';

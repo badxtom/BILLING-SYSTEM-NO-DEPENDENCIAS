@@ -568,6 +568,12 @@
                             <label for="montoFactura">Monto en factura</label>
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="montoApagar" placeholder="Monto a pagar">
+                            <label for="montoApagar">Monto a pagar</label>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-floating mb-3">
                     <input type="file" class="form-control" id="facturaFile">
@@ -856,12 +862,12 @@
             const naCheckbox = document.getElementById('naCheckbox').checked;
             const cuenta = document.getElementById('cuenta').value.trim();
             const montoFactura = parseFloat(document.getElementById('montoFactura').value);
-            const condicionpago = parseFloat(document.getElementById('condicionpago').value);
+            const montoApagar = parseFloat(document.getElementById('montoApagar').value);
+            const condicionpago = parseInt(document.getElementById('condicionpago').value, 10);
             const facturaFile = document.getElementById('facturaFile').files[0];
             const nombreFactura = document.getElementById('nombreFactura').value.trim();
 
-
-            const allFieldsFilled = suplidor && rnc && fecha && moneda && numeroComprobante && tipoGasto && cuenta && !isNaN(montoFactura) && facturaFile && nombreFactura;
+            const allFieldsFilled = suplidor && rnc && fecha && moneda && numeroComprobante && tipoGasto && montoApagar && cuenta && !isNaN(montoFactura) && facturaFile && nombreFactura;
             const itbisChecked = itbisCheckbox || naCheckbox;
 
             if (!allFieldsFilled || !itbisChecked) {
@@ -872,7 +878,6 @@
             try {
                 // Crear una referencia a la carpeta del suplidor
                 const suplidorFolderRef = storageRef(storage, `facturasSuplidores/${suplidor}/`);
-
                 // Crear una referencia al archivo de la factura
                 let facturaStorageRef = storageRef(suplidorFolderRef, `${nombreFactura}.pdf`);
 
@@ -892,9 +897,46 @@
                 await uploadBytes(facturaStorageRef, facturaFile);
                 const formattedDate = formatToSpanishDate(fecha);
 
+                async function obtenerNombreSuplidor(suplidorId) {
+                    try {
+                        const suplidorDoc = await getDoc(doc(dba, 'suplidores', suplidorId));
+                        if (suplidorDoc.exists()) {
+                            return suplidorDoc.data().nombre; // Devuelve el nombre del suplidor
+                        } else {
+                            return 'Desconocido'; // Si no se encuentra el suplidor
+                        }
+                    } catch (error) {
+                        console.error('Error al obtener el nombre del suplidor:', error);
+                        return 'Desconocido';
+                    }
+                }
+
+                const suplidorNombre = await obtenerNombreSuplidor(suplidor);
+
+                // Calcular el estatus y dividir el monto restante
+                let estatus;
+                let pagos = [];
+
+                if (montoFactura !== montoApagar) {
+                    const montoRestante = montoFactura - montoApagar;
+                    const pagoPorCuota = montoRestante / condicionpago;
+                    estatus = 'Abierta';
+
+                    for (let j = 0; j < condicionpago; j++) {
+                        pagos.push({
+                            numeroPago: j + 1,
+                            monto: pagoPorCuota,
+                            estatus: 'Pendiente'
+                        });
+                    }
+                } else {
+                    estatus = 'Cerrada';
+                }
+
                 // Guardar los datos en Firestore
                 const registroDeCompra = {
                     suplidor,
+                    suplidorNombre,
                     rnc,
                     fecha: formattedDate,
                     moneda,
@@ -903,8 +945,11 @@
                     itbis: itbisCheckbox ? '18%' : naCheckbox ? 'N/A' : '',
                     cuenta,
                     montoFactura,
+                    montoApagar,
                     condicionpago,
                     nombreFactura,
+                    estatus,
+                    pagos,
                     facturaURL: await getDownloadURL(facturaStorageRef)
                 };
 
@@ -924,6 +969,7 @@
                 document.getElementById('condicionpago').value = '';
                 document.getElementById('facturaFile').value = '';
                 document.getElementById('nombreFactura').value = '';
+                document.getElementById('montoApagar').value = '';
                 loadSuplidores();
 
             } catch (error) {
@@ -931,6 +977,7 @@
                 alert('Hubo un error al subir la factura y registrar los datos. Inténtelo de nuevo.');
             }
         });
+
 
 
 
@@ -1353,6 +1400,7 @@
 
 
         const listaFacturasG = document.getElementById('listaFacturasG');
+        
         async function listarFacturasDeSuplidores(pageSize = 10, page = 1) {
             const listaFacturas = document.getElementById('listaFacturasG');
             listaFacturas.innerHTML = '';
@@ -1398,26 +1446,12 @@
                 const tableBody = document.createElement('tbody');
 
                 // Función para obtener el nombre del suplidor
-                async function obtenerNombreSuplidor(suplidorId) {
-                    try {
-                        const suplidorDoc = await getDoc(doc(dba, 'suplidores', suplidorId));
-                        if (suplidorDoc.exists()) {
-                            return suplidorDoc.data().nombre; // Devuelve el nombre del suplidor
-                        } else {
-                            return 'Desconocido'; // Si no se encuentra el suplidor
-                        }
-                    } catch (error) {
-                        console.error('Error al obtener el nombre del suplidor:', error);
-                        return 'Desconocido';
-                    }
-                }
 
                 // Iterar sobre cada factura y crear filas de tabla
                 await Promise.all(docsToShow.map(async (doc) => {
                     const data = doc.data();
-                    const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor } = data;
+                    const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor, suplidorNombre } = data;
 
-                    const suplidorNombre = await obtenerNombreSuplidor(suplidor);
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
