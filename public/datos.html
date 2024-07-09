@@ -107,6 +107,12 @@
                             <span class="pc-mtext">Empleados</span>
                         </a>
                     </li>
+                    <li class="pc-item">
+                        <a href="finanzas" class="pc-link disabled" id="finanzas">
+                            <span class="pc-micon"><i class="ti ti-report-money"></i></span>
+                            <span class="pc-mtext">Finanzas</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -303,6 +309,38 @@
                                         </div>
                                         <div class="d-grid mt-4">
                                             <button type="submit" class="btn btn-dark-blue" id="updateButtonC">Registrar
+                                                datos</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Comprobante Fiscal Nota de Crédito</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="MainFormE">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="desdeN" placeholder="Desde"
+                                                value="B" maxlength="11">
+                                            <label for="desdeN">*Desde</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" id="hastaN" placeholder="Hasta"
+                                                value="B" maxlength="11">
+                                            <label for="hastaN">*Hasta</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="date" class="form-control" id="fechaVencimientoN"
+                                                placeholder="Fecha de Vencimiento">
+                                            <label for="fechaVencimientoN">*Fecha de vencimiento</label>
+                                        </div>
+                                        <div class="d-grid mt-4">
+                                            <button type="submit" class="btn btn-dark-blue" id="updateButtonN">Registrar
                                                 datos</button>
                                         </div>
                                     </div>
@@ -598,6 +636,61 @@
             }
         }
 
+        async function registerDataN() {
+            const desde = document.getElementById('desdeN').value.trim();
+            const hasta = document.getElementById('hastaN').value.trim();
+            const fechaVencimiento = document.getElementById('fechaVencimientoN').value.trim();
+
+            // Validación de campos
+            if (desde === '' || hasta === '' || fechaVencimiento === '') {
+                showAlert('Por favor, complete todos los campos obligatorios.', 'alert-warning');
+                return;
+            }
+
+            const formatToSpanishDate = (dateString) => {
+                const dateParts = dateString.split('-');
+                return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+            };
+
+            const formattedfechaVencimiento = formatToSpanishDate(fechaVencimiento);
+
+            // Aquí puedes continuar con el código para guardar los datos en Firebase u otro proceso necesario
+            const newData = {
+                desde: desde,
+                hasta: hasta,
+                fechaVencimiento: formattedfechaVencimiento
+            };
+
+            try {
+                // Guardar en Firebase Realtime Database
+                await set(ref(db, 'comprobantesNotaCredito/'), newData);
+
+                // Actualizar lastNumber para que parta desde "desde"
+                const lastNumber = parseInt(desde.substring(1)) - 1;
+                await updateLastNotaCreditoNumber(lastNumber);
+
+                showSuccessAlert('Datos registrados exitosamente', 'alert-success');
+            } catch (error) {
+                console.error('Error al registrar datos: ', error);
+            }
+        }
+
+        document.getElementById('updateButtonN').addEventListener('click', (event) => {
+            event.preventDefault();
+            registerDataN();
+        });
+
+        async function updateLastNotaCreditoNumber(newNumber) {
+            try {
+                const notaCreditoRef = ref(db, 'notaCreditoNumber/lastNumber');
+                await set(notaCreditoRef, newNumber);
+                console.log('Número de nota de crédito actualizado correctamente:', newNumber);
+            } catch (error) {
+                console.error('Error al actualizar el número de nota de crédito:', error);
+            }
+        }
+
+
 
         const nameInput = document.getElementById('name');
 
@@ -699,8 +792,6 @@
                 console.error('Error al cargar los datos del comprobante fiscal:', error);
             });
 
-
-
             const userCreds = JSON.parse(sessionStorage.getItem("user-creds"));
             if (userCreds) {
                 const userId = userCreds.uid;
@@ -752,8 +843,62 @@
             }
         }
 
+        function loadCompanyDataN() {
+            const desde = document.getElementById('desdeN').value.trim();
+            const hasta = document.getElementById('hastaN').value.trim();
+            const fechaVencimiento = document.getElementById('fechaVencimientoN').value.trim();
+
+            const dbRef = ref(db);
+            get(child(dbRef, 'datos/')).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const companyData = snapshot.val();
+
+                    document.getElementById('name').value = companyData.name || '';
+                    document.getElementById('rnc').value = companyData.rnc || '';
+                    document.getElementById('number').value = companyData.number || '';
+                    document.getElementById('location').value = companyData.location || '';
+
+                    const logoURL = companyData.logoURL || '';
+                    if (logoURL) {
+                        const logoPreview = document.getElementById('logoPreview');
+                        logoPreview.src = logoURL;
+                        logoPreview.style.display = 'block';
+                    }
+                } else {
+                    console.log('No se encontraron datos de la empresa.');
+                }
+            }).catch((error) => {
+                console.error('Error al cargar los datos de la empresa:', error);
+            });
+
+            const formatToSpanishDate = (dateString) => {
+                const dateParts = dateString.split('/');
+                const day = dateParts[0];
+                const month = dateParts[1];
+                const year = dateParts[2];
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            };
+
+            get(child(dbRef, 'comprobantesNotaCredito/')).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const invoiceData = snapshot.val();
+
+                    document.getElementById('desdeN').value = invoiceData.desde || 'B';
+                    document.getElementById('hastaN').value = invoiceData.hasta || 'B';
+                    const formattedFechaVencimiento = formatToSpanishDate(invoiceData.fechaVencimiento);
+                    document.getElementById('fechaVencimientoN').value = formattedFechaVencimiento;
+                } else {
+                    console.log('No se encontraron datos del comprobante fiscal de nota de crédito.');
+                }
+            }).catch((error) => {
+                console.error('Error al cargar los datos del comprobante fiscal de nota de crédito:', error);
+            });
+        }
+
+
         window.addEventListener('DOMContentLoaded', () => {
             loadCompanyData();
+            loadCompanyDataN();
         });
 
         MainForm.addEventListener('submit', registerData);

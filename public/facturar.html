@@ -247,6 +247,12 @@
                             <span class="pc-mtext">Empleados</span>
                         </a>
                     </li>
+                    <li class="pc-item">
+                        <a href="finanzas" class="pc-link disabled" id="finanzas">
+                            <span class="pc-micon"><i class="ti ti-report-money"></i></span>
+                            <span class="pc-mtext">Finanzas</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -450,7 +456,7 @@
                                 </table>
                             </div>
                             <div id="totalsContainer" class="mt-3">
-                                <label id="totalLabel">Total a pagar: RD$0.00</label>
+                                <label id="totalLabel">Total a pagar:$0.00</label>
                                 <br>
                             </div>
                             <button id="generatePDFButton" type="button" class="btn btn-primary mr-3">Generar
@@ -743,22 +749,27 @@
 
             function updateTotals() {
                 let total = 0;
+                let moneda = '';
+
                 const rows = facturaTableBody.querySelectorAll('tr');
                 rows.forEach(row => {
                     const cells = row.querySelectorAll('td');
                     if (cells.length >= 5) {
                         const cantidad = parseFloat(cells[1].textContent);
-                        const precioUnitario = parseFloat(cells[2].textContent);
+                        const precioUnitarioTexto = cells[2].textContent.trim();
+                        const [precioUnitario, monedaLocal] = precioUnitarioTexto.split(' ');
+                        moneda = monedaLocal;
+                        const precioUnitarioNum = parseFloat(precioUnitario);
                         const itbis = cells[3].textContent === '18%' ? 0.18 : 0;
-                        const subtotal = cantidad * precioUnitario * (1 + itbis);
-                        cells[4].textContent = subtotal.toFixed(2);  // Update the total cell with the new calculated total
+                        const subtotal = cantidad * precioUnitarioNum * (1 + itbis);
+                        cells[4].textContent = `${subtotal.toFixed(2)} ${moneda}`;  // Actualizar la celda de total con el subtotal calculado y la moneda
                         total += subtotal;
                     } else {
                         console.error('Unexpected number of cells in row:', cells.length);
                     }
                 });
                 if (totalLabel) {
-                    totalLabel.textContent = `Total a pagar: $${total.toFixed(2)}`;
+                    totalLabel.textContent = `Total a pagar: ${total.toFixed(2)} ${moneda}`;
                 } else {
                     console.error('totalLabel not found in the DOM');
                 }
@@ -768,9 +779,12 @@
             function addToFactura() {
                 const descripcion = descripcionInput.value;
                 const cantidad = parseInt(cantidadFacturarInput.value);
-                const precio = parseFloat(precioInput.value);
+                const precioMoneda = precioInput.value.split(' ');
+                const moneda = precioMoneda[0];
+                const precio = parseFloat(precioMoneda[1]);
                 const disponible = parseInt(disponibleInput.value);
                 const itbis = ITBISInput.value === '18%' ? '18%' : 'N/A';
+
                 if (!descripcion || isNaN(cantidad) || cantidad <= 0 || isNaN(precio) || precio <= 0) {
                     showAlert('Por favor, complete todos los campos.', 'alert-warning');
                     return;
@@ -782,17 +796,18 @@
                 }
 
                 if (!isNaN(cantidad) && cantidad > 0) {
-                    const total = cantidad * precio * (itbis === '18%' ? 1.18 : 1);
+                    const itbisFactor = itbis === '18%' ? 1.18 : 1;
+                    const total = cantidad * precio * itbisFactor;
                     const row = document.createElement('tr');
 
                     row.innerHTML = `
-                <td>${descripcion}</td>
-                <td>${cantidad}</td>
-                <td>${precio.toFixed(2)}</td>
-                <td>${itbis}</td>
-                <td>${total.toFixed(2)}</td>
-                <td><button class="btn btn-danger btn-sm delete-button">Eliminar</button></td>
-            `;
+            <td>${descripcion}</td>
+            <td>${cantidad}</td>
+            <td>${precio.toFixed(2)} ${moneda}</td>
+            <td>${itbis}</td>
+            <td>${total.toFixed(2)} ${moneda}</td>
+            <td><button class="btn btn-danger btn-sm delete-button">Eliminar</button></td>
+        `;
 
                     facturaTableBody.appendChild(row);
 
@@ -814,7 +829,7 @@
                     searchInput.value = producto.descripcion;
                     descripcionInput.value = producto.descripcion;
                     disponibleInput.value = producto.disponible;
-                    precioInput.value = producto.precioVenta;
+                    precioInput.value = `${producto.precioVenta} ${producto.moneda}`;
                     ITBISInput.value = producto.itbis;
                     cantidadFacturarInput.value = '';
                 });
@@ -1097,7 +1112,7 @@
                 doc.addImage(logoImage, 'PNG', doc.internal.pageSize.width - logoWidth - marginRight, marginTop, logoWidth, logoHeight);
 
                 doc.setFontSize(18);
-                doc.text("Factura", 14, 15);
+                doc.text("FACTURA", 14, 15);
 
                 doc.setFontSize(12);
                 const empresaSnapshot = await get(ref(db, 'datos/'));
@@ -1245,12 +1260,22 @@
                             querySnapshot.forEach(async (doc) => {
                                 const productoId = doc.id;
                                 const productoData = doc.data();
-                                const nuevaCantidadDisponible = productoData.disponible - cantidadFacturada;
+                                const disponible = productoData.disponible;
+
+                                // Verificar si disponible es numérico
+                                let nuevaCantidadDisponible;
+                                if (isNaN(disponible)) {
+                                    nuevaCantidadDisponible = 'N/A';
+                                } else {
+                                    nuevaCantidadDisponible = disponible - cantidadFacturada;
+                                }
 
                                 await updateDoc(doc.ref, { disponible: nuevaCantidadDisponible });
                             });
                         }
                     });
+
+
 
                     if (estatusCheckbox.checked) {
                         const condicionPago = parseInt(document.getElementById('condicionPago').value);
@@ -1276,7 +1301,7 @@
 
                     if (!estatusCheckbox.checked) {
 
-                        await generatePDFHorizontal(numeroFacturaGlobal);
+                        await generatePDFHorizontal(numeroFacturaGlobal, totalFactura);
                     } else {
 
                         facturaTableBody.innerHTML = '';
@@ -1369,7 +1394,7 @@
         generatePDFButton.addEventListener('click', generatePDF);
 
 
-        async function generatePDFHorizontal(numeroFacturaR) {
+        async function generatePDFHorizontal(numeroFacturaR, totalFactura) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape'); // Crear documento PDF en formato horizontal
             const progressContainer = document.getElementById('progress-container');
@@ -1407,7 +1432,7 @@
                 doc.addImage(logoImage, 'PNG', doc.internal.pageSize.width - logoWidth - marginRight, marginTop, logoWidth, logoHeight);
 
                 doc.setFontSize(18);
-                doc.text("Recibo", 14, 15);
+                doc.text("RECIBO", 14, 15);
 
                 doc.setFontSize(12);
                 const empresaSnapshot = await get(ref(db, 'datos/'));
@@ -1435,11 +1460,10 @@
                 }
 
                 const marginLeft = 15;
-                const numeroFactura = await obtenerNumeroRecibo();
+                const numeroRecibo = await obtenerNumeroRecibo();
                 const facturaX = marginLeft; // Ajusta la posición X para alinear a la izquierda
-                doc.text(`No. Recibo: ${numeroFactura}`, facturaX, 60);
-                // doc.text(`Referencia:`, 65);
-                doc.text(`No. Factura: ${numeroFacturaR}`, facturaX, 65);
+                doc.text(`No. Recibo: ${numeroRecibo}`, facturaX, 60);
+                doc.text(`Referencia a Factura No. ${numeroFacturaR}`, facturaX, 65);
 
                 const fechaActual = obtenerFechaActual();
                 const fechaActualF = obtenerFechaActualF();
@@ -1476,7 +1500,7 @@
 
                 doc.autoTable({
                     head: [['No. de Recibo', 'Fecha Actual']],
-                    body: [[numeroFactura, fechaActual]],
+                    body: [[numeroRecibo, fechaActual]],
                     startY: 115
                 });
 
@@ -1487,7 +1511,6 @@
                 });
 
                 doc.text(totalLabel.textContent, 14, doc.lastAutoTable.finalY + 20);
-
 
                 const pdfBlob = doc.output('blob');
 
@@ -1515,6 +1538,27 @@
 
                     await uploadBytes(facturaStorageRef, pdfBlob);
 
+                    const reciboURL = await getDownloadURL(facturaStorageRef);
+
+                    const reciboData = {
+                        paciente: pacienteSeleccionado,
+                        doctor: DoctorSeleccionado,
+                        numeroRecibo: numeroRecibo,
+                        numeroFactura: numeroFacturaR,
+                        fecha: fechaActual,
+                        items: Array.from(facturaTableBody.querySelectorAll('tr')).map(row => ({
+                            descripcion: row.cells[0].textContent,
+                            cantidad: parseInt(row.cells[1].textContent),
+                            precioUnitario: parseFloat(row.cells[2].textContent),
+                            itbis: row.cells[3].textContent,
+                            total: parseFloat(row.cells[4].textContent)
+                        })),
+                        total: totalFactura,
+                        urlRecibo: reciboURL
+                    };
+
+                    await addDoc(collection(dba, 'recibos'), reciboData);
+
                     // Limpiar campos y tabla
                     facturaTableBody.innerHTML = '';
                     document.getElementById('searchPatientInput').value = '';
@@ -1530,17 +1574,18 @@
                     totalLabel.innerText = 'Total a pagar: RD$0.00';
 
                 } catch (error) {
-                    console.error('Error al guardar la factura en Storage:', error);
-                    // showAlert('Error al guardar la factura.', 'alert-danger');
+                    console.error('Error al guardar el recibo en Storage:', error);
+                    // showAlert('Error al guardar el recibo.', 'alert-danger');
                 } finally {
                     progressContainer.style.display = 'none';
                     fondoDesenfocado.style.display = 'none';
                 }
 
-                // showSuccessAlert('La factura se ha generado y guardado exitosamente.', 'alert-success');
+                // showSuccessAlert('El recibo se ha generado y guardado exitosamente.', 'alert-success');
                 doc.save('recibo.pdf');
             };
         }
+
 
 
 

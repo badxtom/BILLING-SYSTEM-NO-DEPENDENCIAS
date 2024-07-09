@@ -221,6 +221,33 @@
             border: none;
         }
 
+        #formularioPagoCuentasPorPagar {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            width: 600px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        #formularioPagoCuentasPorPagar .formulario-contenido {
+            position: relative;
+        }
+
+        #formularioPagoCuentasPorPagar .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
         .table {
             width: 100%;
             margin-bottom: 1rem;
@@ -256,6 +283,8 @@
         .table-striped tbody tr:nth-of-type(even) {
             background-color: #f9f9f9;
         }
+
+
 
 
         @media only screen and (max-width: 768px) {
@@ -582,7 +611,7 @@
                         </div>
                     </div>
 
-                    <div class="card dashnum-card dashnum-card-small overflow-hidden" id="Cuentasporpagar">
+                    <div class="card dashnum-card dashnum-card-small overflow-hidden" id="CuentasporPagar">
                         <span class="round bg-danger small"></span>
                         <span class="round bg-danger big"></span>
                         <div class="card-body p-3">
@@ -753,7 +782,7 @@
         <div class="formulario-contenido">
             <span id="closeFormularioPago" class="close">&times;</span>
             <h2>Detalles de la Factura</h2>
-            <p>Doctor: <span id="facturaDoctor"></span></p>
+            <p>Cliente: <span id="facturaCliente"></span></p>
             <p>Estatus: <span id="facturaEstatus"></span></p>
             <p>Fecha: <span id="facturaFecha"></span></p>
             <p>Total: <span id="facturaTotal"></span></p>
@@ -768,10 +797,107 @@
         </div>
     </div>
 
+    <div id="HistorialCuentasPorPagar" class="formulario-container" style="display: none; width: 60%; margin: 0 auto;">
+        <h3 class="mb-3">Historial General de Cuentas por Pagar</h3>
+        <div class="card-header">
+            <form id="MainFormCuentasPorPagar" class="d-flex" style="max-width: 400px;">
+                <input id="searchInputCuentasPorPagar" class="form-control me-sm-2" type="search"
+                    placeholder="Buscar No. Factura" style="flex: 1 0 auto;">
+                <div class="col-auto">
+                    <!-- <button id="generateExcelButtonCuentasPorPagar" type="button"
+                        class="btn btn-dark-green btn-sm fa-solid fa-file-excel" style="padding: 10px 20px;"></button> -->
+                </div>
+            </form>
+        </div>
+        <div id="listaCuentasPorPagar" class="lista-facturas" style="max-height: 300px; overflow-y: auto;"></div>
+        <div>
+            <ul class="pagination" id="paginationCuentasPorPagar">
+                <li class="page-item" id="previousPageCuentasPorPagar"><a class="page-link" href="#">&laquo;</a></li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item"><a class="page-link" href="#">4</a></li>
+                <li class="page-item"><a class="page-link" href="#">5</a></li>
+                <li class="page-item" id="nextPageCuentasPorPagar"><a class="page-link" href="#">&raquo;</a></li>
+            </ul>
+        </div>
+        <div class="d-grid mt-2">
+            <button type="button" class="btn btn-danger" id="closeHistorialButtonCuentasPorPagar">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="formularioPagoCuentasPorPagar" style="display:none;">
+        <div class="formulario-contenido">
+            <span id="closeFormularioPagoCuentasPorPagar" class="close">&times;</span>
+            <h2>Detalles de la Compra</h2>
+            <p>Suplidor: <span id="facturaSuplidor"></span></p>
+            <p>Estatus: <span id="facturaEstatusP"></span></p>
+            <p>Fecha: <span id="facturaFechaP"></span></p>
+            <p>Total: <span id="facturaTotalP"></span></p>
+            <p>Items: <span id="facturaItemsP"></span></p>
+            <p>Número de Factura: <span id="facturaNumeroP"></span></p>
+            <h3>Pagos</h3>
+            <table id="listaPagosCuentasPorPagar" class="table table-striped">
+                <tbody>
+                    <!-- Aquí se llenarán las filas de pagos -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="formularioNotaCredito" class="formulario-container" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h5>Generar Nota de Crédito</h5>
+            </div>
+            <div class="card-body">
+                <form id="notaCreditoForm">
+                    <div class="form-floating mb-3">
+                        <select class="form-select" id="facturaSelect" aria-label="Seleccionar Factura">
+                            <option selected>Elegir Factura</option>
+                            <!-- Las facturas se cargarán aquí -->
+                        </select>
+                        <label for="facturaSelect">*Elegir Factura</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="comprobanteFiscalFactura"
+                            placeholder="Comprobante Fiscal de la Factura" readonly>
+                        <label for="comprobanteFiscalFactura">*Comprobante Fiscal de la Factura</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="cliente" placeholder="Concepto">
+                        <label for="cliente">*Cliente</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="number" class="form-control" id="monto" placeholder="Monto">
+                        <label for="monto">*Monto</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="concepto" placeholder="Concepto">
+                        <label for="concepto">*Concepto</label>
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-success" id="generarNotaCreditoButton">Generar Nota de
+                            Crédito</button>
+                    </div>
+                    <div class="d-grid mt-2">
+                        <button type="button" class="btn btn-danger" id="closeNotaCreditoButton">Cerrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    </div>
+    </div>
+
+
+
     <div id="progress-container" style="display:none;">
         <div class="progress">
-            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
-                aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%;"></div>
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75"
+                aria-valuemin="0" aria-valuemax="100" style="width: 75%;"></div>
         </div>
     </div>
 
@@ -809,6 +935,8 @@
             messagingSenderId: "906484441227",
             appId: "1:906484441227:web:7b486131ad930a7b03b48e"
         };
+
+        
         const app = initializeApp(firebaseConfig);
         const db = getDatabase();
         const auth = getAuth();
@@ -1105,20 +1233,17 @@
                 // Verificar si no hay egresos para este mes y año
                 let egresosEncontrados = false;
 
-                querySnapshot.forEach((doc) => {
+                for (const doc of querySnapshot.docs) {
                     const data = doc.data();
                     const amount = parseFloat(data.montoFactura || 0);
-                    const estatus = data.estatus;
-                    const pagos = data.pagos || [];
-
                     const docMonth = data.fecha.split('/')[1];
                     const docYear = data.fecha.split('/')[2];
 
-                    if (amount > 0 && docMonth === month && docYear === year) {
-                        // Filtrar según las condiciones de visualización de egresos
-                        if (estatus === 'Cerrada') {
-                            totalExpenses += parseFloat(data.montoApagar);
+                    if (docMonth === month && docYear === year) {
+                        if (data.estatus === 'Cerrada' && amount > 0) {
+                            // Procesar factura cerrada
                             egresosEncontrados = true;
+                            totalExpenses += parseFloat(data.montoApagar);
 
                             const listItem = document.createElement('li');
                             listItem.classList.add('list-group-item', 'px-0');
@@ -1129,36 +1254,17 @@
                                 <small class="text-danger">${data.fecha}</small>
                             </div>
                             <div class="col-auto">
-                                <h4 class="mb-0">$${parseFloat(data.montoApagar).toFixed(2)}<span class="ms-2 align-top avtar avtar-xxs bg-light-danger"><i class="ti ti-chevron-down text-danger"></i></span></h4>
+                                <h4 class="mb-0">$${parseFloat(data.montoFactura).toFixed(2)}<span class="ms-2 align-top avtar avtar-xxs bg-light-danger"><i class="ti ti-chevron-down text-danger"></i></span></h4>
                             </div>
                         </div>
                     `;
                             expensesList.appendChild(listItem);
-
-                        } else if (estatus === 'Abierta') {
-                            // Mostrar el monto a pagar en facturas abiertas
-                            const listItemMontoApagar = document.createElement('li');
-                            listItemMontoApagar.classList.add('list-group-item', 'px-0');
-                            listItemMontoApagar.innerHTML = `
-                        <div class="row align-items-start">
-                            <div class="col">
-                                <h5 class="mb-0">${data.suplidorNombre}</h5>
-                                <small class="text-danger">${data.fecha}</small>
-                            </div>
-                            <div class="col-auto">
-                                <h4 class="mb-0">$${parseFloat(data.montoApagar).toFixed(2)}<span class="ms-2 align-top avtar avtar-xxs bg-light-danger"><i class="ti ti-chevron-down text-danger"></i></span></h4>
-                            </div>
-                        </div>
-                    `;
-                            expensesList.appendChild(listItemMontoApagar);
-                            totalExpenses += parseFloat(data.montoApagar);
-                            egresosEncontrados = true;
-
-                            // Verificar si hay pagos con estatus "Pagado" y mostrar el monto
-                            const pagosPagados = pagos.filter(pago => pago.estatus === 'Pagado');
-                            pagosPagados.forEach((pago) => {
-                                totalExpenses += parseFloat(pago.monto);
+                        } else if (data.estatus === 'Abierta') {
+                            // Procesar pagos de factura abierta
+                            const pagos = data.pagos || [];
+                            if (data.montoApagar > 0) {
                                 egresosEncontrados = true;
+                                totalExpenses += parseFloat(data.montoApagar);
 
                                 const listItem = document.createElement('li');
                                 listItem.classList.add('list-group-item', 'px-0');
@@ -1169,15 +1275,40 @@
                                     <small class="text-danger">${data.fecha}</small>
                                 </div>
                                 <div class="col-auto">
-                                    <h4 class="mb-0">$${parseFloat(pago.monto).toFixed(2)}<span class="ms-2 align-top avtar avtar-xxs bg-light-danger"><i class="ti ti-chevron-down text-danger"></i></span></h4>
+                                    <h4 class="mb-0">$${parseFloat(data.montoApagar).toFixed(2)}<span class="ms-2 align-top avtar avtar-xxs bg-light-danger"><i class="ti ti-chevron-down text-danger"></i></span></h4>
                                 </div>
                             </div>
                         `;
                                 expensesList.appendChild(listItem);
+                            }
+
+                            pagos.forEach((pago) => {
+                                if (pago.estatus === 'Pagado') {
+                                    const pagoAmount = parseFloat(pago.monto || 0);
+                                    if (pagoAmount > 0) {
+                                        egresosEncontrados = true;
+                                        totalExpenses += pagoAmount;
+
+                                        const listItem = document.createElement('li');
+                                        listItem.classList.add('list-group-item', 'px-0');
+                                        listItem.innerHTML = `
+                                    <div class="row align-items-start">
+                                        <div class="col">
+                                            <h5 class="mb-0">${data.suplidorNombre} - Pago ${pago.numeroPago}</h5>
+                                            <small class="text-danger">${pago.fechapago}</small>
+                                        </div>
+                                        <div class="col-auto">
+                                            <h4 class="mb-0">$${pagoAmount.toFixed(2)}<span class="ms-2 align-top avtar avtar-xxs bg-light-danger"><i class="ti ti-chevron-down text-danger"></i></span></h4>
+                                        </div>
+                                    </div>
+                                `;
+                                        expensesList.appendChild(listItem);
+                                    }
+                                }
                             });
                         }
                     }
-                });
+                }
 
                 // Si no se encontraron egresos para el mes y año seleccionados, mostrar mensaje
                 if (!egresosEncontrados) {
@@ -1193,6 +1324,7 @@
                 // Manejar el error aquí según sea necesario
             }
         }
+
 
 
         const openHistorialFacturas = document.getElementById('openHistorialFacturas');
@@ -1245,7 +1377,7 @@
                 const tableHeader = document.createElement('thead');
                 tableHeader.innerHTML = `
         <tr>
-            <th>Doctor</th>
+            <th>Cliente</th>
             <th>Estatus</th>
             <th>Fecha</th>
             <th>Total</th>
@@ -1260,11 +1392,11 @@
                 // Iterar sobre cada factura y crear filas de tabla
                 docsToShow.forEach(doc => {
                     const data = doc.data();
-                    const { doctor, estatus, fecha, total, items, numeroFactura, urlFactura } = data;
+                    const { doctor, estatus, fecha, total, items, numeroFactura, urlFactura, paciente } = data;
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
-            <td>${doctor}</td>
+            <td>${paciente}</td>
             <td>${estatus}</td>
             <td>${fecha}</td>
             <td>${total}</td>
@@ -1392,7 +1524,7 @@
             const tableHeader = document.createElement('thead');
             tableHeader.innerHTML = `
     <tr>
-        <th>Doctor</th>
+        <th>Cliente</th>
         <th>Estatus</th>
         <th>Fecha</th>
         <th>Total</th>
@@ -1407,18 +1539,17 @@
             // Iterar sobre cada factura filtrada y crear filas de tabla
             filteredData.forEach(doc => {
                 const data = doc.data();
-                const { doctor, estatus, fecha, total, items, numeroFactura, urlFactura } = data;
+                const { doctor, estatus, fecha, total, items, numeroFactura, urlFactura, paciente } = data;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-        <td>${doctor}</td>
+        <td>${paciente}</td>
         <td>${estatus}</td>
         <td>${fecha}</td>
         <td>${total}</td>
         <td>${items.length}</td>
         <td>${numeroFactura}</td>
-        <td><a href="${urlFactura}" target="_blank">Ver factura</a></td>
-        <td><button class="btn btn-sm btn-primary" onclick="aplicarPago('${doc.id}')">Aplicar Pago</button></td>`;
+        <td><a href="${urlFactura}" target="_blank">Ver factura</a></td>`;
 
                 tableBody.appendChild(row);
             });
@@ -1488,7 +1619,7 @@
                 const tableHeader = document.createElement('thead');
                 tableHeader.innerHTML = `
         <tr>
-            <th>Doctor</th>
+            <th>Cliente</th>
             <th>Estatus</th>
             <th>Fecha</th>
             <th>Total</th>
@@ -1503,11 +1634,11 @@
                 // Iterar sobre cada factura y crear filas de tabla
                 docsToShow.forEach(doc => {
                     const data = doc.data();
-                    const { doctor, estatus, fecha, total, items, numeroFactura, urlFactura } = data;
+                    const { doctor, estatus, fecha, total, items, numeroFactura, urlFactura, paciente } = data;
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
-            <td>${doctor}</td>
+            <td>${paciente}</td>
             <td>${estatus}</td>
             <td>${fecha}</td>
             <td>${total}</td>
@@ -1636,7 +1767,7 @@
             const tableHeader = document.createElement('thead');
             tableHeader.innerHTML = `
     <tr>
-        <th>Doctor</th>
+        <th>Cliente</th>
         <th>Estatus</th>
         <th>Fecha</th>
         <th>Total</th>
@@ -1651,11 +1782,11 @@
             // Iterar sobre cada factura filtrada y crear filas de tabla
             filteredData.forEach(doc => {
                 const data = doc.data();
-                const { doctor, estatus, fecha, total, items, numeroFactura, urlFactura } = data;
+                const { doctor, estatus, fecha, total, items, numeroFactura, urlFactura, paciente } = data;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-        <td>${doctor}</td>
+        <td>${paciente}</td>
         <td>${estatus}</td>
         <td>${fecha}</td>
         <td>${total}</td>
@@ -1688,10 +1819,10 @@
                 }
 
                 const facturaData = facturaSnap.data();
-                const { doctor, estatus, fecha, total, items, numeroFactura, condicionPago } = facturaData;
+                const { doctor, estatus, fecha, total, items, numeroFactura, condicionPago, paciente } = facturaData;
 
                 // Llenar los datos de la factura en el formulario
-                document.getElementById('facturaDoctor').textContent = doctor;
+                document.getElementById('facturaCliente').textContent = paciente;
                 document.getElementById('facturaEstatus').textContent = estatus;
                 document.getElementById('facturaFecha').textContent = fecha;
                 document.getElementById('facturaTotal').textContent = total;
@@ -1833,6 +1964,650 @@
         }
 
 
+        const openHistorialCuentasPorPagar = document.getElementById('CuentasporPagar');
+        const historialCuentasPorPagar = document.getElementById('HistorialCuentasPorPagar');
+        const listaCuentasPorPagar = document.getElementById('listaCuentasPorPagar');
+
+        // Función para mostrar/ocultar el formulario de cuentas por pagar
+        function toggleFormularioCuentasPorPagar() {
+            const fondoDesenfocado = document.getElementById('fondoDesenfocado');
+            if (historialCuentasPorPagar.style.display === 'none' || historialCuentasPorPagar.style.display === '') {
+                historialCuentasPorPagar.style.display = 'block';
+                fondoDesenfocado.style.display = 'block';
+            } else {
+                historialCuentasPorPagar.style.display = 'none';
+                fondoDesenfocado.style.display = 'none';
+            }
+        }
+
+        // Evento para cerrar el formulario de cuentas por pagar
+        document.getElementById('closeHistorialButtonCuentasPorPagar').addEventListener('click', () => {
+            toggleFormularioCuentasPorPagar();
+        });
+
+        // Función para listar facturas con estatus "Abierta"
+        async function listarCuentasPorPagar(pageSize = 10, page = 1) {
+            listaCuentasPorPagar.innerHTML = '';
+
+            try {
+                const facturasRef = collection(dba, 'RegistroDeCompras');
+                const snapshot = await getDocs(query(facturasRef, where('estatus', '==', 'Abierta')));
+
+                if (snapshot.empty) {
+                    const noDataMessage = document.createElement('p');
+                    noDataMessage.textContent = 'No se encontraron facturas abiertas.';
+                    listaCuentasPorPagar.appendChild(noDataMessage);
+                    return;
+                }
+
+                const totalDocs = snapshot.docs.length;
+                const totalPages = Math.ceil(totalDocs / pageSize);
+                const startIndex = (page - 1) * pageSize;
+                const endIndex = startIndex + pageSize;
+
+                const docsToShow = snapshot.docs.slice(startIndex, endIndex);
+
+                const table = document.createElement('table');
+                table.classList.add('table', 'table-striped');
+
+                // Crear encabezados de tabla
+                const tableHeader = document.createElement('thead');
+                tableHeader.innerHTML = `
+        <tr>
+            <th>Suplidor</th>
+            <th>Estatus</th>
+            <th>Fecha</th>
+            <th>Monto pagado en el momento de la compra</th>
+            <th>Total</th>
+            <th>Número de comprobante fiscal</th>
+            <th>Número de Factura</th>
+            <th>Factura</th>
+        </tr>`;
+                table.appendChild(tableHeader);
+
+                const tableBody = document.createElement('tbody');
+
+                // Iterar sobre cada factura y crear filas de tabla
+                docsToShow.forEach(doc => {
+                    const data = doc.data();
+                    const { suplidorNombre, estatus, fecha, montoFactura, nombreFactura, numeroComprobante, facturaURL, pagos, montoApagar } = data;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+            <td>${suplidorNombre}</td>
+            <td>${estatus}</td>
+            <td>${fecha}</td>
+            <td>${montoApagar}</td>
+            <td>${montoFactura}</td>
+            <td>${numeroComprobante}</td>
+            <td>${nombreFactura}</td>
+            <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>
+            <td><button class="btn btn-sm btn-primary" onclick="aplicarPagoCuentasPorPagar('${doc.id}')">Aplicar Pago</button></td>`;
+
+                    tableBody.appendChild(row);
+                });
+
+                table.appendChild(tableBody);
+                listaCuentasPorPagar.appendChild(table);
+
+                // Actualizar la paginación
+                actualizarPaginacionCuentasPorPagar(totalPages, page, 'paginationCuentasPorPagar');
+
+            } catch (error) {
+                console.error('Error al cargar el historial de cuentas por pagar:', error);
+                const errorMessage = document.createElement('p');
+                errorMessage.textContent = 'Hubo un error al cargar el historial de cuentas por pagar. Por favor, inténtelo de nuevo más tarde.';
+                listaCuentasPorPagar.appendChild(errorMessage);
+            }
+        }
+
+        // Función para actualizar la paginación
+        function actualizarPaginacionCuentasPorPagar(totalPages, currentPage, paginationId) {
+            const paginationContainer = document.getElementById(paginationId);
+            paginationContainer.innerHTML = '';
+
+            // Botón anterior
+            const prevButton = document.createElement('li');
+            prevButton.classList.add('page-item', 'prev-button');
+            if (currentPage === 1) {
+                prevButton.classList.add('disabled');
+            }
+            const prevLink = document.createElement('a');
+            prevLink.classList.add('page-link');
+            prevLink.href = '#';
+            prevLink.textContent = '«';
+            prevLink.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    listarCuentasPorPagar(5, currentPage - 1);
+                }
+            });
+            prevButton.appendChild(prevLink);
+            paginationContainer.appendChild(prevButton);
+
+            // Números de página
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('li');
+                pageButton.classList.add('page-item');
+                if (i === currentPage) {
+                    pageButton.classList.add('active');
+                }
+                const pageLink = document.createElement('a');
+                pageLink.classList.add('page-link');
+                pageLink.href = '#';
+                pageLink.textContent = i;
+                pageLink.addEventListener('click', () => {
+                    listarCuentasPorPagar(5, i);
+                });
+                pageButton.appendChild(pageLink);
+                paginationContainer.appendChild(pageButton);
+            }
+
+            // Botón siguiente
+            const nextButton = document.createElement('li');
+            nextButton.classList.add('page-item', 'next-button');
+            if (currentPage === totalPages) {
+                nextButton.classList.add('disabled');
+            }
+            const nextLink = document.createElement('a');
+            nextLink.classList.add('page-link');
+            nextLink.href = '#';
+            nextLink.textContent = '»';
+            nextLink.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    listarCuentasPorPagar(5, currentPage + 1);
+                }
+            });
+            nextButton.appendChild(nextLink);
+            paginationContainer.appendChild(nextButton);
+        }
+
+        // Función para filtrar la tabla de facturas por texto de búsqueda
+        async function filterTableCuentasPorPagar() {
+            const searchTerm = searchInputCuentasPorPagar.value.toLowerCase();
+
+            try {
+                const facturasRef = collection(dba, 'RegistroDeCompras');
+                const snapshot = await getDocs(query(facturasRef, where('estatus', '==', 'Abierta')));
+
+                if (snapshot.empty) {
+                    console.log('No hay facturas abiertas encontradas.');
+                    return;
+                }
+
+                const filteredData = snapshot.docs.filter(doc => {
+                    const data = doc.data();
+                    return data.numeroComprobante.toString().includes(searchTerm);
+                });
+
+                actualizarTablaCuentasPorPagar(filteredData); // Actualiza la tabla con los datos filtrados
+
+            } catch (error) {
+                console.error('Error al filtrar datos:', error);
+            }
+        }
+
+        // Función para actualizar la tabla con datos filtrados
+        function actualizarTablaCuentasPorPagar(filteredData) {
+            listaCuentasPorPagar.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                const noDataMessage = document.createElement('p');
+                noDataMessage.textContent = 'No se encontraron registros que coincidan con la búsqueda.';
+                listaCuentasPorPagar.appendChild(noDataMessage);
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.classList.add('table', 'table-striped');
+
+            // Crear encabezados de tabla
+            const tableHeader = document.createElement('thead');
+            tableHeader.innerHTML = `
+    <tr>
+        <th>Suplidor</th>
+        <th>Estatus</th>
+        <th>Fecha</th>
+        <th>Total</th>
+        <th>Número de Factura</th>
+        <th>Factura</th>
+    </tr>`;
+            table.appendChild(tableHeader);
+
+            const tableBody = document.createElement('tbody');
+
+            // Iterar sobre cada factura filtrada y crear filas de tabla
+            filteredData.forEach(doc => {
+                const data = doc.data();
+                const { suplidorNombre, estatus, fecha, montoFactura, nombreFactura, numeroComprobante, facturaURL, pagos } = data;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+        <td>${suplidorNombre}</td>
+        <td>${estatus}</td>
+        <td>${fecha}</td>
+        <td>${montoFactura}</td>
+        <td>${numeroComprobante}</td>
+        <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>
+        <td><button class="btn btn-sm btn-primary" onclick="aplicarPagoCuentasPorPagar('${doc.id}')">Aplicar Pago</button></td>`;
+
+                tableBody.appendChild(row);
+            });
+
+            table.appendChild(tableBody);
+            listaCuentasPorPagar.appendChild(table);
+        }
+
+        window.aplicarPagoCuentasPorPagar = async function (docId) {
+            toggleFormularioPagoCuentasPorPagar();
+
+            const listaPagos = document.getElementById('listaPagosCuentasPorPagar');
+            listaPagos.innerHTML = '';
+
+            try {
+                // Obtener los datos de la factura desde Firestore
+                const facturaRef = doc(dba, 'RegistroDeCompras', docId);
+                const facturaSnap = await getDoc(facturaRef);
+
+                if (!facturaSnap.exists()) {
+                    console.error('La factura no existe.');
+                    return;
+                }
+
+                const facturaData = facturaSnap.data();
+                const { suplidorNombre, estatus, fecha, montoFactura, pagos, numeroComprobante, nombreFactura } = facturaData;
+
+                // Llenar los datos de la factura en el formulario
+                document.getElementById('facturaSuplidor').textContent = suplidorNombre;
+                document.getElementById('facturaEstatusP').textContent = estatus;
+                document.getElementById('facturaFechaP').textContent = fecha;
+                document.getElementById('facturaTotalP').textContent = montoFactura;
+                document.getElementById('facturaItemsP').textContent = pagos.length;
+                document.getElementById('facturaNumeroP').textContent = nombreFactura;
+
+                // Listar los pagos del array 'pagos'
+                const totalF = montoFactura;
+
+                let tableContent = `
+        <thead>
+            <tr>
+                <th>Pago</th>
+                <th>Monto en Factura</th>
+                <th>A Pagar</th>
+                <th>Fecha</th>
+                <th>Estatus</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+                pagos.forEach((pago, index) => {
+                    const { estatus, fechapago, monto = 0, numeroPago, total } = pago;
+
+                    tableContent += `
+            <tr>
+                <td>Pago ${numeroPago}</td>
+                <td>${totalF}</td>
+                <td>${monto}</td>
+                <td>${fechapago || 'Pendiente'}</td>
+                <td>${estatus}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="pagarCuentasPorPagar('${docId}', ${index}, ${monto})" ${estatus === 'Pagado' ? 'disabled' : ''}>Pagar</button>
+                </td>
+            </tr>
+        `;
+                });
+
+                tableContent += '</tbody>';
+                listaPagos.innerHTML = tableContent;
+
+            } catch (error) {
+                console.error('Error al aplicar pago:', error);
+            }
+        }
+
+        window.pagarCuentasPorPagar = async function (facturaId, pagoIndex, total) {
+            try {
+                const facturaRef = doc(dba, 'RegistroDeCompras', facturaId);
+                const facturaSnap = await getDoc(facturaRef);
+
+                if (!facturaSnap.exists()) {
+                    console.error('La factura no existe.');
+                    return;
+                }
+
+                const facturaData = facturaSnap.data();
+                const pagos = facturaData.pagos;
+
+                if (!pagos || !pagos[pagoIndex]) {
+                    console.error('El pago no existe.');
+                    return;
+                }
+
+                const fechaActual = obtenerFechaActual();
+
+                pagos[pagoIndex].estatus = 'Pagado';
+                pagos[pagoIndex].fechapago = fechaActual;
+
+                await updateDoc(facturaRef, {
+                    pagos: pagos
+                });
+
+                // Verificar si todos los pagos están pagados
+                const todosPagados = pagos.every(pago => pago.estatus === 'Pagado');
+
+                if (todosPagados) {
+                    await updateDoc(facturaRef, {
+                        estatus: 'Cerrada'
+                    });
+                }
+
+                const { suplidorNombre, numeroComprobante } = facturaData;
+
+                // Generar recibo PDF
+                // await generatePDFHorizontal(facturaId, suplidorNombre, numeroComprobante, total);
+
+                // Actualizar la lista de pagos en el formulario
+                aplicarPagoCuentasPorPagar(facturaId);
+
+            } catch (error) {
+                console.error('Error al pagar:', error);
+            }
+        }
+
+        // Función para mostrar/ocultar el formulario de pagos
+        function toggleFormularioPagoCuentasPorPagar() {
+            const formularioPagoCuentasPorPagar = document.getElementById('formularioPagoCuentasPorPagar');
+            console.log('llegue');
+
+            if (formularioPagoCuentasPorPagar.style.display === 'none') {
+                formularioPagoCuentasPorPagar.style.display = 'block';
+            } else {
+                formularioPagoCuentasPorPagar.style.display = 'none';
+            }
+        }
+
+        // Añadir el evento para cerrar el formulario de pagos
+        document.getElementById('closeFormularioPagoCuentasPorPagar').addEventListener('click', () => {
+            toggleFormularioPagoCuentasPorPagar();
+        });
+
+        // Escuchar el evento de entrada en el campo de búsqueda para filtrar las facturas
+        document.getElementById('searchInputCuentasPorPagar').addEventListener('input', filterTableCuentasPorPagar);
+
+        // Llamar a la función para cargar el historial de facturas abiertas al hacer clic en el enlace
+        openHistorialCuentasPorPagar.addEventListener('click', async () => {
+            toggleFormularioCuentasPorPagar(); // Mostrar el formulario antes de cargar las facturas
+
+            await listarCuentasPorPagar(5, 1); // Llama a la función para cargar las facturas con los parámetros deseados
+        });
+
+
+        function toggleFormularioNotaCredito() {
+            const fondoDesenfocado = document.getElementById('fondoDesenfocado');
+            const formularioNotaCredito = document.getElementById('formularioNotaCredito');
+
+            if (formularioNotaCredito.style.display === 'none' || formularioNotaCredito.style.display === '') {
+                formularioNotaCredito.style.display = 'block';
+                fondoDesenfocado.style.display = 'block';
+                loadFacturas();
+            } else {
+                formularioNotaCredito.style.display = 'none';
+                fondoDesenfocado.style.display = 'none';
+            }
+        }
+
+        document.getElementById('NotaDeCredito').addEventListener('click', toggleFormularioNotaCredito);
+
+        document.getElementById('closeNotaCreditoButton').addEventListener('click', toggleFormularioNotaCredito);
+
+        document.getElementById('generarNotaCreditoButton').addEventListener('click', async (event) => {
+            event.preventDefault();
+            await generarNotaCredito();
+            toggleFormularioNotaCredito();
+        });
+
+
+        async function loadFacturas() {
+            const facturaSelect = document.getElementById('facturaSelect');
+            facturaSelect.innerHTML = '<option selected>Elegir Factura</option>';
+
+            try {
+                const q = query(collection(dba, "facturas"), where("comprobante", "!=", null));
+                const querySnapshot = await getDocs(q);
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id; // Use the document ID for the value
+                    option.text = `Factura ${data.numeroFactura} - ${data.fecha}`;
+                    facturaSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar las facturas:', error);
+            }
+        }
+
+        document.getElementById('facturaSelect').addEventListener('change', async function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const facturaId = selectedOption.value;
+
+            try {
+                const facturaDoc = await getDoc(doc(dba, "facturas", facturaId));
+                if (facturaDoc.exists()) {
+                    const facturaData = facturaDoc.data();
+                    document.getElementById('comprobanteFiscalFactura').value = facturaData.comprobante;
+                    document.getElementById('cliente').value = facturaData.paciente; // Autocomplete the cliente field
+                }
+            } catch (error) {
+                console.error('Error al obtener los detalles de la factura:', error);
+            }
+        });
+
+        async function generarNotaCredito() {
+            const comprobanteFiscalFactura = document.getElementById('comprobanteFiscalFactura').value.trim();
+            const monto = parseFloat(document.getElementById('monto').value.trim());
+            const concepto = document.getElementById('concepto').value.trim();
+            const cliente = document.getElementById('cliente').value.trim();
+
+            if (comprobanteFiscalFactura === '' || isNaN(monto) || monto <= 0 || concepto === '' || cliente === '') {
+                showAlert('Por favor, complete todos los campos obligatorios con valores válidos.', 'alert-warning');
+                return;
+            }
+
+            let numeroNotaCredito = '';
+            let fechaVencimiento = '';
+
+            try {
+                const comprobantesSnapshot = await get(ref(db, 'comprobantesNotaCredito/'));
+                if (comprobantesSnapshot.exists()) {
+                    const comprobantesData = comprobantesSnapshot.val();
+                    const desde = comprobantesData.desde || '';
+                    const hasta = comprobantesData.hasta || '';
+                    fechaVencimiento = comprobantesData.fechaVencimiento || '';
+
+                    let lastNotaCreditoNumber = await getLastNotaCreditoNumber();
+                    let nextNotaCreditoNumber = lastNotaCreditoNumber + 1;
+
+                    if (nextNotaCreditoNumber > parseInt(hasta.substring(1))) {
+                        showAlert('Se ha alcanzado el límite máximo de notas de crédito para este comprobante.', 'alert-warning');
+                        return;
+                    }
+
+                    numeroNotaCredito = `${desde.substring(0, 1)}${nextNotaCreditoNumber.toString().padStart(hasta.length - 1, '0')}`;
+                    await updateLastNotaCreditoNumber(nextNotaCreditoNumber);
+                } else {
+                    showAlert('No se encontraron datos de comprobantes válidos.', 'alert-danger');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error al obtener datos de comprobantes:', error);
+                showAlert('Error al obtener datos de comprobantes.', 'alert-danger');
+                return;
+            }
+
+            const notaCreditoData = {
+                comprobanteFiscalFactura,
+                monto,
+                concepto,
+                numeroNotaCredito,
+                fechaVencimiento,
+                fecha: obtenerFechaActual(),
+                cliente
+            };
+
+            try {
+                await addDoc(collection(dba, 'notasDeCredito'), notaCreditoData);
+                showAlert('Nota de Crédito generada exitosamente.', 'alert-success');
+                document.getElementById('notaCreditoForm').reset();
+                document.getElementById('formularioNotaCredito').style.display = 'none';
+                await generateNotaCreditoPDF(notaCreditoData);
+
+            } catch (error) {
+                console.error('Error al guardar la Nota de Crédito en Firestore:', error);
+                showAlert('Error al guardar la Nota de Crédito.', 'alert-danger');
+            }
+        }
+
+        async function getLastNotaCreditoNumber() {
+            const lastNumberSnap = await get(ref(db, 'notaCreditoNumber/lastNumber'));
+            return lastNumberSnap.exists() ? lastNumberSnap.val() : 0;
+        }
+
+        async function updateLastNotaCreditoNumber(newNumber) {
+            try {
+                const notaCreditoRef = ref(db, 'notaCreditoNumber/lastNumber');
+                await set(notaCreditoRef, newNumber);
+                console.log('Número de nota de crédito actualizado correctamente:', newNumber);
+            } catch (error) {
+                console.error('Error al actualizar el número de nota de crédito:', error);
+            }
+        }
+
+        async function generateNotaCreditoPDF(notaCreditoData) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const progressContainer = document.getElementById('progress-container');
+
+            let { comprobanteFiscalFactura, monto, concepto, numeroNotaCredito, fecha, cliente } = notaCreditoData;
+
+            doc.setFontSize(12);
+
+            progressContainer.style.display = 'block';
+
+            const logoImage = new Image();
+            logoImage.src = 'unoin.png';
+
+            logoImage.onload = async () => {
+                const logoWidth = 20;
+                const logoHeight = (logoWidth / logoImage.width) * logoImage.height;
+                const marginRight = 15;
+                const marginTop = 5;
+                doc.addImage(logoImage, 'PNG', doc.internal.pageSize.width - logoWidth - marginRight, marginTop, logoWidth, logoHeight);
+
+                doc.setFontSize(18);
+                doc.text("NOTA DE CRÉDITO", 14, 15);
+
+                doc.setFontSize(12);
+                const empresaSnapshot = await get(ref(db, 'datos/'));
+                const empresaData = empresaSnapshot.val();
+
+                if (empresaData) {
+                    doc.text(`${empresaData.name}`, 15, 25);
+                    doc.text(`RNC: ${empresaData.rnc}`, 15, 30);
+                    doc.text(`Teléfono: ${empresaData.number}`, 15, 35);
+
+                    const location = empresaData.location;
+                    if (location.length > 15) {
+                        const firstLine = location.substring(0, 23);
+                        let secondLine = location.substring(23);
+                        if (secondLine.length > 35) {
+                            const secondLineFirstPart = secondLine.substring(0, 35);
+                            const secondLineSecondPart = secondLine.substring(35);
+                            secondLine = secondLineFirstPart + '\n' + secondLineSecondPart;
+                        }
+                        doc.text(`Dirección: ${firstLine}`, 15, 40);
+                        doc.text(`${secondLine}`, 15, 45);
+                    } else {
+                        doc.text(`Dirección: ${empresaData.location}`, 17, 40);
+                    }
+                }
+
+                const marginLeft = 15;
+                doc.text(`NCF Nota de Crédito: ${numeroNotaCredito}`, marginLeft, 60);
+
+                const fechaActual = obtenerFechaActual();
+                const fechaActualF = obtenerFechaActualF();
+                const fechaX = marginLeft;
+                doc.text(`Fecha: ${fecha}`, fechaX, 65);
+
+                const nombreDoctorX = marginLeft;
+                doc.text("NCF Factura:", nombreDoctorX, 75);
+                doc.text(`${comprobanteFiscalFactura}`, nombreDoctorX, 80);
+
+                doc.text(`Cliente: ${cliente}`, nombreDoctorX, 90);
+
+                doc.line(14, 100, 200, 100);
+
+                doc.autoTable({
+                    head: [['Concepto']],
+                    body: [[concepto]],
+                    startY: 105
+                });
+
+                const totalY = doc.lastAutoTable.finalY + 10;
+                doc.text(`Cantidad: $${monto.toFixed(2)}`, 14, totalY);
+
+                const finalY = doc.internal.pageSize.height - 10;
+                const lineaWidth = (doc.internal.pageSize.width - 100) / 2;
+                const lineaX1 = (doc.internal.pageSize.width / 2) - (lineaWidth / 2);
+                const lineaX2 = lineaX1 + lineaWidth;
+                doc.setLineWidth(0.5);
+                doc.line(lineaX1, finalY, lineaX2, finalY);
+
+                const textoFirmaCelloX = doc.internal.pageSize.width / 2;
+                const textoFirmaCelloY = finalY + 5;
+                doc.setFontSize(10);
+                doc.text("Firma y Cello", textoFirmaCelloX, textoFirmaCelloY, { align: "center" });
+
+                const pdfBlob = doc.output('blob');
+
+                try {
+                    const storage = getStorage(app);
+
+                    // Guardar en Storage usando el ID de la nota de crédito como carpeta
+                    const notaCreditoFolderRef = storageRef(storage, `notasDeCredito/${numeroNotaCredito}/`);
+                    let notaCreditoStorageRef = storageRef(notaCreditoFolderRef, `${fechaActualF}.pdf`);
+
+                    // Verificar si ya existe un archivo con el mismo nombre
+                    let i = 1;
+                    while (await getDownloadURL(notaCreditoStorageRef).then(() => true).catch(() => false)) {
+                        notaCreditoStorageRef = storageRef(notaCreditoFolderRef, `${fechaActualF} (${i}).pdf`);
+                        i++;
+                    }
+
+                    await uploadBytes(notaCreditoStorageRef, pdfBlob);
+
+                    const notaCreditoURL = await getDownloadURL(notaCreditoStorageRef);
+
+                    // Definir correctamente la referencia al documento de la Nota de Crédito en Firestore
+                    const notaCreditoDocRef = doc(dba, 'notasDeCredito', notaCreditoData.id);
+                    await updateDoc(notaCreditoDocRef, { urlNotaCredito: notaCreditoURL });
+
+                } catch (error) {
+                    console.error('Error al guardar la Nota de Crédito en Storage:', error);
+                } finally {
+                    progressContainer.style.display = 'none';
+                }
+
+                showAlert('Nota de Crédito generada exitosamente.', 'alert-success');
+                doc.save('nota_credito.pdf');
+            };
+        }
+
+
+
+
 
 
         document.getElementById('generateExcelButtonI').addEventListener('click', async (event) => {
@@ -1968,23 +2743,28 @@
                 for (const doc of querySnapshot.docs) {
                     const data = doc.data();
                     const { suplidorNombre, numeroComprobante, fecha, estatus, montoApagar, montoFactura, nombreFactura, condicionpago } = data;
-                    let pagosInfo = '';
+                    let pagosInfo = 'N/A';
 
-                    // Verificar si la factura está abierta y agregar pagos con estatus "Pagado"
-                    if (estatus === 'Abierta') {
-                        const pagosPagados = data.pagos.filter(pago => pago.estatus === 'Pagado');
-                        pagosPagados.forEach((pago) => {
-                            pagosInfo += `Pago ${pago.numeroPago}: $${pago.monto}, `;
-                            totalExpenses += parseFloat(pago.monto);
+                    // Verificar si la factura tiene pagos
+                    const pagos = data.pagos || [];
+                    if (pagos.length > 0) {
+                        pagosInfo = '';
+                        pagos.forEach((pago) => {
+                            if (pago.estatus === 'Pagado') {
+                                pagosInfo += `Pago ${pago.numeroPago} (Fecha: ${pago.fechapago || 'Pendiente'}): $${pago.monto}, `;
+                                totalExpenses += parseFloat(pago.monto);
+                            }
                         });
                         pagosInfo = pagosInfo.slice(0, -2); // Eliminar la última coma y espacio
+                    }
 
-                        if (montoApagar > 0) {
-                            worksheet.addRow([suplidorNombre, numeroComprobante, fecha, estatus, montoApagar, montoFactura, nombreFactura, condicionpago, pagosInfo]);
-                        }
-
-                    } else if (estatus === 'Cerrada') {
-                        worksheet.addRow([suplidorNombre, numeroComprobante, fecha, estatus, montoApagar, montoFactura, nombreFactura, condicionpago, '']);
+                    if (estatus === 'Cerrada') {
+                        // Agregar fila a la hoja de Excel para facturas cerradas
+                        worksheet.addRow([suplidorNombre, numeroComprobante, fecha, estatus, montoApagar, montoFactura, nombreFactura, condicionpago, pagosInfo]);
+                        totalExpenses += parseFloat(montoApagar);
+                    } else if (estatus === 'Abierta' && montoApagar > 0) {
+                        // Agregar fila a la hoja de Excel para facturas abiertas
+                        worksheet.addRow([suplidorNombre, numeroComprobante, fecha, estatus, montoApagar, montoFactura, nombreFactura, condicionpago, pagosInfo]);
                         totalExpenses += parseFloat(montoApagar);
                     }
                 }
@@ -2025,7 +2805,6 @@
                 showAlertExcel(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
             }
         });
-
 
         document.getElementById('generateExcelButtonF').addEventListener('click', async (event) => {
             event.preventDefault();
@@ -2080,7 +2859,7 @@
                         pagosInfo = ''; // Reiniciar pagosInfo si hay pagos
                         pagosSnapshot.forEach((pagoDoc) => {
                             const pagoData = pagoDoc.data();
-                            const pagoGanancia = pagoData.total|| 0;
+                            const pagoGanancia = pagoData.total || 0;
                             const fechapago = pagoData.fechapago || 'Pendiente';
                             pagosInfo += `Pago ${pagoData.numeroPago} (Fecha: ${fechapago}): $${pagoGanancia}, `;
                         });
@@ -2088,7 +2867,7 @@
                     }
 
                     // Filtrar facturas con ganancia válida (mayor que 0 y no estatus Pendiente)
-                    if (ganancia > 0 && !(estatus === 'Abierta' && ganancia === 'Pendiente')) {
+                    if (!(estatus === 'Abierta' && ganancia === 'Pendiente')) {
                         // Agregar fila a la hoja de Excel
                         worksheet.addRow([
                             numeroFactura,
@@ -2252,6 +3031,22 @@
                     }
 
                     await uploadBytes(reciboStorageRef, pdfBlob);
+
+                    const reciboURL = await getDownloadURL(reciboStorageRef);
+
+                    const reciboData = {
+                        paciente: pacienteSeleccionado,
+                        doctor: doctorSeleccionado,
+                        numeroRecibo: numeroRecibo,
+                        numeroFactura: numeroFactura,
+                        fecha: fechaActual,
+                        totalPago: totalPago,
+                        urlRecibo: reciboURL
+                    };
+
+                    await addDoc(collection(dba, 'recibos'), reciboData)
+
+
                 } catch (error) {
                     console.error('Error al guardar el recibo en Storage:', error);
                 } finally {
@@ -2323,6 +3118,20 @@
             setTimeout(() => {
                 alertBox.remove();
             }, 3000);
+        }
+
+        function showAlert(message, alertType) {
+            const alertDiv = document.createElement('div');
+            alertDiv.classList.add('alert', 'alert-dismissible', alertType, 'position-fixed', 'top-50', 'start-50', 'translate-middle');
+            alertDiv.innerHTML = `
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <h4 class="alert-heading">¡Advertencia!</h4>
+    <p class="mb-0">${message}</p>
+  `;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
         }
 
 

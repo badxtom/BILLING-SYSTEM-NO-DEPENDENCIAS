@@ -238,6 +238,12 @@
                             <span class="pc-mtext">Empleados</span>
                         </a>
                     </li>
+                    <li class="pc-item">
+                        <a href="finanzas" class="pc-link disabled" id="finanzas">
+                            <span class="pc-micon"><i class="ti ti-report-money"></i></span>
+                            <span class="pc-mtext">Finanzas</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -581,7 +587,7 @@
                 </div>
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="nombreFactura" placeholder="Nombre de la factura">
-                    <label for="nombreFactura">Nombre de la factura</label>
+                    <label for="nombreFactura">No. Factura</label>
                 </div>
                 <div class="d-grid mt-4">
                     <button type="submit" class="btn btn-success" id="subirButton">Registrar datos</button>
@@ -944,8 +950,8 @@
                     tipoGasto,
                     itbis: itbisCheckbox ? '18%' : naCheckbox ? 'N/A' : '',
                     cuenta,
-                    montoFactura,
-                    montoApagar,
+                    montoFactura: `${montoFactura.toFixed(2)} ${moneda} `,
+                    montoApagar: `${montoApagar.toFixed(2)} ${moneda}`, 
                     condicionpago,
                     nombreFactura,
                     estatus,
