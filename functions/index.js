@@ -40,17 +40,31 @@ exports.sendAppointmentReminders = functions.pubsub.schedule('0 4 * * *').onRun(
 
     try {
         const snapshot = await db.collection('CitasAgendas').get();
+        const batch = db.batch();
+
         snapshot.forEach(async (doc) => {
             const appointment = doc.data();
+            const appointmentDateParts = appointment.fechaEntrada.split('/');
+            const appointmentDate = new Date(`${appointmentDateParts[2]}-${appointmentDateParts[1]}-${appointmentDateParts[0]}`);
+
             if (appointment.fechaEntrada === tomorrowFormatted) {
                 const email = appointment.email;
                 const subject = 'RECORDATORIO DE CITA MÉDICA- UNOIN';
                 const message = `Estimado(a) Sr(a) ${appointment.paciente},\n\nEste es un recordatorio de su cita médica con su especialista ${appointment.doctor} programada para el ${appointment.fechaEntrada} a las ${appointment.hora}.\n\nUnidad Oncológica Integral\nCalle Arístides Fiallo Cabral #51, Gazcue. Santo Domingo\nTeléfono (809) 530-1057`;
                 await sendReminderEmail(email, subject, message);
             }
+
+            if (appointmentDate < currentDate) {
+                const historialRef = db.collection('HistorialCitasAgendas').doc(doc.id);
+                batch.set(historialRef, appointment);
+                batch.delete(doc.ref);
+            }
         });
-        console.log('Appointment reminder emails sent successfully');
+
+        await batch.commit();
+        console.log('Appointment reminder emails sent and past appointments archived successfully');
     } catch (error) {
-        console.error('Error fetching appointments:', error);
+        console.error('Error processing appointments:', error);
     }
+
 });

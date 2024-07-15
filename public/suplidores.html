@@ -181,12 +181,29 @@
                 padding: 10px;
             }
         }
+
+        .btn-dark-green {
+            background-color: rgb(12, 97, 9);
+            color: white;
+            border: none;
+            transition: background-color 0.3s ease;
+
+        }
+
+        .btn-dark-green:hover {
+            background-color: rgb(4, 97, 24);
+
+        }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx-style/0.8.13/xlsx-style.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.1/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 
 </head>
 <script>
@@ -630,6 +647,11 @@
                 <form id="MainFormSEG" class="d-flex" style="max-width: 400px;">
                     <input id="searchInputG" class="form-control me-sm-2" type="search" placeholder="Buscar"
                         style="flex: 1 0 auto;">
+                    <div class="col-auto">
+                        <button id="generateExcelButtonF" type="button"
+                            class="btn btn-dark-green btn-sm fa-solid fa-file-excel"
+                            style="padding: 10px 20px;"></button>
+                    </div>
                 </form>
             </div>
             <div id="listaFacturasG" class="lista-facturas"></div>
@@ -931,7 +953,7 @@
                     for (let j = 0; j < condicionpago; j++) {
                         pagos.push({
                             numeroPago: j + 1,
-                            monto: pagoPorCuota,
+                            monto: `${pagoPorCuota.toFixed(2)} ${moneda}`,
                             estatus: 'Pendiente'
                         });
                     }
@@ -951,7 +973,7 @@
                     itbis: itbisCheckbox ? '18%' : naCheckbox ? 'N/A' : '',
                     cuenta,
                     montoFactura: `${montoFactura.toFixed(2)} ${moneda} `,
-                    montoApagar: `${montoApagar.toFixed(2)} ${moneda}`, 
+                    montoApagar: `${montoApagar.toFixed(2)} ${moneda}`,
                     condicionpago,
                     nombreFactura,
                     estatus,
@@ -1365,7 +1387,7 @@
             <th>ITBIS</th>
             <th>Cuenta</th>
             <th>Monto en Factura</th>
-            <th>Nombre de la Factura</th>
+            <th>No. Factura</th>
             <th>Factura</th>
         </tr>
     `;
@@ -1406,7 +1428,7 @@
 
 
         const listaFacturasG = document.getElementById('listaFacturasG');
-        
+
         async function listarFacturasDeSuplidores(pageSize = 10, page = 1) {
             const listaFacturas = document.getElementById('listaFacturasG');
             listaFacturas.innerHTML = '';
@@ -1435,42 +1457,61 @@
                 // Crear encabezados de tabla
                 const tableHeader = document.createElement('thead');
                 tableHeader.innerHTML = `
-    <tr>
-        <th>Suplidor</th>
-        <th>Fecha</th>
-        <th>Moneda</th>
-        <th>Número de Comprobante</th>
-        <th>Tipo de Gasto</th>
-        <th>ITBIS</th>
-        <th>Cuenta</th>
-        <th>Monto en Factura</th>
-        <th>Nombre de la Factura</th>
-        <th>Factura</th>
-    </tr>`;
+            <tr>
+                <th>Suplidor</th>
+                <th>Fecha</th>
+                <th>Moneda</th>
+                <th>Número de Comprobante</th>
+                <th>Tipo de Gasto</th>
+                <th>ITBIS</th>
+                <th>Cuenta</th>
+                <th>Monto en Factura</th>
+                <th>No. Factura</th>
+                <th>Factura</th>
+                <th>Recibo de Pago</th>
+            </tr>`;
                 table.appendChild(tableHeader);
 
                 const tableBody = document.createElement('tbody');
 
                 // Función para obtener el nombre del suplidor
+                async function obtenerNombreSuplidor(suplidorId) {
+                    try {
+                        const suplidorDoc = await getDoc(doc(dba, 'suplidores', suplidorId));
+                        if (suplidorDoc.exists()) {
+                            return suplidorDoc.data().nombre; // Devuelve el nombre del suplidor
+                        } else {
+                            return 'Desconocido'; // Si no se encuentra el suplidor
+                        }
+                    } catch (error) {
+                        console.error('Error al obtener el nombre del suplidor:', error);
+                        return 'Desconocido';
+                    }
+                }
 
                 // Iterar sobre cada factura y crear filas de tabla
                 await Promise.all(docsToShow.map(async (doc) => {
                     const data = doc.data();
-                    const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor, suplidorNombre } = data;
+                    const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor, suplidorNombre, pagos } = data;
 
+                    let reciboDePago = 'N/A';
+                    if (pagos && pagos.length > 0) {
+                        reciboDePago = pagos.map(pago => pago.reciboURL ? `<a href="${pago.reciboURL}" target="_blank">Ver recibo</a>` : 'Pendiente').join(', ');
+                    }
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
-        <td>${suplidorNombre}</td>
-        <td>${fecha}</td>
-        <td>${moneda}</td>
-        <td>${numeroComprobante}</td>
-        <td>${tipoGasto}</td>
-        <td>${itbis}</td>
-        <td>${cuenta}</td>
-        <td>${montoFactura}</td>
-        <td>${nombreFactura}</td>
-        <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>`;
+                <td>${suplidorNombre}</td>
+                <td>${fecha}</td>
+                <td>${moneda}</td>
+                <td>${numeroComprobante}</td>
+                <td>${tipoGasto}</td>
+                <td>${itbis}</td>
+                <td>${cuenta}</td>
+                <td>${montoFactura}</td>
+                <td>${nombreFactura}</td>
+                <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>
+                <td>${reciboDePago}</td>`;
 
                     tableBody.appendChild(row);
                 }));
@@ -1488,6 +1529,7 @@
                 listaFacturas.appendChild(errorMessage);
             }
         }
+
 
         function actualizarPaginacion(totalPages, currentPage, paginationId) {
             const paginationContainer = document.getElementById(paginationId);
@@ -1617,19 +1659,24 @@
             <th>ITBIS</th>
             <th>Cuenta</th>
             <th>Monto en Factura</th>
-            <th>Nombre de la Factura</th>
+            <th>No. Factura</th>
             <th>Factura</th>
+            <th>Recibo de Pago</th>
         </tr>`;
             table.appendChild(tableHeader);
 
             const tableBody = document.createElement('tbody');
 
-
             filteredData.forEach(async doc => {
                 const data = doc.data();
-                const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor } = data;
+                const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor, pagos } = data;
 
                 const suplidorNombre = await obtenerNombreSuplidor(suplidor);
+
+                let reciboDePago = 'N/A';
+                if (pagos && pagos.length > 0) {
+                    reciboDePago = pagos.map(pago => pago.reciboURL ? `<a href="${pago.reciboURL}" target="_blank">Ver recibo</a>` : 'Pendiente').join(', ');
+                }
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1642,7 +1689,8 @@
             <td>${cuenta}</td>
             <td>${montoFactura}</td>
             <td>${nombreFactura}</td>
-            <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>`;
+            <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>
+            <td>${reciboDePago}</td>`;
 
                 tableBody.appendChild(row);
             });
@@ -1650,6 +1698,7 @@
             table.appendChild(tableBody);
             listaFacturas.appendChild(table);
         }
+
 
 
         document.getElementById('searchInputG').addEventListener('input', filterTableG);
@@ -1758,6 +1807,112 @@
             toggleFormularioE();
             saveChanges();
         });
+
+        document.getElementById('generateExcelButtonF').addEventListener('click', async (event) => {
+            event.preventDefault();
+
+            try {
+                // Consulta para obtener todas las facturas de la colección RegistroDeCompras
+                const q = collection(dba, "RegistroDeCompras");
+
+                const querySnapshot = await getDocs(q);
+
+                // Crear una nueva instancia de workbook (libro de Excel)
+                const workbook = new ExcelJS.Workbook();
+
+                // Agregar una nueva hoja al libro
+                const worksheet = workbook.addWorksheet('Registro de Compras');
+
+                // Encabezados de la tabla de compras
+                const headers = [
+                    'Fecha',
+                    'Moneda',
+                    'Número de Comprobante',
+                    'Tipo de Gasto',
+                    'ITBIS',
+                    'Cuenta',
+                    'Monto en Factura',
+                    'Monto pagado al momento del registro',
+                    'No. Factura',
+                    'Pagos'
+                ];
+
+                // Agregar encabezados a la hoja de Excel
+                worksheet.addRow(headers);
+
+                // Iterar sobre todas las facturas encontradas
+                for (const doc of querySnapshot.docs) {
+                    const data = doc.data();
+                    const {
+                        fecha,
+                        moneda,
+                        numeroComprobante,
+                        tipoGasto,
+                        itbis,
+                        cuenta,
+                        montoFactura,
+                        montoApagar,
+                        nombreFactura,
+                        pagos // Obtener el array de pagos
+                    } = data;
+                    let pagosInfo = 'N/A'; // Valor por defecto para pagos
+
+                    if (Array.isArray(pagos) && pagos.length > 0) {
+                        pagosInfo = ''; // Reiniciar pagosInfo si hay pagos
+                        pagos.forEach((pago) => {
+                            const pagoTotal = pago.monto || 0;
+                            const fechaPago = pago.fechapago || 'Pendiente';
+                            pagosInfo += `Pago ${pago.numeroPago} (Fecha: ${fechaPago}): $${pagoTotal}, `;
+                        });
+                        pagosInfo = pagosInfo.slice(0, -2); // Eliminar la última coma y espacio
+                    }
+
+                    // Agregar fila a la hoja de Excel
+                    worksheet.addRow([
+                        fecha,
+                        moneda,
+                        numeroComprobante ? numeroComprobante : 'N/A',
+                        tipoGasto,
+                        itbis,
+                        cuenta,
+                        montoFactura,
+                        montoApagar,
+                        nombreFactura,
+                        pagosInfo
+                    ]);
+                }
+
+                // Establecer estilos para el encabezado
+                const headerRow = worksheet.getRow(1);
+                headerRow.eachCell((cell) => {
+                    cell.font = { bold: true };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0074D9' } };
+                });
+
+                // Ajustar el ancho de las columnas automáticamente
+                worksheet.columns.forEach((column) => {
+                    let maxLength = 0;
+                    column.eachCell({ includeEmpty: true }, (cell) => {
+                        const cellValue = cell.value ? cell.value.toString() : '';
+                        maxLength = Math.max(maxLength, cellValue.length);
+                    });
+                    column.width = maxLength + 2;
+                });
+
+                // Guardar el archivo Excel
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+                // Descargar el archivo Excel
+                saveAs(blob, 'RegistroDeCompras.xlsx');
+
+            } catch (error) {
+                console.error('Error al generar el archivo de Excel:', error);
+            }
+        });
+
 
 
 

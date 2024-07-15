@@ -436,6 +436,17 @@
                                         <label for="cantidadFacturar">*Cantidad a facturar</label>
                                     </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating mb-3">
+                                        <select class="form-control" id="formaDePago" aria-label="Forma de Pago">
+                                            <option selected>Seleccionar Forma de Pago</option>
+                                            <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                                            <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                                            <option value="Efectivo">Efectivo</option>
+                                        </select>
+                                        <label for="formaDePago">*Forma de Pago</label>
+                                    </div>
+                                </div>
                             </div>
                             <button id="addToListButton" type="button" class="btn btn-success">Agregar a la
                                 lista</button>
@@ -780,8 +791,8 @@
                 const descripcion = descripcionInput.value;
                 const cantidad = parseInt(cantidadFacturarInput.value);
                 const precioMoneda = precioInput.value.split(' ');
-                const moneda = precioMoneda[0];
-                const precio = parseFloat(precioMoneda[1]);
+                const moneda = precioMoneda[1];
+                const precio = parseFloat(precioMoneda[0]);
                 const disponible = parseInt(disponibleInput.value);
                 const itbis = ITBISInput.value === '18%' ? '18%' : 'N/A';
 
@@ -993,12 +1004,14 @@
             const searchDoctorInput = document.getElementById('searchDoctorInput');
             const comprobanteCheckbox = document.getElementById('comprobanteCheckbox');
             const estatusCheckbox = document.getElementById('EstatusCheckbox');
+            const formaDePagoSelect = document.getElementById('formaDePago');
 
             let numeroFactura = '';
             let numeroComprobante = '';
             let fechaVencimiento = '';
             let gananciaTotal = 0;
             let totalFactura = 0;
+            let moneda = '';
 
             if (facturaTableBody.querySelectorAll('tr').length === 0) {
                 showAlert('La tabla está vacía. Por favor, agregue productos antes de generar la factura.', 'alert-warning');
@@ -1013,7 +1026,20 @@
 
             const DoctorSeleccionado = document.getElementById('searchDoctorInput').value;
             if (DoctorSeleccionado.trim() === '') {
-                showAlert('El campo del médico está vacío. Por favor, seleccione un paciente antes de generar la factura.', 'alert-warning');
+                showAlert('El campo del médico está vacío. Por favor, seleccione un médico antes de generar la factura.', 'alert-warning');
+                return;
+            }
+
+            const formaDePagoSeleccionada = formaDePagoSelect.value;
+            if (formaDePagoSeleccionada === 'Seleccionar Forma de Pago') {
+                showAlert('Por favor, seleccione una forma de pago.', 'alert-warning');
+                return;
+            }
+
+            // Obtener información del paciente (dirección y teléfono)
+            const pacienteInfo = await getPacienteInfoFromDatabase(pacienteSeleccionado);
+            if (!pacienteInfo) {
+                showAlert('Paciente no encontrado en la base de datos. Verifique el nombre e inténtelo nuevamente.', 'alert-danger');
                 return;
             }
 
@@ -1095,8 +1121,8 @@
             rows.forEach(row => {
                 const totalProducto = parseFloat(row.cells[4].textContent);
                 totalFactura += totalProducto;
+                moneda = row.cells[4].textContent.split(' ')[1]; // Obtener la moneda del total
             });
-
 
             progressContainer.style.display = 'block';
             fondoDesenfocado.style.display = 'block';
@@ -1176,15 +1202,22 @@
                     doc.text(`${pacienteSeleccionado}`, nombrePacienteStartX, 95);
                 }
 
-                doc.line(14, 105, 200, 105);
+                // Agregar dirección y teléfono del paciente
+                doc.text(`Dirección: ${pacienteInfo.direccion}`, nombrePacienteX, 100);
+                doc.text(`Teléfono: ${pacienteInfo.telefono}`, nombrePacienteX, 105);
+
+                doc.line(14, 115, 200, 115);
 
                 doc.autoTable({
                     head: [['Descripción', 'Cantidad', 'Precio Unitario', 'ITBIS', 'Total']],
                     body: Array.from(facturaTableBody.querySelectorAll('tr')).map(row => Array.from(row.querySelectorAll('td')).slice(0, 5).map(cell => cell.textContent)),
-                    startY: 115
+                    startY: 125
                 });
 
                 doc.text(totalLabel.textContent, 14, doc.lastAutoTable.finalY + 10);
+
+                // Agregar la forma de pago al documento PDF
+                doc.text(`Forma de Pago: ${formaDePagoSeleccionada}`, 14, doc.lastAutoTable.finalY + 20);
 
                 const finalY = doc.internal.pageSize.height - 10; // Posición Y para la línea y texto
                 const lineaWidth = (doc.internal.pageSize.width - 100) / 2; // Longitud de la línea reducida a la mitad
@@ -1193,27 +1226,19 @@
                 doc.setLineWidth(0.5);
                 doc.line(lineaX1, finalY, lineaX2, finalY);
 
-                // Texto "Firma y Cello"
+                // Texto "Firma y Sello"
                 const textoFirmaCelloX = doc.internal.pageSize.width / 2;
                 const textoFirmaCelloY = finalY + 5; // Ajusta la posición vertical según necesites
                 doc.setFontSize(10);
-                doc.text("Firma y Cello", textoFirmaCelloX, textoFirmaCelloY, { align: "center" });
+                doc.text("Firma y Sello", textoFirmaCelloX, textoFirmaCelloY, { align: "center" });
 
                 const pdfBlob = doc.output('blob');
 
                 try {
                     const storage = getStorage(app);
 
-                    // Obtener el ID del paciente seleccionado
-                    const pacienteId = await getPacienteIdFromDatabase(pacienteSeleccionado);
-
-                    if (!pacienteId) {
-                        showAlert('Paciente no encontrado en la base de datos. Verifique el nombre e inténtelo nuevamente.', 'alert-danger');
-                        return;
-                    }
-
                     // Guardar en Storage usando el ID del paciente como carpeta
-                    const pacienteFolderRef = storageRef(storage, `facturas/${pacienteId}/`);
+                    const pacienteFolderRef = storageRef(storage, `facturas/${pacienteInfo.id}/`);
                     let facturaStorageRef = storageRef(pacienteFolderRef, `${fechaActualF}.pdf`);
 
                     // Verificar si ya existe un archivo con el mismo nombre
@@ -1239,10 +1264,11 @@
                             itbis: row.cells[3].textContent,
                             total: parseFloat(row.cells[4].textContent)
                         })),
-                        total: totalFactura,
+                        total: `${totalFactura.toFixed(2)} ${moneda}`,
                         estatus: estatusCheckbox.checked ? 'Abierta' : 'Cerrada',
                         comprobante: comprobanteCheckbox.checked ? numeroComprobante : null,
-                        ganancia: gananciaTotal,
+                        ganancia: `${gananciaTotal.toFixed(2)}`,
+                        formaDePago: formaDePagoSeleccionada,
                         urlFactura: facturaURL
                     };
 
@@ -1275,8 +1301,6 @@
                         }
                     });
 
-
-
                     if (estatusCheckbox.checked) {
                         const condicionPago = parseInt(document.getElementById('condicionPago').value);
                         if (isNaN(condicionPago) || condicionPago <= 0) {
@@ -1289,8 +1313,8 @@
                         for (let j = 1; j <= condicionPago; j++) {
                             const pagoData = {
                                 numeroPago: j,
-                                ganancia: gananciaPorPago,
-                                total: totalPorPago,
+                                ganancia: `${gananciaPorPago.toFixed(2)}`,
+                                total: `${totalPorPago.toFixed(2)} ${moneda}`,
                                 estatus: 'Pendiente'
                             };
                             // Guardar cada pago en la subcolección "pagos" del documento de factura
@@ -1298,12 +1322,9 @@
                         }
                     }
 
-
                     if (!estatusCheckbox.checked) {
-
                         await generatePDFHorizontal(numeroFacturaGlobal, totalFactura);
                     } else {
-
                         facturaTableBody.innerHTML = '';
                         document.getElementById('searchPatientInput').value = '';
                         searchInput.value = '';
@@ -1319,23 +1340,8 @@
                         document.getElementById('EstatusCheckbox').checked = false;
                         totalLabel.innerText = 'Total a pagar: RD$0.00';
                     }
-                    // Limpiar campos y tabla
-                    // facturaTableBody.innerHTML = '';
-                    // document.getElementById('searchPatientInput').value = '';
-                    // searchInput.value = '';
-                    // descripcionInput.value = '';
-                    // disponibleInput.value = '';
-                    // precioInput.value = '';
-                    // ITBISInput.value = '';
-                    // cantidadFacturarInput.value = '';
-                    // searchResults.innerHTML = '';
-                    // searchDoctorInput.value = '';
-                    // document.getElementById('comprobanteCheckbox').checked = false;
-                    // totalLabel.innerText = 'Total a pagar: RD$0.00';
-
                 } catch (error) {
                     console.error('Error al guardar la factura en Storage:', error);
-                    // showAlert('Error al guardar la factura.', 'alert-danger');
                 } finally {
                     progressContainer.style.display = 'none';
                     fondoDesenfocado.style.display = 'none';
@@ -1345,6 +1351,7 @@
                 doc.save('factura.pdf');
             };
         }
+
 
         async function getLastFacturaNumber() {
             try {
@@ -1371,19 +1378,22 @@
                 console.error('Error al actualizar el número de factura:', error);
             }
         }
-        async function getPacienteIdFromDatabase(pacienteName) {
+
+
+        async function getPacienteInfoFromDatabase(pacienteName) {
             const pacientesSnapshot = await getDocs(collection(getFirestore(), 'pacientes'));
 
             const nombreNormalizado = pacienteName.trim().toLowerCase();
 
             const pacienteDoc = pacientesSnapshot.docs.find(doc => {
-                const { fname, lname } = doc.data();
+                const { fname, lname, direccion, telefono } = doc.data();
                 const nombreCompleto = `${fname} ${lname}`.toLowerCase().trim();
                 return nombreCompleto === nombreNormalizado;
             });
 
             if (pacienteDoc) {
-                return pacienteDoc.id;
+                const data = pacienteDoc.data();
+                return { id: pacienteDoc.id, direccion: data.location, telefono: data.number };
             } else {
                 console.error(`Paciente no encontrado en la base de datos: ${pacienteName}`);
                 return null;
@@ -1398,23 +1408,35 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape'); // Crear documento PDF en formato horizontal
             const progressContainer = document.getElementById('progress-container');
+            const fondoDesenfocado = document.getElementById('fondoDesenfocado');
+            const descripcionInput = document.getElementById('desp');
 
-            const searchInput = document.getElementById('searchInput');
             const facturaTableBody = document.getElementById('facturaTableBody');
             const totalLabel = document.getElementById('totalLabel');
             const searchPatientInput = document.getElementById('searchPatientInput');
             const searchDoctorInput = document.getElementById('searchDoctorInput');
+            const formaDePagoSelect = document.getElementById('formaDePago');
 
-            const descripcionInput = document.getElementById('desp');
+            const pacienteSeleccionado = searchPatientInput.value;
+            const DoctorSeleccionado = searchDoctorInput.value;
+            const formaDePagoSeleccionada = formaDePagoSelect.value;
+
+            const searchInput = document.getElementById('searchInput');
             const disponibleInput = document.getElementById('disp');
             const precioInput = document.getElementById('precio');
             const ITBISInput = document.getElementById('itbis');
             const cantidadFacturarInput = document.getElementById('cantidadFacturar');
+            const addToListButton = document.getElementById('addToListButton');
+            const searchButton = document.getElementById('searchButton');
             const searchResults = document.getElementById('searchResults');
-            const comprobanteCheckbox = document.getElementById('comprobanteCheckbox');
+            const searchDoctorResults = document.getElementById('searchDoctorResults');
 
-            const pacienteSeleccionado = document.getElementById('searchPatientInput').value;
-            const DoctorSeleccionado = document.getElementById('searchDoctorInput').value;
+            // Obtener información del paciente (dirección y teléfono)
+            const pacienteInfo = await getPacienteInfoFromDatabase(pacienteSeleccionado);
+            if (!pacienteInfo) {
+                showAlert('Paciente no encontrado en la base de datos. Verifique el nombre e inténtelo nuevamente.', 'alert-danger');
+                return;
+            }
 
             doc.setFontSize(12);
 
@@ -1461,72 +1483,47 @@
 
                 const marginLeft = 15;
                 const numeroRecibo = await obtenerNumeroRecibo();
-                const facturaX = marginLeft; // Ajusta la posición X para alinear a la izquierda
-                doc.text(`No. Recibo: ${numeroRecibo}`, facturaX, 60);
-                doc.text(`Referencia a Factura No. ${numeroFacturaR}`, facturaX, 65);
+                doc.text(`No. Recibo: ${numeroRecibo}`, marginLeft, 60);
+                doc.text(`Referencia a Factura No. ${numeroFacturaR}`, marginLeft, 65);
 
                 const fechaActual = obtenerFechaActual();
                 const fechaActualF = obtenerFechaActualF();
-                const fechaX = marginLeft; // Ajusta la posición X para alinear a la izquierda
+                const fechaX = marginLeft;
                 doc.text(`Fecha: ${fechaActual}`, fechaX, 70);
 
-                const nombreDoctorX = marginLeft; // Ajusta la posición X para alinear a la izquierda
-                const nombreDoctorWidth = doc.getTextWidth(DoctorSeleccionado);
+                doc.text(`Doctor: ${DoctorSeleccionado}`, marginLeft, 80);
+                doc.text(`Facturado a: ${pacienteSeleccionado}`, marginLeft, 90);
 
-                doc.text("Doctor:", nombreDoctorX, 75);
-                const nombreDoctorStartX = nombreDoctorX + doc.getTextWidth("Doctor:");
-                const nombreDoctorEndX = nombreDoctorStartX + nombreDoctorWidth;
-
-                if (nombreDoctorEndX > marginLeft) {
-                    doc.text(`${DoctorSeleccionado}`, marginLeft, 80);
-                } else {
-                    doc.text(`${DoctorSeleccionado}`, nombreDoctorStartX, 80);
-                }
-
-                const nombrePacienteX = marginLeft; // Ajusta la posición X para alinear a la izquierda
-                const nombrePacienteWidth = doc.getTextWidth(pacienteSeleccionado);
-
-                doc.text("Facturado a:", nombrePacienteX, 90);
-                const nombrePacienteStartX = nombrePacienteX + doc.getTextWidth("Facturado a:");
-                const nombrePacienteEndX = nombrePacienteStartX + nombrePacienteWidth;
-
-                if (nombrePacienteEndX > marginLeft) {
-                    doc.text(`${pacienteSeleccionado}`, marginLeft, 95);
-                } else {
-                    doc.text(`${pacienteSeleccionado}`, nombrePacienteStartX, 95);
-                }
+                // Agregar dirección y teléfono del paciente
+                doc.text(`Dirección: ${pacienteInfo.direccion}`, marginLeft, 95);
+                doc.text(`Teléfono: ${pacienteInfo.telefono}`, marginLeft, 100);
 
                 doc.line(14, 105, 280, 105); // Ajusta la longitud de la línea horizontal
 
-                doc.autoTable({
-                    head: [['No. de Recibo', 'Fecha Actual']],
-                    body: [[numeroRecibo, fechaActual]],
-                    startY: 115
-                });
-
+                let moneda = '';
                 doc.autoTable({
                     head: [['Descripción', 'Cantidad', 'Precio Unitario', 'ITBIS', 'Total']],
-                    body: Array.from(facturaTableBody.querySelectorAll('tr')).map(row => Array.from(row.querySelectorAll('td')).slice(0, 5).map(cell => cell.textContent)),
-                    startY: 115
+                    body: Array.from(facturaTableBody.querySelectorAll('tr')).map(row => {
+                        const cells = row.querySelectorAll('td');
+                        const totalCell = cells[4].textContent.trim();
+                        moneda = totalCell.split(' ')[1]; // Asumimos que la moneda es la misma para todos los productos
+                        return Array.from(cells).map(cell => cell.textContent);
+                    }),
+                    startY: 110
                 });
 
-                doc.text(totalLabel.textContent, 14, doc.lastAutoTable.finalY + 20);
+                doc.text(totalLabel.textContent, 14, doc.lastAutoTable.finalY + 10);
+
+                // Agregar la forma de pago al documento PDF
+                doc.text(`Forma de Pago: ${formaDePagoSeleccionada}`, 14, doc.lastAutoTable.finalY + 20);
 
                 const pdfBlob = doc.output('blob');
 
                 try {
                     const storage = getStorage(app);
 
-                    // Obtener el ID del paciente seleccionado
-                    const pacienteId = await getPacienteIdFromDatabase(pacienteSeleccionado);
-
-                    if (!pacienteId) {
-                        showAlert('Paciente no encontrado en la base de datos. Verifique el nombre e inténtelo nuevamente.', 'alert-danger');
-                        return;
-                    }
-
                     // Guardar en Storage usando el ID del paciente como carpeta
-                    const pacienteFolderRef = storageRef(storage, `recibos/${pacienteId}/`);
+                    const pacienteFolderRef = storageRef(storage, `recibos/${pacienteInfo.id}/`);
                     let facturaStorageRef = storageRef(pacienteFolderRef, `${fechaActualF}.pdf`);
 
                     // Verificar si ya existe un archivo con el mismo nombre
@@ -1551,9 +1548,10 @@
                             cantidad: parseInt(row.cells[1].textContent),
                             precioUnitario: parseFloat(row.cells[2].textContent),
                             itbis: row.cells[3].textContent,
-                            total: parseFloat(row.cells[4].textContent)
+                            total: row.cells[4].textContent
                         })),
-                        total: totalFactura,
+                        total: totalLabel.textContent.split(': ')[1],
+                        formaDePago: formaDePagoSeleccionada,
                         urlRecibo: reciboURL
                     };
 
@@ -1561,7 +1559,7 @@
 
                     // Limpiar campos y tabla
                     facturaTableBody.innerHTML = '';
-                    document.getElementById('searchPatientInput').value = '';
+                    searchPatientInput.value = '';
                     searchInput.value = '';
                     descripcionInput.value = '';
                     disponibleInput.value = '';
@@ -1570,21 +1568,25 @@
                     cantidadFacturarInput.value = '';
                     searchResults.innerHTML = '';
                     searchDoctorInput.value = '';
-                    document.getElementById('comprobanteCheckbox').checked = false;
+                    comprobanteCheckbox.checked = false;
                     totalLabel.innerText = 'Total a pagar: RD$0.00';
 
                 } catch (error) {
                     console.error('Error al guardar el recibo en Storage:', error);
-                    // showAlert('Error al guardar el recibo.', 'alert-danger');
                 } finally {
                     progressContainer.style.display = 'none';
                     fondoDesenfocado.style.display = 'none';
                 }
 
-                // showSuccessAlert('El recibo se ha generado y guardado exitosamente.', 'alert-success');
+                showSuccessAlert('El recibo se ha generado y guardado exitosamente.', 'alert-success');
                 doc.save('recibo.pdf');
             };
         }
+
+
+
+
+
 
 
 

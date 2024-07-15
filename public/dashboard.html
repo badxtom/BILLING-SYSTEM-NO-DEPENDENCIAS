@@ -94,7 +94,6 @@
       color: #050505;
 
     }
-
   </style>
 
 </head>
@@ -617,9 +616,10 @@
     const dba = getFirestore();
     const notificationList = document.getElementById('notificationList');
 
-    async function checkLowStockAndExpiry() {
+    async function checkLowStockAndExpiry () {
       const productosSnapshot = await getDocs(collection(dba, 'productos'));
       const comprobantesSnapshot = await get(ref(db, 'comprobantes/'));
+      const comprobantesNotaCreditoSnapshot = await get(ref(db, 'comprobantesNotaCredito/'));
       notificationList.innerHTML = '';
 
       const today = new Date();
@@ -633,7 +633,6 @@
         const descripcion = producto.descripcion;
         const disponible = producto.disponible;
         let fechaVencimiento;
-
 
         if (producto.fechaVencimiento && producto.fechaVencimiento.trim() !== '') {
           const [dia, mes, año] = producto.fechaVencimiento.split('/');
@@ -675,10 +674,24 @@
         }
       }
 
+      if (comprobantesNotaCreditoSnapshot.exists()) {
+        const comprobantesNotaCreditoData = comprobantesNotaCreditoSnapshot.val();
+        const desdeNC = comprobantesNotaCreditoData.desde || '';
+        const hastaNC = comprobantesNotaCreditoData.hasta || '';
+
+        const lastNotaCreditoNumber = await getLastNotaCreditoNumber();
+        const nextNotaCreditoNumber = lastNotaCreditoNumber + 1;
+        const comprobanteNotaCreditoLimit = parseInt(hastaNC.substring(1));
+
+        if (comprobanteNotaCreditoLimit - nextNotaCreditoNumber <= 20) {
+          addNotification('Notas de Crédito', `Quedan ${comprobanteNotaCreditoLimit - nextNotaCreditoNumber} disponibles`, 'notaCredito');
+          notificationsExist = true;
+        }
+      }
+
       if (!notificationsExist) {
         showNoNotificationsMessage();
       }
-
     }
 
     function showNoNotificationsMessage() {
@@ -714,6 +727,9 @@
       } else if (tipo === 'comprobante') {
         notificationItem.classList.add('expiry-warning');
         messageText = `${descripcion} - ${detalle}`;
+      } else if (tipo === 'notaCredito') {
+        notificationItem.classList.add('expiry-warning');
+        messageText = `${descripcion} - ${detalle}`;
       }
 
       message.textContent = messageText;
@@ -724,7 +740,11 @@
       notificationItem.appendChild(messageContainer);
 
       notificationList.appendChild(notificationItem);
+    }
 
+    async function getLastNotaCreditoNumber() {
+      const lastNumberSnap = await get(ref(db, 'notaCreditoNumber/lastNumber'));
+      return lastNumberSnap.exists() ? lastNumberSnap.val() : 0;
     }
 
 

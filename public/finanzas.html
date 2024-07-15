@@ -231,7 +231,7 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            width: 600px;
+            width: 800px;
             max-height: 80%;
             overflow-y: auto;
         }
@@ -568,7 +568,7 @@
                                     <i class="text-primary ti ti-currency-dollar"></i>
                                 </div>
                                 <div class="ms-2">
-                                    <h4 class="mb-1">Nota de crédito <i
+                                    <h4 class="mb-1">Nota de Crédito <i
                                             class="ti ti-arrow-up-right-circle opacity-50"></i></h4>
                                     <p class="mb-0 opacity-50 text-sm"></p>
                                 </div>
@@ -602,7 +602,7 @@
                                     <i class="text-info ti ti-currency-dollar"></i>
                                 </div>
                                 <div class="ms-2">
-                                    <h4 class="mb-1">Cuentas por cobrar <i
+                                    <h4 class="mb-1">Cuentas por Cobrar <i
                                             class="ti ti-arrow-up-right-circle opacity-50"></i>
                                     </h4>
                                     <p class="mb-0 opacity-50 text-sm"></p>
@@ -620,13 +620,31 @@
                                     <i class="text-danger ti ti-currency-dollar"></i>
                                 </div>
                                 <div class="ms-2">
-                                    <h4 class="mb-1">Cuentas por pagar <i
+                                    <h4 class="mb-1">Cuentas por Pagar <i
                                             class="ti ti-arrow-up-right-circle opacity-50"></i></h4>
                                     <p class="mb-0 opacity-50 text-sm"></p>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <div class="card dashnum-card dashnum-card-small overflow-hidden" id="CatalogoCuentas">
+                        <span class="round bg-success small"></span>
+                        <span class="round bg-success big"></span>
+                        <div class="card-body p-3" onclick="window.location.href='catalogo-de-cuentas'" style="cursor: pointer;">
+                            <div class="d-flex align-items-center">
+                                <div class="avtar avtar-lg bg-light-success">
+                                    <i class="text-success ti ti-book"></i>
+                                </div>
+                                <div class="ms-2">
+                                    <h4 class="mb-1">Catálogo de Cuentas <i
+                                            class="ti ti-arrow-up-right-circle opacity-50"></i></h4>
+                                    <p class="mb-0 opacity-50 text-sm"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
 
 
 
@@ -936,7 +954,7 @@
             appId: "1:906484441227:web:7b486131ad930a7b03b48e"
         };
 
-        
+
         const app = initializeApp(firebaseConfig);
         const db = getDatabase();
         const auth = getAuth();
@@ -1137,7 +1155,6 @@
                 const earningsList = document.getElementById('earningsList');
                 earningsList.innerHTML = '';
 
-                // Verificar si no hay ganancias para este mes y año
                 let gananciasEncontradas = false;
 
                 for (const doc of querySnapshot.docs) {
@@ -1148,26 +1165,24 @@
 
                     if (docMonth === month && docYear === year) {
                         if (data.estatus === 'Cerrada' && amount > 0) {
-                            // Procesar factura cerrada
                             gananciasEncontradas = true;
                             totalEarnings += amount;
 
                             const listItem = document.createElement('li');
                             listItem.classList.add('list-group-item', 'px-0');
                             listItem.innerHTML = `
-                        <div class="row align-items-start">
-                            <div class="col">
-                                <h5 class="mb-0">No. Factura ${data.numeroFactura}</h5>
-                                <small class="text-success">${data.fecha}</small>
-                            </div>
-                            <div class="col-auto">
-                                <h4 class="mb-0">$${amount.toFixed(2)}<span class="ms-2 align-top avtar avtar-xxs bg-light-success"><i class="ti ti-chevron-up text-success"></i></span></h4>
-                            </div>
-                        </div>
-                    `;
+                <div class="row align-items-start">
+                    <div class="col">
+                        <h5 class="mb-0">No. Factura ${data.numeroFactura}</h5>
+                        <small class="text-success">${data.fecha}</small>
+                    </div>
+                    <div class="col-auto">
+                        <h4 class="mb-0">$${amount.toFixed(2)}<span class="ms-2 align-top avtar avtar-xxs bg-light-success"><i class="ti ti-chevron-up text-success"></i></span></h4>
+                    </div>
+                </div>
+            `;
                             earningsList.appendChild(listItem);
                         } else if (data.estatus === 'Abierta') {
-                            // Procesar pagos de factura abierta
                             const pagosSnapshot = await getDocs(collection(dba, `facturas/${doc.id}/pagos`));
                             pagosSnapshot.forEach((pagoDoc) => {
                                 const pagoData = pagoDoc.data();
@@ -1180,16 +1195,16 @@
                                         const listItem = document.createElement('li');
                                         listItem.classList.add('list-group-item', 'px-0');
                                         listItem.innerHTML = `
-                                    <div class="row align-items-start">
-                                        <div class="col">
-                                            <h5 class="mb-0">No. Factura ${data.numeroFactura} - Pago ${pagoData.numeroPago}</h5>
-                                            <small class="text-success">${pagoData.fechapago}</small>
-                                        </div>
-                                        <div class="col-auto">
-                                            <h4 class="mb-0">$${pagoAmount.toFixed(2)}<span class="ms-2 align-top avtar avtar-xxs bg-light-success"><i class="ti ti-chevron-up text-success"></i></span></h4>
-                                        </div>
-                                    </div>
-                                `;
+                            <div class="row align-items-start">
+                                <div class="col">
+                                    <h5 class="mb-0">No. Factura ${data.numeroFactura} - Pago ${pagoData.numeroPago}</h5>
+                                    <small class="text-success">${pagoData.fechapago}</small>
+                                </div>
+                                <div class="col-auto">
+                                    <h4 class="mb-0">$${pagoAmount.toFixed(2)}<span class="ms-2 align-top avtar avtar-xxs bg-light-success"><i class="ti ti-chevron-up text-success"></i></span></h4>
+                                </div>
+                            </div>
+                        `;
                                         earningsList.appendChild(listItem);
                                     }
                                 }
@@ -1198,7 +1213,6 @@
                     }
                 }
 
-                // Si no se encontraron ganancias para el mes y año seleccionados, mostrar mensaje
                 if (!gananciasEncontradas) {
                     const noEarningsMessage = document.createElement('li');
                     noEarningsMessage.classList.add('list-group-item', 'px-0');
@@ -1209,7 +1223,6 @@
                 document.getElementById('totalEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
             } catch (error) {
                 console.error("Error al cargar las ganancias:", error);
-                // Manejar el error aquí según sea necesario
             }
         }
 
@@ -1819,7 +1832,7 @@
                 }
 
                 const facturaData = facturaSnap.data();
-                const { doctor, estatus, fecha, total, items, numeroFactura, condicionPago, paciente } = facturaData;
+                const { doctor, estatus, fecha, total, items, numeroFactura, condicionPago, paciente, moneda } = facturaData;
 
                 // Llenar los datos de la factura en el formulario
                 document.getElementById('facturaCliente').textContent = paciente;
@@ -1926,7 +1939,6 @@
                 console.error('Error al pagar:', error);
             }
         }
-
         // Función para mostrar/ocultar el formulario de pagos
         function toggleFormularioPago() {
             const formularioPago = document.getElementById('formularioPago');
@@ -2235,14 +2247,16 @@
                 <th>A Pagar</th>
                 <th>Fecha</th>
                 <th>Estatus</th>
-                <th>Acciones</th>
+                <th>Pagar</th>
+                <th>Subir Recibo</th>
+                <th>Guardar Recibo</th>
             </tr>
         </thead>
         <tbody>
     `;
 
                 pagos.forEach((pago, index) => {
-                    const { estatus, fechapago, monto = 0, numeroPago, total } = pago;
+                    const { estatus, fechapago, monto = '0.00 DOP', numeroPago } = pago;
 
                     tableContent += `
             <tr>
@@ -2252,7 +2266,14 @@
                 <td>${fechapago || 'Pendiente'}</td>
                 <td>${estatus}</td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="pagarCuentasPorPagar('${docId}', ${index}, ${monto})" ${estatus === 'Pagado' ? 'disabled' : ''}>Pagar</button>
+                    <button class="btn btn-sm btn-primary" onclick="pagarCuentasPorPagar('${docId}', ${index}, '${monto}')" ${estatus === 'Pagado' ? 'disabled' : ''}>Pagar</button>
+                </td>
+                <td>
+                    <input type="file" id="reciboFile-${docId}-${index}" class="form-control" style="display: ${estatus === 'Pagado' ? 'block' : 'none'};" onchange="mostrarNombreArchivo('${docId}', ${index})" />
+                    <span id="nombreArchivo-${docId}-${index}" style="display: ${estatus === 'Pagado' ? 'block' : 'none'};"></span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-success" onclick="guardarRecibo('${docId}', ${index})" style="display: ${estatus === 'Pagado' ? 'block' : 'none'};">Aplicar</button>
                 </td>
             </tr>
         `;
@@ -2266,7 +2287,18 @@
             }
         }
 
-        window.pagarCuentasPorPagar = async function (facturaId, pagoIndex, total) {
+        window.mostrarNombreArchivo = function (facturaId, pagoIndex) {
+            const reciboFileInput = document.getElementById(`reciboFile-${facturaId}-${pagoIndex}`);
+            const nombreArchivoSpan = document.getElementById(`nombreArchivo-${facturaId}-${pagoIndex}`);
+
+            if (reciboFileInput.files.length > 0) {
+                nombreArchivoSpan.textContent = reciboFileInput.files[0].name;
+            } else {
+                nombreArchivoSpan.textContent = '';
+            }
+        }
+
+        window.pagarCuentasPorPagar = async function (facturaId, pagoIndex, monto) {
             try {
                 const facturaRef = doc(dba, 'RegistroDeCompras', facturaId);
                 const facturaSnap = await getDoc(facturaRef);
@@ -2302,12 +2334,6 @@
                     });
                 }
 
-                const { suplidorNombre, numeroComprobante } = facturaData;
-
-                // Generar recibo PDF
-                // await generatePDFHorizontal(facturaId, suplidorNombre, numeroComprobante, total);
-
-                // Actualizar la lista de pagos en el formulario
                 aplicarPagoCuentasPorPagar(facturaId);
 
             } catch (error) {
@@ -2315,10 +2341,65 @@
             }
         }
 
+        window.guardarRecibo = async function (facturaId, pagoIndex) {
+            const reciboFileInput = document.getElementById(`reciboFile-${facturaId}-${pagoIndex}`);
+            const reciboFile = reciboFileInput.files[0];
+
+            if (!reciboFile) {
+                alert('Por favor, seleccione un archivo.');
+                return;
+            }
+
+            try {
+                const facturaRef = doc(dba, 'RegistroDeCompras', facturaId);
+                const facturaSnap = await getDoc(facturaRef);
+
+                if (!facturaSnap.exists()) {
+                    console.error('La factura no existe.');
+                    return;
+                }
+
+                const facturaData = facturaSnap.data();
+                const pagos = facturaData.pagos;
+                const fechaActualF = obtenerFechaActualF();
+
+                if (!pagos || !pagos[pagoIndex]) {
+                    console.error('El pago no existe.');
+                    return;
+                }
+
+                const storage = getStorage(app);
+                const reciboFolderRef = storageRef(storage, `recibos/${facturaId}/`);
+                let reciboStorageRef = storageRef(reciboFolderRef, `${fechaActualF}-${pagoIndex}.pdf`);
+
+                let i = 1;
+                while (await getDownloadURL(reciboStorageRef).then(() => true).catch(() => false)) {
+                    reciboStorageRef = storageRef(reciboFolderRef, `${fechaActualF}-${pagoIndex} (${i}).pdf`);
+                    i++;
+                }
+
+                await uploadBytes(reciboStorageRef, reciboFile);
+                const reciboURL = await getDownloadURL(reciboStorageRef);
+
+                pagos[pagoIndex].reciboURL = reciboURL;
+
+                await updateDoc(facturaRef, {
+                    pagos: pagos
+                });
+
+                showSuccessAlert('Recibo subido y guardado con éxito.', 'alert-success');
+
+            } catch (error) {
+                console.error('Error al subir el recibo:', error);
+                alert('Hubo un error al subir el recibo. Inténtelo de nuevo.');
+            }
+        }
+
+
+
         // Función para mostrar/ocultar el formulario de pagos
         function toggleFormularioPagoCuentasPorPagar() {
             const formularioPagoCuentasPorPagar = document.getElementById('formularioPagoCuentasPorPagar');
-            console.log('llegue');
 
             if (formularioPagoCuentasPorPagar.style.display === 'none') {
                 formularioPagoCuentasPorPagar.style.display = 'block';
@@ -2568,7 +2649,7 @@
                 const textoFirmaCelloX = doc.internal.pageSize.width / 2;
                 const textoFirmaCelloY = finalY + 5;
                 doc.setFontSize(10);
-                doc.text("Firma y Cello", textoFirmaCelloX, textoFirmaCelloY, { align: "center" });
+                doc.text("Firma y Sello", textoFirmaCelloX, textoFirmaCelloY, { align: "center" });
 
                 const pdfBlob = doc.output('blob');
 
@@ -2606,10 +2687,6 @@
         }
 
 
-
-
-
-
         document.getElementById('generateExcelButtonI').addEventListener('click', async (event) => {
             event.preventDefault();
 
@@ -2645,13 +2722,17 @@
                     let { ganancia } = data;
                     let pagosInfo = 'N/A';
 
+                    // Extraer y convertir el valor de la ganancia a número
+                    const gananciaValor = parseFloat(ganancia.split(' ')[0]);
+
                     // Verificar si la factura tiene pagos
                     const pagosSnapshot = await getDocs(collection(dba, `facturas/${doc.id}/pagos`));
                     if (!pagosSnapshot.empty) {
                         pagosInfo = '';
                         pagosSnapshot.forEach((pagoDoc) => {
                             const pagoData = pagoDoc.data();
-                            const pagoGanancia = pagoData.ganancia || 0;
+                            const pagoGananciaStr = pagoData.ganancia || "0.00 DOP";
+                            const pagoGanancia = parseFloat(pagoGananciaStr.split(' ')[0]); // Extraer y convertir el valor a número
                             const fechaPago = pagoData.fechapago ? pagoData.fechapago : 'Pendiente';
                             pagosInfo += `Pago ${pagoData.numeroPago} (Fecha: ${fechaPago}): $${pagoGanancia}, `;
                         });
@@ -2659,12 +2740,12 @@
                     }
 
                     // Filtrar facturas con ganancia válida (mayor que 0 y no estatus Pendiente)
-                    if (ganancia > 0 && !(estatus === 'Abierta' && ganancia === 'Pendiente')) {
+                    if (gananciaValor > 0 && !(estatus === 'Abierta' && ganancia === 'Pendiente')) {
                         // Agregar fila a la hoja de Excel
                         worksheet.addRow([numeroFactura, fecha, estatus, ganancia, pagosInfo]);
 
                         // Sumar la ganancia total
-                        totalEarnings += parseFloat(ganancia);
+                        totalEarnings += gananciaValor;
                     }
                 }
 
@@ -2704,6 +2785,7 @@
                 showAlertExcel(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
             }
         });
+
 
 
 
@@ -2806,32 +2888,32 @@
             }
         });
 
+
         document.getElementById('generateExcelButtonF').addEventListener('click', async (event) => {
             event.preventDefault();
 
             try {
-                // Consulta para obtener todas las facturas sin filtrar por mes y año
-                const q = collection(dba, "facturas");
+                // Consulta para obtener todas las facturas de la colección RegistroDeCompras
+                const q = collection(dba, "RegistroDeCompras");
 
                 const querySnapshot = await getDocs(q);
-                let totalEarnings = 0;
 
                 // Crear una nueva instancia de workbook (libro de Excel)
                 const workbook = new ExcelJS.Workbook();
 
                 // Agregar una nueva hoja al libro
-                const worksheet = workbook.addWorksheet('Registro de Ingresos');
+                const worksheet = workbook.addWorksheet('Registro de Compras');
 
-                // Encabezados de la tabla de ingresos
+                // Encabezados de la tabla de compras
                 const headers = [
-                    'Número de Factura',
                     'Fecha',
-                    'Estatus',
-                    'Ganancia',
-                    'Comprobante',
-                    'Doctor',
-                    'Paciente',
-                    'Total',
+                    'Moneda',
+                    'Número de Comprobante',
+                    'Tipo de Gasto',
+                    'ITBIS',
+                    'Cuenta',
+                    'Monto en Factura',
+                    'Nombre de la Factura',
                     'Pagos'
                 ];
 
@@ -2842,48 +2924,35 @@
                 for (const doc of querySnapshot.docs) {
                     const data = doc.data();
                     const {
-                        numeroFactura,
                         fecha,
-                        estatus,
-                        ganancia,
-                        comprobante,
-                        doctor,
-                        paciente,
-                        total
+                        moneda,
+                        numeroComprobante,
+                        tipoGasto,
+                        itbis,
+                        cuenta,
+                        montoFactura,
+                        nombreFactura,
+                        pagos
                     } = data;
                     let pagosInfo = 'N/A'; // Valor por defecto para pagos
 
                     // Verificar si la factura tiene pagos
-                    const pagosSnapshot = await getDocs(collection(dba, `facturas/${doc.id}/pagos`));
-                    if (!pagosSnapshot.empty) {
-                        pagosInfo = ''; // Reiniciar pagosInfo si hay pagos
-                        pagosSnapshot.forEach((pagoDoc) => {
-                            const pagoData = pagoDoc.data();
-                            const pagoGanancia = pagoData.total || 0;
-                            const fechapago = pagoData.fechapago || 'Pendiente';
-                            pagosInfo += `Pago ${pagoData.numeroPago} (Fecha: ${fechapago}): $${pagoGanancia}, `;
-                        });
-                        pagosInfo = pagosInfo.slice(0, -2); // Eliminar la última coma y espacio
+                    if (pagos && pagos.length > 0) {
+                        pagosInfo = pagos.map(pago => `Pago ${pago.numeroPago} (Monto: ${pago.monto} ${moneda}): ${pago.estatus}`).join(', ');
                     }
 
-                    // Filtrar facturas con ganancia válida (mayor que 0 y no estatus Pendiente)
-                    if (!(estatus === 'Abierta' && ganancia === 'Pendiente')) {
-                        // Agregar fila a la hoja de Excel
-                        worksheet.addRow([
-                            numeroFactura,
-                            fecha,
-                            estatus,
-                            ganancia,
-                            comprobante ? comprobante : 'N/A',
-                            doctor,
-                            paciente,
-                            total,
-                            pagosInfo
-                        ]);
-
-                        // Sumar la ganancia total
-                        totalEarnings += parseFloat(ganancia);
-                    }
+                    // Agregar fila a la hoja de Excel
+                    worksheet.addRow([
+                        fecha,
+                        moneda,
+                        numeroComprobante ? numeroComprobante : 'N/A',
+                        tipoGasto,
+                        itbis,
+                        cuenta,
+                        `${montoFactura.toFixed(2)} ${moneda}`,
+                        nombreFactura,
+                        pagosInfo
+                    ]);
                 }
 
                 // Establecer estilos para el encabezado
@@ -2910,18 +2979,14 @@
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
                 // Descargar el archivo Excel
-                saveAs(blob, 'facturas.xlsx');
+                saveAs(blob, 'RegistroDeCompras.xlsx');
 
-                // Mostrar mensaje de éxito
-                showAlertExcel('Archivo de Excel generado correctamente.', 'alert-success');
-
-                // Actualizar el total de ganancias en la interfaz
-                document.getElementById('totalEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
             } catch (error) {
                 console.error('Error al generar el archivo de Excel:', error);
-                showAlertExcel(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
             }
         });
+
+
 
         async function generatePDFHorizontal(facturaId, doctorSeleccionado, pacienteSeleccionado, numeroFactura, totalPago) {
             const { jsPDF } = window.jspdf;
@@ -3076,6 +3141,7 @@
             }
         }
 
+
         function obtenerFechaActualF() {
             const fecha = new Date();
             const dia = fecha.getDate();
@@ -3107,13 +3173,29 @@
         }
 
 
+        function showSuccessAlert(message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.classList.add('alert', 'alert-dismissible', 'alert-success', 'position-fixed', 'top-50', 'start-50', 'translate-middle');
+            alertDiv.style.zIndex = '1050';  // Asegurar que el z-index sea alto para estar encima de otros elementos
+            alertDiv.innerHTML = `
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <strong>¡Bien hecho!</strong> ${message}
+    `;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
 
 
-        // Función para mostrar alertas
         function showAlertExcel(message, alertType) {
             const alertBox = document.createElement('div');
-            alertBox.className = `alert ${alertType}`;
-            alertBox.textContent = message;
+            alertBox.className = `alert ${alertType} position-fixed top-50 start-50 translate-middle`;
+            alertBox.style.zIndex = '1050'; // Asegurar que el z-index sea alto para estar encima de otros elementos
+            alertBox.innerHTML = `
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <strong>¡Bien hecho!</strong> ${message}
+    `;
             document.body.appendChild(alertBox);
             setTimeout(() => {
                 alertBox.remove();
@@ -3123,16 +3205,18 @@
         function showAlert(message, alertType) {
             const alertDiv = document.createElement('div');
             alertDiv.classList.add('alert', 'alert-dismissible', alertType, 'position-fixed', 'top-50', 'start-50', 'translate-middle');
+            alertDiv.style.zIndex = '1050';  // Asegurar que el z-index sea alto para estar encima de otros elementos
             alertDiv.innerHTML = `
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    <h4 class="alert-heading">¡Advertencia!</h4>
-    <p class="mb-0">${message}</p>
-  `;
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <strong>¡Bien hecho!</strong> ${message}
+    `;
             document.body.appendChild(alertDiv);
             setTimeout(() => {
                 alertDiv.remove();
             }, 5000);
         }
+
+
 
 
 
