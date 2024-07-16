@@ -365,7 +365,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
         import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, deleteDoc, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable, listAll } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         import { getDatabase, set, ref, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
@@ -607,48 +607,117 @@
             try {
                 const querySnapshot = await getDocs(collection(db, 'CatalogoCuentas'));
 
-                querySnapshot.forEach(doc => {
+                for (const doc of querySnapshot.docs) {
                     const data = doc.data();
+                    let montoTotal = await calcularMontoCuenta(doc.id, data.pacientes);
+
                     const row = document.createElement('tr');
                     row.ondblclick = () => editarCuenta(doc.id);
                     row.innerHTML = `
-                        <td>${data.codigo}</td>
-                        <td>${data.nombre}</td>
-                        <td>${data.origen}</td>
-                        <td>${data.monto}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" onclick="verMovimientos('${doc.id}')">Ver Movimientos</button>
-                            <button class="btn btn-sm btn-warning" onclick="agregarSubcuenta('${doc.id}')">Agregar Subcuenta</button>
-                            <button class="btn btn-sm btn-danger" onclick="eliminarCuenta('${doc.id}')">Eliminar</button>
-                        </td>
-                    `;
+                <td>${data.codigo}</td>
+                <td>${data.nombre}</td>
+                <td>${data.origen}</td>
+                <td>${montoTotal.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="agregarSubcuenta('${doc.id}')">Agregar Subcuenta</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarCuenta('${doc.id}')">Eliminar</button>
+                </td>
+            `;
                     catalogoCuentas.appendChild(row);
 
-                    data.subcuentas.forEach((subcuenta, index) => {
+                    for (const [index, subcuenta] of data.subcuentas.entries()) {
+                        let montoSubcuenta = await calcularMontoCuenta(doc.id, subcuenta.pacientes, subcuenta.codigo);
+
                         const subRow = document.createElement('tr');
                         subRow.classList.add('subcuenta');
                         subRow.ondblclick = () => editarSubcuenta(doc.id, index);
                         subRow.innerHTML = `
-                            <td style="padding-left: 20px;">${subcuenta.codigo}</td>
-                            <td>${subcuenta.nombre}</td>
-                            <td>${subcuenta.origen}</td>
-                            <td>${subcuenta.monto}</td>
-                            <td>
-                                <button class="btn btn-sm btn-danger" onclick="eliminarSubcuenta('${doc.id}', ${index})">Eliminar</button>
-                            </td>
-                        `;
+                    <td style="padding-left: 20px;">${subcuenta.codigo}</td>
+                    <td>${subcuenta.nombre}</td>
+                    <td>${subcuenta.origen}</td>
+                    <td>${montoSubcuenta.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarSubcuenta('${doc.id}', ${index})">Eliminar</button>
+                    </td>
+                `;
                         catalogoCuentas.appendChild(subRow);
-                    });
-                });
+                    }
+                }
             } catch (error) {
                 console.error('Error al cargar el catálogo de cuentas:', error);
             }
         }
 
-        window.verMovimientos = async function (cuentaId) {
-            alert(`Ver movimientos de la cuenta ${cuentaId}`);
-            // Implementar la lógica para ver los movimientos de la cuenta
+        async function calcularMontoCuenta(cuentaId, pacientes, subcuentaCodigo = null) {
+            let montoTotal = 0;
+            let montoSubcuentas = 0;
+
+            if (pacientes && pacientes.length > 0) {
+                const facturasRef = collection(db, 'facturas');
+                const facturasQuery = query(facturasRef, where('paciente', 'in', pacientes));
+                const facturasSnapshot = await getDocs(facturasQuery);
+
+                for (const facturaDoc of facturasSnapshot.docs) {
+                    const factura = facturaDoc.data();
+                    if (factura.estatus === 'Cerrada') {
+                        if (!factura.pagos) {
+                            montoTotal += parseFloat(factura.total.replace(' DOP', ''));
+                        } else {
+                            const pagosRef = collection(db, `facturas/${facturaDoc.id}/pagos`);
+                            const pagosSnapshot = await getDocs(pagosRef);
+                            for (const pagoDoc of pagosSnapshot.docs) {
+                                const pago = pagoDoc.data();
+                                if (pago.estatus === 'Pagado') {
+                                    montoTotal += parseFloat(pago.total.replace(' DOP', ''));
+                                }
+                            }
+                        }
+                    } else if (factura.estatus === 'Abierta') {
+                        const pagosRef = collection(db, `facturas/${facturaDoc.id}/pagos`);
+                        const pagosSnapshot = await getDocs(pagosRef);
+                        for (const pagoDoc of pagosSnapshot.docs) {
+                            const pago = pagoDoc.data();
+                            if (pago.estatus === 'Pagado') {
+                                montoTotal += parseFloat(pago.total.replace(' DOP', ''));
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Sumar montos de subcuentas
+            const cuentaRef = doc(db, 'CatalogoCuentas', cuentaId);
+            const cuentaDoc = await getDoc(cuentaRef);
+
+            if (cuentaDoc.exists() && !subcuentaCodigo) {
+                const cuentaData = cuentaDoc.data();
+                for (const subcuenta of cuentaData.subcuentas) {
+                    montoSubcuentas += subcuenta.monto;
+                }
+                montoTotal += montoSubcuentas;
+            }
+
+            // Actualizar el monto en Firestore
+            if (cuentaDoc.exists()) {
+                const cuentaData = cuentaDoc.data();
+                if (subcuentaCodigo) {
+                    const subcuentaIndex = cuentaData.subcuentas.findIndex(sub => sub.codigo === subcuentaCodigo);
+                    if (subcuentaIndex !== -1) {
+                        cuentaData.subcuentas[subcuentaIndex].monto = montoTotal;
+                    }
+                } else {
+                    cuentaData.monto = montoTotal;
+                }
+                await updateDoc(cuentaRef, cuentaData);
+            }
+
+            return montoTotal;
         }
+
+
+
+        // Llamar a la función para cargar las cuentas contables al cargar la página
+        window.addEventListener('DOMContentLoaded', cargarCatalogoCuentas);
 
         window.agregarSubcuenta = async function (cuentaId) {
             abrirFormulario('Agregar Subcuenta');
@@ -669,6 +738,7 @@
                 document.getElementById('nombreCuenta').value = cuentaData.nombre;
                 document.getElementById('origenCuenta').value = cuentaData.origen;
                 document.getElementById('montoCuenta').value = cuentaData.monto;
+                document.getElementById('montoCuenta').disabled = true;
 
                 currentEditingId = cuentaId;
                 currentEditingSubIndex = null;
@@ -689,6 +759,7 @@
                 document.getElementById('nombreCuenta').value = subcuentaData.nombre;
                 document.getElementById('origenCuenta').value = subcuentaData.origen;
                 document.getElementById('montoCuenta').value = subcuentaData.monto;
+                document.getElementById('montoCuenta').disabled = true;
 
                 currentEditingId = cuentaId;
                 currentEditingSubIndex = subIndex;
@@ -790,7 +861,8 @@
             isAddingSubcuenta = false;
         }
 
-        cargarCatalogoCuentas();
+
+
     </script>
 
     <script src="popper.min.js"></script>

@@ -476,6 +476,12 @@
                     </div>
                 </div>
                 <div class="form-floating mb-3">
+                    <select class="form-control" id="cuentaContable" placeholder="Cuenta Contable">
+                        <option value="">Seleccione una cuenta contable</option>
+                    </select>
+                    <label for="cuentaContable">*Cuenta Contable</label>
+                </div>
+                <div class="form-floating mb-3">
                     <input type="date" class="form-control" id="fechaEntrada" placeholder="Fecha de entrada">
                     <label for="fechaEntrada">*Fecha de entrada</label>
                 </div>
@@ -556,6 +562,12 @@
                     </div>
                 </div>
                 <div class="form-floating mb-3">
+                    <select class="form-control" id="cuentaContableE" placeholder="Cuenta Contable">
+                        <option value="">Seleccione una cuenta contable</option>
+                    </select>
+                    <label for="cuentaContableE">*Cuenta Contable</label>
+                </div>
+                <div class="form-floating mb-3">
                     <input type="date" class="form-control" id="fechaEntradaE" placeholder="Fecha de entrada">
                     <label for="fechaEntradaE">*Fecha de entrada</label>
                 </div>
@@ -620,6 +632,7 @@
         const db = getDatabase();
         const auth = getAuth();
         const storage = getStorage(app);
+        const dba = getFirestore();
 
         window.addEventListener('DOMContentLoaded', () => {
             const userCreds = sessionStorage.getItem("user-creds");
@@ -1112,6 +1125,93 @@
             }
         }
 
+        async function cargarCuentasContables() {
+            const cuentasSelect = document.getElementById('cuentaContable');
+            const cuentasSelectE = document.getElementById('cuentaContableE');
+            const querySnapshot = await getDocs(collection(dba, 'CatalogoCuentas'));
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = `${data.codigo} - ${data.nombre}`;
+                cuentasSelect.appendChild(option);
+
+                const optionE = document.createElement('option');
+                optionE.value = doc.id;
+                optionE.textContent = `${data.codigo} - ${data.nombre}`;
+                cuentasSelectE.appendChild(optionE);
+
+                data.subcuentas.forEach((subcuenta) => {
+                    const subOption = document.createElement('option');
+                    subOption.value = `${doc.id}_${subcuenta.codigo}`;
+                    subOption.textContent = `  ${subcuenta.codigo} - ${subcuenta.nombre}`;
+                    cuentasSelect.appendChild(subOption);
+
+                    const subOptionE = document.createElement('option');
+                    subOptionE.value = `${doc.id}_${subcuenta.codigo}`;
+                    subOptionE.textContent = `  ${subcuenta.codigo} - ${subcuenta.nombre}`;
+                    cuentasSelectE.appendChild(subOptionE);
+                });
+            });
+        }
+
+
+        window.addEventListener('DOMContentLoaded', cargarCuentasContables);
+
+        async function asociarCuentaContable(pacienteNombre, cuentaId, cuentaAnteriorId = null) {
+            if (cuentaAnteriorId && cuentaAnteriorId !== cuentaId) {
+                // Eliminar el paciente de la cuenta anterior
+                await eliminarPacienteDeCuenta(pacienteNombre, cuentaAnteriorId);
+            }
+
+            const cuentaRef = doc(dba, 'CatalogoCuentas', cuentaId.split('_')[0]);
+            const cuentaDoc = await getDoc(cuentaRef);
+
+            if (cuentaDoc.exists()) {
+                const cuentaData = cuentaDoc.data();
+                const subcuentas = cuentaData.subcuentas;
+                if (cuentaId.includes('_')) {
+                    const subcuentaCodigo = cuentaId.split('_')[1];
+                    const subcuenta = subcuentas.find(sub => sub.codigo === subcuentaCodigo);
+                    if (subcuenta) {
+                        if (!subcuenta.pacientes) {
+                            subcuenta.pacientes = [];
+                        }
+                        subcuenta.pacientes = subcuenta.pacientes.filter(p => p !== pacienteNombre);
+                        subcuenta.pacientes.push(pacienteNombre);
+                    }
+                } else {
+                    if (!cuentaData.pacientes) {
+                        cuentaData.pacientes = [];
+                    }
+                    cuentaData.pacientes = cuentaData.pacientes.filter(p => p !== pacienteNombre);
+                    cuentaData.pacientes.push(pacienteNombre);
+                }
+                await updateDoc(cuentaRef, cuentaData);
+            }
+        }
+        async function eliminarPacienteDeCuenta(pacienteNombre, cuentaId) {
+            const cuentaRef = doc(dba, 'CatalogoCuentas', cuentaId.split('_')[0]);
+            const cuentaDoc = await getDoc(cuentaRef);
+
+            if (cuentaDoc.exists()) {
+                const cuentaData = cuentaDoc.data();
+                const subcuentas = cuentaData.subcuentas;
+                if (cuentaId.includes('_')) {
+                    const subcuentaCodigo = cuentaId.split('_')[1];
+                    const subcuenta = subcuentas.find(sub => sub.codigo === subcuentaCodigo);
+                    if (subcuenta) {
+                        subcuenta.pacientes = subcuenta.pacientes.filter(p => p !== pacienteNombre);
+                    }
+                } else {
+                    cuentaData.pacientes = cuentaData.pacientes.filter(p => p !== pacienteNombre);
+                }
+                await updateDoc(cuentaRef, cuentaData);
+            }
+        }
+
+
         form.addEventListener('submit', async (event) => {
             // Prevenir el comportamiento predeterminado del formulario
             event.preventDefault();
@@ -1137,6 +1237,7 @@
             const fechaNac = document.getElementById('fechaNac');
             const ARS = document.getElementById('ars');
             const Npoliza = document.getElementById('npoliza');
+            const cuentaContable = document.getElementById('cuentaContable').value;
             const fechaEntradaValue = (fechaEntrada.value) ? formatDateToSpanish(fechaEntrada.value) : null;
             const fechaNacValue = (fechaNac.value) ? formatDateToSpanish(fechaNac.value) : null;
 
@@ -1168,6 +1269,8 @@
 
                 });
 
+                await asociarCuentaContable(`${fname} ${lname}`, cuentaContable);
+
                 // Mostrar una alerta de éxito
                 showSuccessAlert('Datos del paciente registrados correctamente.', 'alert-success');
 
@@ -1191,7 +1294,7 @@
 
             pacientesSnapshot.forEach((doc) => {
                 const pacienteData = doc.data();
-                const { fname, lname, number, dni, fechaEntrada, location, medico, email, ars, npoliza, nEmergencia, provincia, edad, fechaNac } = pacienteData;
+                const { fname, lname, number, dni, fechaEntrada, location, medico, email, ars, npoliza, nEmergencia, provincia, edad, fechaNac, cuentaContable } = pacienteData;
 
                 const dateParts = fechaEntrada.split('/');
                 const formattedFechaEntrada = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
@@ -1227,6 +1330,7 @@
                     fechaNacE.value = formattedFechaNac;
                     ARSE.value = ars;
                     NpolizaE.value = npoliza;
+                    cuentaContableE.value = cuentaContable;
                     fechaEntradaE.value = formattedFechaEntrada;
 
                     EditarFormulario.dataset.docId = doc.id;
@@ -1270,6 +1374,11 @@
 
         async function saveChanges() {
             const docId = EditarFormulario.dataset.docId;
+            const cuentaContableE = document.getElementById('cuentaContableE').value;
+
+            const pacienteRef = doc(dba, 'pacientes', docId);
+            const pacienteDoc = await getDoc(pacienteRef);
+            const cuentaContableAnterior = pacienteDoc.exists() ? pacienteDoc.data().cuentaContable : null;
 
 
             if (!docId) return;
@@ -1299,11 +1408,13 @@
                 fechaNac: fechaNacValue,
                 ars: ARSE.value,
                 npoliza: NpolizaE.value,
+                cuentaContable: cuentaContableE,
                 fechaEntrada: fechaEntradaValue
             };
 
             try {
                 await setDoc(doc(getFirestore(), 'pacientes', docId), updatedData);
+                await asociarCuentaContable(`${FnameInpE.value} ${LnameInpE.value}`, cuentaContableE, cuentaContableAnterior);
                 showSuccessAlert('Empleado actualizado correctamente"', 'alert-success');
                 EditarFormulario.style.disinedplay = 'none';
                 loadPacientes();
