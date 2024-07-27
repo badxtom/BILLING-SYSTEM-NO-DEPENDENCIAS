@@ -1308,16 +1308,22 @@
                             return;
                         }
 
-                        const gananciaPorPago = gananciaTotal / condicionPago;
                         const totalPorPago = totalFactura / condicionPago;
+                        let pagos = [];
                         for (let j = 1; j <= condicionPago; j++) {
-                            const pagoData = {
+                            pagos.push({
                                 numeroPago: j,
-                                ganancia: `${gananciaPorPago.toFixed(2)}`,
-                                total: `${totalPorPago.toFixed(2)} ${moneda}`,
+                                total: parseFloat((totalPorPago).toFixed(2)),
                                 estatus: 'Pendiente'
-                            };
-                            // Guardar cada pago en la subcolección "pagos" del documento de factura
+                            });
+                        }
+
+                        const diferencia = totalFactura - pagos.reduce((acc, pago) => acc + pago.total, 0);
+                        if (diferencia !== 0) {
+                            pagos[0].total += diferencia;
+                        }
+
+                        for (const pagoData of pagos) {
                             await addDoc(collection(dba, `facturas/${facturaRef.id}/pagos`), pagoData);
                         }
                     }

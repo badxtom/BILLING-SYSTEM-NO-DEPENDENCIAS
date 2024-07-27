@@ -194,6 +194,37 @@
             background-color: rgb(4, 97, 24);
 
         }
+
+        .loader {
+            --r1: 154%;
+            --r2: 68.5%;
+            width: 40px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background:
+                radial-gradient(var(--r1) var(--r2) at top, #0000 79.5%, #269af2 80%),
+                radial-gradient(var(--r1) var(--r2) at bottom, #269af2 79.5%, #0000 80%),
+                radial-gradient(var(--r1) var(--r2) at top, #0000 79.5%, #269af2 80%),
+                #ccc;
+            background-size: 50.5% 220%;
+            background-position: -100% 0%, 0% 0%, 100% 0%;
+            background-repeat: no-repeat;
+            animation: l9 2s infinite linear;
+        }
+
+        @keyframes l9 {
+            33% {
+                background-position: 0% 33%, 100% 33%, 200% 33%;
+            }
+
+            66% {
+                background-position: -100% 66%, 0% 66%, 100% 66%;
+            }
+
+            100% {
+                background-position: 0% 100%, 100% 100%, 200% 100%;
+            }
+        }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
@@ -575,8 +606,10 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="cuenta" placeholder="Cuenta">
-                            <label for="cuenta">Cuenta</label>
+                            <select class="form-select" id="cuentaSelect" aria-label="Floating label select example">
+                                <option selected>Elige una cuenta</option>
+                            </select>
+                            <label for="cuentaSelect">*Cuenta</label>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -721,7 +754,7 @@
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
         import { getDatabase, set, ref, get, child, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
         import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, setDoc, serverTimestamp, deleteDoc, Timestamp, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, setDoc, serverTimestamp, deleteDoc, Timestamp, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable, listAll } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -888,42 +921,62 @@
             const tipoGasto = document.getElementById('tipoGasto').value.trim();
             const itbisCheckbox = document.getElementById('itbisCheckbox').checked;
             const naCheckbox = document.getElementById('naCheckbox').checked;
-            const cuenta = document.getElementById('cuenta').value.trim();
             const montoFactura = parseFloat(document.getElementById('montoFactura').value);
             const montoApagar = parseFloat(document.getElementById('montoApagar').value);
             const condicionpago = parseInt(document.getElementById('condicionpago').value, 10);
             const facturaFile = document.getElementById('facturaFile').files[0];
             const nombreFactura = document.getElementById('nombreFactura').value.trim();
 
-            const allFieldsFilled = suplidor && rnc && fecha && moneda && numeroComprobante && tipoGasto && montoApagar && cuenta && !isNaN(montoFactura) && facturaFile && nombreFactura;
+            const allFieldsFilled = suplidor && rnc && fecha && moneda && numeroComprobante && tipoGasto && montoApagar && !isNaN(montoFactura) && facturaFile && nombreFactura;
             const itbisChecked = itbisCheckbox || naCheckbox;
 
             if (!allFieldsFilled || !itbisChecked) {
-                alert('Por favor, complete todos los campos.');
+                showAlert('Por favor, complete todos los campos.', 'alert-danger');
                 return;
             }
 
-            try {
-                // Crear una referencia a la carpeta del suplidor
-                const suplidorFolderRef = storageRef(storage, `facturasSuplidores/${suplidor}/`);
-                // Crear una referencia al archivo de la factura
-                let facturaStorageRef = storageRef(suplidorFolderRef, `${nombreFactura}.pdf`);
+            const subirButton = document.getElementById('subirButton');
+            const loader = document.createElement('div');
+            loader.classList.add('loader');
+            loader.style.display = 'block';
+            loader.style.margin = '0 auto';
 
-                // Verificar si ya existe un archivo con el mismo nombre
-                let i = 1;
-                while (await getDownloadURL(facturaStorageRef).then(() => true).catch(() => false)) {
-                    facturaStorageRef = storageRef(suplidorFolderRef, `${nombreFactura} (${i}).pdf`);
-                    i++;
+            subirButton.style.display = 'none';
+            subirButton.parentNode.appendChild(loader);
+
+            try {
+                const cuentaSelect = document.getElementById('cuentaSelect').value;
+                const [cuentaId, subcuentaCodigo] = cuentaSelect.split('-');
+                let nombreCuenta = '';
+
+                // Obtener nombre de la cuenta o subcuenta y verificar fondos
+                let cuentaMonto = 0;
+                if (subcuentaCodigo) {
+                    const cuentaRef = doc(dba, 'CatalogoCuentas', cuentaId);
+                    const cuentaDoc = await getDoc(cuentaRef);
+                    if (cuentaDoc.exists()) {
+                        const cuentaData = cuentaDoc.data();
+                        const subcuenta = cuentaData.subcuentas.find(sub => sub.codigo === subcuentaCodigo);
+                        nombreCuenta = subcuenta.nombre;
+                        cuentaMonto = parseFloat(subcuenta.monto);
+                    }
+                } else {
+                    const cuentaRef = doc(dba, 'CatalogoCuentas', cuentaId);
+                    const cuentaDoc = await getDoc(cuentaRef);
+                    if (cuentaDoc.exists()) {
+                        const cuentaData = cuentaDoc.data();
+                        nombreCuenta = cuentaData.nombre;
+                        cuentaMonto = parseFloat(cuentaData.monto);
+                    }
                 }
 
-                const formatToSpanishDate = (dateString) => {
-                    const dateParts = dateString.split('-');
-                    return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-                };
-
-                // Subir el archivo
-                await uploadBytes(facturaStorageRef, facturaFile);
-                const formattedDate = formatToSpanishDate(fecha);
+                // Verificar fondos
+                if (montoApagar > cuentaMonto) {
+                    showAlert('No hay suficientes fondos en la cuenta seleccionada.', 'alert-danger');
+                    loader.remove();
+                    subirButton.style.display = 'block';
+                    return;
+                }
 
                 async function obtenerNombreSuplidor(suplidorId) {
                     try {
@@ -957,9 +1010,24 @@
                             estatus: 'Pendiente'
                         });
                     }
+
+                    // Verificar la sumatoria de los pagos
+                    const sumaPagos = pagos.reduce((total, pago) => total + parseFloat(pago.monto), 0);
+                    const diferencia = montoRestante - sumaPagos;
+
+                    if (diferencia !== 0) {
+                        pagos[0].monto = (parseFloat(pagos[0].monto) + diferencia).toFixed(2) + ` ${moneda}`;
+                    }
                 } else {
                     estatus = 'Cerrada';
                 }
+
+                const formatToSpanishDate = (dateString) => {
+                    const dateParts = dateString.split('-');
+                    return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+                };
+
+                const formattedDate = formatToSpanishDate(fecha);
 
                 // Guardar los datos en Firestore
                 const registroDeCompra = {
@@ -971,41 +1039,128 @@
                     numeroComprobante,
                     tipoGasto,
                     itbis: itbisCheckbox ? '18%' : naCheckbox ? 'N/A' : '',
-                    cuenta,
                     montoFactura: `${montoFactura.toFixed(2)} ${moneda} `,
                     montoApagar: `${montoApagar.toFixed(2)} ${moneda}`,
                     condicionpago,
                     nombreFactura,
                     estatus,
                     pagos,
-                    facturaURL: await getDownloadURL(facturaStorageRef)
+                    cuenta: nombreCuenta
                 };
 
-                await addDoc(collection(dba, 'RegistroDeCompras'), registroDeCompra);
+                const docRef = await addDoc(collection(dba, 'RegistroDeCompras'), registroDeCompra);
+
+                // Actualizar cuenta o subcuenta
+                if (subcuentaCodigo) {
+                    const cuentaRef = doc(dba, 'CatalogoCuentas', cuentaId);
+                    const cuentaDoc = await getDoc(cuentaRef);
+
+                    if (cuentaDoc.exists()) {
+                        const cuentaData = cuentaDoc.data();
+                        const subcuentaIndex = cuentaData.subcuentas.findIndex(sub => sub.codigo === subcuentaCodigo);
+                        if (subcuentaIndex !== -1) {
+                            if (!cuentaData.subcuentas[subcuentaIndex].compras) {
+                                cuentaData.subcuentas[subcuentaIndex].compras = [];
+                            }
+                            cuentaData.subcuentas[subcuentaIndex].compras.push(docRef.id);
+
+                            await updateDoc(cuentaRef, cuentaData);
+                        }
+                    }
+                } else {
+                    const cuentaRef = doc(dba, 'CatalogoCuentas', cuentaId);
+                    const cuentaDoc = await getDoc(cuentaRef);
+
+                    if (cuentaDoc.exists()) {
+                        const cuentaData = cuentaDoc.data();
+                        if (!cuentaData.compras) {
+                            cuentaData.compras = [];
+                        }
+                        cuentaData.compras.push(docRef.id);
+
+                        await updateDoc(cuentaRef, cuentaData);
+                    }
+                }
+
+                // Subir el archivo solo después de verificar y guardar los datos
+                const suplidorFolderRef = storageRef(storage, `facturasSuplidores/${suplidor}/`);
+                let facturaStorageRef = storageRef(suplidorFolderRef, `${nombreFactura}.pdf`);
+
+                // Verificar si ya existe un archivo con el mismo nombre
+                let i = 1;
+                while (await getDownloadURL(facturaStorageRef).then(() => true).catch(() => false)) {
+                    facturaStorageRef = storageRef(suplidorFolderRef, `${nombreFactura} (${i}).pdf`);
+                    i++;
+                }
+
+                await uploadBytes(facturaStorageRef, facturaFile);
+                registroDeCompra.facturaURL = await getDownloadURL(facturaStorageRef);
+
+                await updateDoc(doc(dba, 'RegistroDeCompras', docRef.id), { facturaURL: registroDeCompra.facturaURL });
 
                 showAlert('Factura subida y datos registrados con éxito.', 'alert-success');
-                document.getElementById('roleSelect').selectedIndex = 0;
-                document.getElementById('rncC').value = '';
-                document.getElementById('fecha').value = '';
-                document.getElementById('moneda').value = '';
-                document.getElementById('numeroComprobante').value = '';
-                document.getElementById('tipoGasto').value = '';
-                document.getElementById('itbisCheckbox').checked = false;
-                document.getElementById('naCheckbox').checked = true;
-                document.getElementById('cuenta').value = '';
-                document.getElementById('montoFactura').value = '';
-                document.getElementById('condicionpago').value = '';
-                document.getElementById('facturaFile').value = '';
-                document.getElementById('nombreFactura').value = '';
-                document.getElementById('montoApagar').value = '';
-                loadSuplidores();
+                resetForm();
 
             } catch (error) {
                 console.error('Error al subir la factura y registrar los datos:', error);
-                alert('Hubo un error al subir la factura y registrar los datos. Inténtelo de nuevo.');
+                showAlert('Hubo un error al subir la factura y registrar los datos. Inténtelo de nuevo.', 'alert-danger');
+            } finally {
+                loader.remove();
+                subirButton.style.display = 'block';
+                subirButton.disabled = false;
             }
         });
 
+
+
+        function resetForm() {
+            document.getElementById('roleSelect').selectedIndex = 0;
+            document.getElementById('rncC').value = '';
+            document.getElementById('fecha').value = '';
+            document.getElementById('moneda').value = '';
+            document.getElementById('numeroComprobante').value = '';
+            document.getElementById('tipoGasto').value = '';
+            document.getElementById('itbisCheckbox').checked = false;
+            document.getElementById('naCheckbox').checked = true;
+            document.getElementById('cuentaSelect').selectedIndex = 0;
+            document.getElementById('montoFactura').value = '';
+            document.getElementById('condicionpago').value = '';
+            document.getElementById('facturaFile').value = '';
+            document.getElementById('nombreFactura').value = '';
+            document.getElementById('montoApagar').value = '';
+            loadSuppliers();
+            loadCuentas();
+        }
+
+
+        async function loadCuentas() {
+            const cuentaSelect = document.getElementById('cuentaSelect');
+            cuentaSelect.innerHTML = '<option selected>Elige una cuenta</option>';
+
+            const catalogoCuentasSnapshot = await getDocs(collection(getFirestore(), 'CatalogoCuentas'));
+
+            catalogoCuentasSnapshot.forEach((doc) => {
+                const cuentaData = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id; // Aquí guardamos el ID de la cuenta
+                option.textContent = cuentaData.nombre;
+                cuentaSelect.appendChild(option);
+
+                if (cuentaData.subcuentas) {
+                    cuentaData.subcuentas.forEach(subcuenta => {
+                        const subOption = document.createElement('option');
+                        subOption.value = `${doc.id}-${subcuenta.codigo}`; // Guardamos el ID de la cuenta y el código de la subcuenta
+                        subOption.textContent = `-- ${subcuenta.nombre}`;
+                        cuentaSelect.appendChild(subOption);
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSuppliers().catch(error => console.error('Error al cargar suplidores:', error));
+            loadCuentas().catch(error => console.error('Error al cargar cuentas:', error));
+        });
 
 
 
@@ -1054,12 +1209,6 @@
             }
         });
 
-
-
-
-        window.addEventListener('DOMContentLoaded', () => {
-            loadSuppliers().catch(error => console.error('Error al cargar suplidores:', error));
-        });
 
         function showUserData(userId) {
             const dbRef = ref(db);
@@ -1918,21 +2067,31 @@
 
 
         function showAlert(message, alertType) {
-            const alertDiv = document.createElement('div');
-            alertDiv.classList.add('alert', 'alert-dismissible', alertType, 'position-fixed', 'top-50', 'start-50', 'translate-middle');
-            alertDiv.innerHTML = `
+            const alertBox = document.createElement('div');
+            alertBox.className = `alert ${alertType} position-fixed top-50 start-50 translate-middle`;
+            alertBox.style.zIndex = '1050'; // Asegurar que el z-index sea alto para estar encima de otros elementos
+
+            let heading;
+            if (alertType === 'alert-success') {
+                heading = '¡Bien hecho!';
+            } else if (alertType === 'alert-danger') {
+                heading = '¡Advertencia!';
+            } else {
+                heading = '¡Atención!';
+            }
+
+            alertBox.innerHTML = `
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        <h4 class="alert-heading">¡Advertencia!</h4>
-        <p class="mb-0">${message}</p>
+        <strong>${heading}</strong> ${message}
     `;
 
-            const formContainer = document.getElementById('nuevoFormulario');
-            formContainer.appendChild(alertDiv);
-
+            document.body.appendChild(alertBox);
             setTimeout(() => {
-                alertDiv.remove();
-            }, 5000);
+                alertBox.remove();
+            }, 3000);
         }
+
+
 
         function showSuccessAlert(message) {
             const alertDiv = document.createElement('div');

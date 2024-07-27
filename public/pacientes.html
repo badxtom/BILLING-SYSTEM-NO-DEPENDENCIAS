@@ -1231,12 +1231,12 @@
             const number = document.getElementById('number').value;
             const location = document.getElementById('location').value;
             const medico = document.getElementById('searchInputM').value;
-            const nEmergencia = document.getElementById('nEmergencia');
-            const Provincia = document.getElementById('provincia');
-            const Edad = document.getElementById('edad');
-            const fechaNac = document.getElementById('fechaNac');
-            const ARS = document.getElementById('ars');
-            const Npoliza = document.getElementById('npoliza');
+            const nEmergencia = document.getElementById('nEmergencia').value;
+            const Provincia = document.getElementById('provincia').value;
+            const Edad = document.getElementById('edad').value;
+            const fechaNac = document.getElementById('fechaNac').value;
+            const ARS = document.getElementById('ars').value;
+            const Npoliza = document.getElementById('npoliza').value;
             const cuentaContable = document.getElementById('cuentaContable').value;
             const fechaEntradaValue = (fechaEntrada.value) ? formatDateToSpanish(fechaEntrada.value) : null;
             const fechaNacValue = (fechaNac.value) ? formatDateToSpanish(fechaNac.value) : null;
@@ -1447,21 +1447,31 @@
 
 
 
-        function showSuccessAlert(message) {
-            const alertDiv = document.createElement('div');
-            alertDiv.classList.add('alert', 'alert-dismissible', 'alert-success', 'position-fixed', 'top-50', 'start-50', 'translate-middle');
-            alertDiv.innerHTML = `
+        function showSuccessAlert(message, alertType) {
+            const alertBox = document.createElement('div');
+            alertBox.className = `alert ${alertType} position-fixed top-50 start-50 translate-middle`;
+            alertBox.style.zIndex = '1050'; // Asegurar que el z-index sea alto para estar encima de otros elementos
+
+            let heading;
+            if (alertType === 'alert-success') {
+                heading = '¡Bien hecho!';
+            } else if (alertType === 'alert-danger') {
+                heading = '¡Advertencia!';
+            } else {
+                heading = '¡Atención!';
+            }
+
+            alertBox.innerHTML = `
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        <strong>¡Bien hecho!</strong> ${message}
+        <strong>${heading}</strong> ${message}
     `;
 
-            const formContainer = document.getElementById('nuevoFormulario');
-            formContainer.appendChild(alertDiv);
-
+            document.body.appendChild(alertBox);
             setTimeout(() => {
-                alertDiv.remove();
-            }, 5000);
+                alertBox.remove();
+            }, 3000);
         }
+
 
 
         searchInput.addEventListener('input', filterTable);

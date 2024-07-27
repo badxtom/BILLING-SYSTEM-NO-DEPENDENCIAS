@@ -172,6 +172,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
 </head>
 
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const userCreds = sessionStorage.getItem("user-creds");
+      if (!userCreds && window.location.pathname.includes('catalogo-de-cuentas')) {
+        window.location.href = 'login';
+      }
+  
+    });
+  </script>
+  
+
 <body data-pc-preset="preset-1" data-pc-sidebar-theme="light" data-pc-sidebar-caption="true" data-pc-direction="ltr"
     data-pc-theme="light">
     <div class="loader-bg">
@@ -609,7 +620,9 @@
 
                 for (const doc of querySnapshot.docs) {
                     const data = doc.data();
-                    let montoTotal = await calcularMontoCuenta(doc.id, data.pacientes);
+                    let montoTotal = data.monto; // Usar el monto existente como punto de partida
+
+                    montoTotal = await calcularMontoCuenta(doc.id, data.pacientes);
 
                     const row = document.createElement('tr');
                     row.ondblclick = () => editarCuenta(doc.id);
@@ -626,7 +639,9 @@
                     catalogoCuentas.appendChild(row);
 
                     for (const [index, subcuenta] of data.subcuentas.entries()) {
-                        let montoSubcuenta = await calcularMontoCuenta(doc.id, subcuenta.pacientes, subcuenta.codigo);
+                        let montoSubcuenta = subcuenta.monto; // Usar el monto existente como punto de partida
+
+                        montoSubcuenta = await calcularMontoCuenta(doc.id, subcuenta.pacientes, subcuenta.codigo);
 
                         const subRow = document.createElement('tr');
                         subRow.classList.add('subcuenta');
@@ -697,6 +712,9 @@
                 montoTotal += montoSubcuentas;
             }
 
+            // Restar montos de registro de compras
+            montoTotal -= await calcularMontoRegistroCompras(cuentaId, subcuentaCodigo);
+
             // Actualizar el monto en Firestore
             if (cuentaDoc.exists()) {
                 const cuentaData = cuentaDoc.data();
@@ -714,10 +732,57 @@
             return montoTotal;
         }
 
+        async function calcularMontoRegistroCompras(cuentaId, subcuentaCodigo = null) {
+            let montoTotal = 0;
 
+            const cuentaRef = doc(db, 'CatalogoCuentas', cuentaId);
+            const cuentaDoc = await getDoc(cuentaRef);
 
-        // Llamar a la función para cargar las cuentas contables al cargar la página
-        window.addEventListener('DOMContentLoaded', cargarCatalogoCuentas);
+            if (cuentaDoc.exists()) {
+                const cuentaData = cuentaDoc.data();
+                let compras = cuentaData.compras;
+
+                if (subcuentaCodigo) {
+                    const subcuenta = cuentaData.subcuentas.find(sub => sub.codigo === subcuentaCodigo);
+                    compras = subcuenta ? subcuenta.compras : [];
+                }
+
+                if (compras && compras.length > 0) {
+                    for (const compraId of compras) {
+                        const compraRef = doc(db, 'RegistroDeCompras', compraId);
+                        const compraDoc = await getDoc(compraRef);
+
+                        if (compraDoc.exists()) {
+                            const compra = compraDoc.data();
+
+                            if (compra.estatus === 'Cerrada') {
+                                if (!compra.pagos || compra.pagos.length === 0) {
+                                    montoTotal += parseFloat(compra.montoFactura.replace(' DOP', ''));
+                                } else {
+                                    for (const pago of compra.pagos) {
+                                        if (pago.estatus === 'Pagado') {
+                                            montoTotal += parseFloat(pago.monto.replace(' DOP', ''));
+                                        }
+                                    }
+                                }
+                            } else if (compra.estatus === 'Abierta' && compra.pagos) {
+                                for (const pago of compra.pagos) {
+                                    if (pago.estatus === 'Pagado') {
+                                        montoTotal += parseFloat(pago.monto.replace(' DOP', ''));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return montoTotal;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await cargarCatalogoCuentas();
+        });
 
         window.agregarSubcuenta = async function (cuentaId) {
             abrirFormulario('Agregar Subcuenta');

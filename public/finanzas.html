@@ -371,6 +371,37 @@
                 padding: 10px;
             }
         }
+
+        .loader {
+            --r1: 154%;
+            --r2: 68.5%;
+            width: 40px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background:
+                radial-gradient(var(--r1) var(--r2) at top, #0000 79.5%, #269af2 80%),
+                radial-gradient(var(--r1) var(--r2) at bottom, #269af2 79.5%, #0000 80%),
+                radial-gradient(var(--r1) var(--r2) at top, #0000 79.5%, #269af2 80%),
+                #ccc;
+            background-size: 50.5% 220%;
+            background-position: -100% 0%, 0% 0%, 100% 0%;
+            background-repeat: no-repeat;
+            animation: l9 2s infinite linear;
+        }
+
+        @keyframes l9 {
+            33% {
+                background-position: 0% 33%, 100% 33%, 200% 33%;
+            }
+
+            66% {
+                background-position: -100% 66%, 0% 66%, 100% 66%;
+            }
+
+            100% {
+                background-position: 0% 100%, 100% 100%, 200% 100%;
+            }
+        }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
@@ -696,7 +727,7 @@
                         <div class="card-body">
                             <div class="row mb-3 align-items-center">
                                 <div class="col">
-                                    <h4>Egresos</h4>
+                                    <h4>Gastos</h4>
                                 </div>
                                 <div class="col-auto">
                                     <input type="search" id="filterDateE" class="filter-input" placeholder="mm/yyyy" />
@@ -711,8 +742,8 @@
                                 <div class="px-3 pt-3">
                                     <div class="row mb-1 align-items-start">
                                         <div class="col">
-                                            <h5 class="text-secondary mb-0">Total Egresos</h5>
-                                            <small class="text-muted">Egresos del mes seleccionado</small>
+                                            <h5 class="text-secondary mb-0">Total Gastos</h5>
+                                            <small class="text-muted">Gastos del mes seleccionado</small>
                                         </div>
                                         <div class="col-auto">
                                             <h4 id="totalExpenses" class="mb-0">$0.00</h4>
@@ -2026,16 +2057,16 @@
                 // Crear encabezados de tabla
                 const tableHeader = document.createElement('thead');
                 tableHeader.innerHTML = `
-        <tr>
-            <th>Suplidor</th>
-            <th>Estatus</th>
-            <th>Fecha</th>
-            <th>Monto pagado en el momento de la compra</th>
-            <th>Total</th>
-            <th>Número de comprobante fiscal</th>
-            <th>Número de Factura</th>
-            <th>Factura</th>
-        </tr>`;
+            <tr>
+                <th>Suplidor</th>
+                <th>Estatus</th>
+                <th>Fecha</th>
+                <th>Monto pagado en el momento de la compra</th>
+                <th>Total</th>
+                <th>Número de comprobante fiscal</th>
+                <th>Número de Factura</th>
+                <th>Factura</th>
+            </tr>`;
                 table.appendChild(tableHeader);
 
                 const tableBody = document.createElement('tbody');
@@ -2047,15 +2078,15 @@
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
-            <td>${suplidorNombre}</td>
-            <td>${estatus}</td>
-            <td>${fecha}</td>
-            <td>${montoApagar}</td>
-            <td>${montoFactura}</td>
-            <td>${numeroComprobante}</td>
-            <td>${nombreFactura}</td>
-            <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>
-            <td><button class="btn btn-sm btn-primary" onclick="aplicarPagoCuentasPorPagar('${doc.id}')">Aplicar Pago</button></td>`;
+                <td>${suplidorNombre}</td>
+                <td>${estatus}</td>
+                <td>${fecha}</td>
+                <td>${montoApagar}</td>
+                <td>${montoFactura}</td>
+                <td>${numeroComprobante}</td>
+                <td>${nombreFactura}</td>
+                <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>
+                <td><button class="btn btn-sm btn-primary" onclick="aplicarPagoCuentasPorPagar('${doc.id}')">Aplicar Pago</button></td>`;
 
                     tableBody.appendChild(row);
                 });
@@ -2217,7 +2248,6 @@
             listaPagos.innerHTML = '';
 
             try {
-                // Obtener los datos de la factura desde Firestore
                 const facturaRef = doc(dba, 'RegistroDeCompras', docId);
                 const facturaSnap = await getDoc(facturaRef);
 
@@ -2229,7 +2259,6 @@
                 const facturaData = facturaSnap.data();
                 const { suplidorNombre, estatus, fecha, montoFactura, pagos, numeroComprobante, nombreFactura } = facturaData;
 
-                // Llenar los datos de la factura en el formulario
                 document.getElementById('facturaSuplidor').textContent = suplidorNombre;
                 document.getElementById('facturaEstatusP').textContent = estatus;
                 document.getElementById('facturaFechaP').textContent = fecha;
@@ -2237,47 +2266,46 @@
                 document.getElementById('facturaItemsP').textContent = pagos.length;
                 document.getElementById('facturaNumeroP').textContent = nombreFactura;
 
-                // Listar los pagos del array 'pagos'
                 const totalF = montoFactura;
 
                 let tableContent = `
-        <thead>
-            <tr>
-                <th>Pago</th>
-                <th>Monto en Factura</th>
-                <th>A Pagar</th>
-                <th>Fecha</th>
-                <th>Estatus</th>
-                <th>Pagar</th>
-                <th>Subir Recibo</th>
-                <th>Guardar Recibo</th>
-            </tr>
-        </thead>
-        <tbody>
-    `;
+            <thead>
+                <tr>
+                    <th>Pago</th>
+                    <th>Monto en Factura</th>
+                    <th>A Pagar</th>
+                    <th>Fecha</th>
+                    <th>Estatus</th>
+                    <th>Pagar</th>
+                    <th>Subir Recibo</th>
+                    <th>Guardar Recibo</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
 
                 pagos.forEach((pago, index) => {
                     const { estatus, fechapago, monto = '0.00 DOP', numeroPago } = pago;
 
                     tableContent += `
-            <tr>
-                <td>Pago ${numeroPago}</td>
-                <td>${totalF}</td>
-                <td>${monto}</td>
-                <td>${fechapago || 'Pendiente'}</td>
-                <td>${estatus}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="pagarCuentasPorPagar('${docId}', ${index}, '${monto}')" ${estatus === 'Pagado' ? 'disabled' : ''}>Pagar</button>
-                </td>
-                <td>
-                    <input type="file" id="reciboFile-${docId}-${index}" class="form-control" style="display: ${estatus === 'Pagado' ? 'block' : 'none'};" onchange="mostrarNombreArchivo('${docId}', ${index})" />
-                    <span id="nombreArchivo-${docId}-${index}" style="display: ${estatus === 'Pagado' ? 'block' : 'none'};"></span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-success" onclick="guardarRecibo('${docId}', ${index})" style="display: ${estatus === 'Pagado' ? 'block' : 'none'};">Aplicar</button>
-                </td>
-            </tr>
-        `;
+                <tr>
+                    <td>Pago ${numeroPago}</td>
+                    <td>${totalF}</td>
+                    <td>${monto}</td>
+                    <td>${fechapago || 'Pendiente'}</td>
+                    <td>${estatus}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" id="pagarBtn-${docId}-${index}" onclick="pagarCuentasPorPagar('${docId}', ${index}, '${monto}')" ${estatus === 'Pagado' ? 'disabled' : ''} disabled>Pagar</button>
+                    </td>
+                    <td>
+                        <input type="file" id="reciboFile-${docId}-${index}" class="form-control" onchange="mostrarNombreArchivo('${docId}', ${index})" />
+                        <span id="nombreArchivo-${docId}-${index}"></span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-success" id="aplicarBtn-${docId}-${index}" onclick="guardarRecibo('${docId}', ${index})" ${estatus === 'Pagado' ? 'disabled' : ''}>Aplicar</button>
+                    </td>
+                </tr>
+            `;
                 });
 
                 tableContent += '</tbody>';
@@ -2299,57 +2327,21 @@
             }
         }
 
-        window.pagarCuentasPorPagar = async function (facturaId, pagoIndex, monto) {
-            try {
-                const facturaRef = doc(dba, 'RegistroDeCompras', facturaId);
-                const facturaSnap = await getDoc(facturaRef);
-
-                if (!facturaSnap.exists()) {
-                    console.error('La factura no existe.');
-                    return;
-                }
-
-                const facturaData = facturaSnap.data();
-                const pagos = facturaData.pagos;
-
-                if (!pagos || !pagos[pagoIndex]) {
-                    console.error('El pago no existe.');
-                    return;
-                }
-
-                const fechaActual = obtenerFechaActual();
-
-                pagos[pagoIndex].estatus = 'Pagado';
-                pagos[pagoIndex].fechapago = fechaActual;
-
-                await updateDoc(facturaRef, {
-                    pagos: pagos
-                });
-
-                // Verificar si todos los pagos están pagados
-                const todosPagados = pagos.every(pago => pago.estatus === 'Pagado');
-
-                if (todosPagados) {
-                    await updateDoc(facturaRef, {
-                        estatus: 'Cerrada'
-                    });
-                }
-
-                aplicarPagoCuentasPorPagar(facturaId);
-
-            } catch (error) {
-                console.error('Error al pagar:', error);
-            }
-        }
-
         window.guardarRecibo = async function (facturaId, pagoIndex) {
             const reciboFileInput = document.getElementById(`reciboFile-${facturaId}-${pagoIndex}`);
             const reciboFile = reciboFileInput.files[0];
 
             if (!reciboFile) {
-                alert('Por favor, seleccione un archivo.');
+                showAlert('Por favor, seleccione un archivo.', 'alert-warning');
                 return;
             }
+
+            const aplicarBtn = document.getElementById(`aplicarBtn-${facturaId}-${pagoIndex}`);
+            aplicarBtn.style.display = 'none'; // Ocultar el botón "Aplicar"
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.classList.add('loader');
+            aplicarBtn.parentNode.appendChild(loaderDiv); // Mostrar la animación de carga
 
             try {
                 const facturaRef = doc(dba, 'RegistroDeCompras', facturaId);
@@ -2388,13 +2380,68 @@
                     pagos: pagos
                 });
 
-                showSuccessAlert('Recibo subido y guardado con éxito.', 'alert-success');
+                showAlert('Recibo subido y guardado con éxito.', 'alert-success');
+
+                const payButton = document.getElementById(`pagarBtn-${facturaId}-${pagoIndex}`);
+                payButton.disabled = false;
+                aplicarBtn.disabled = true;
+
+                loaderDiv.remove(); // Eliminar la animación de carga
+                aplicarBtn.style.display = 'block'; // Mantener el botón "Aplicar" oculto
 
             } catch (error) {
                 console.error('Error al subir el recibo:', error);
-                alert('Hubo un error al subir el recibo. Inténtelo de nuevo.');
+                showAlert('Hubo un error al subir el recibo. Inténtelo de nuevo.', 'alert-danger');
+
+                loaderDiv.remove(); // Eliminar la animación de carga
+                aplicarBtn.style.display = 'block'; // Mostrar el botón "Aplicar"
             }
         }
+
+
+        window.pagarCuentasPorPagar = async function (facturaId, pagoIndex, monto) {
+            try {
+                const facturaRef = doc(dba, 'RegistroDeCompras', facturaId);
+                const facturaSnap = await getDoc(facturaRef);
+
+                if (!facturaSnap.exists()) {
+                    console.error('La factura no existe.');
+                    return;
+                }
+
+                const facturaData = facturaSnap.data();
+                const pagos = facturaData.pagos;
+
+                if (!pagos || !pagos[pagoIndex]) {
+                    console.error('El pago no existe.');
+                    return;
+                }
+
+                const fechaActual = obtenerFechaActual();
+
+                pagos[pagoIndex].estatus = 'Pagado';
+                pagos[pagoIndex].fechapago = fechaActual;
+
+                await updateDoc(facturaRef, {
+                    pagos: pagos
+                });
+
+                const todosPagados = pagos.every(pago => pago.estatus === 'Pagado');
+
+                if (todosPagados) {
+                    await updateDoc(facturaRef, {
+                        estatus: 'Cerrada'
+                    });
+                }
+
+                aplicarPagoCuentasPorPagar(facturaId);
+
+            } catch (error) {
+                console.error('Error al pagar:', error);
+            }
+        }
+
+
 
 
 
@@ -2461,7 +2508,7 @@
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     const option = document.createElement('option');
-                    option.value = doc.id; // Use the document ID for the value
+                    option.value = doc.id; 
                     option.text = `Factura ${data.numeroFactura} - ${data.fecha}`;
                     facturaSelect.appendChild(option);
                 });
@@ -2479,7 +2526,7 @@
                 if (facturaDoc.exists()) {
                     const facturaData = facturaDoc.data();
                     document.getElementById('comprobanteFiscalFactura').value = facturaData.comprobante;
-                    document.getElementById('cliente').value = facturaData.paciente; // Autocomplete the cliente field
+                    document.getElementById('cliente').value = facturaData.paciente; 
                 }
             } catch (error) {
                 console.error('Error al obtener los detalles de la factura:', error);
@@ -2804,7 +2851,7 @@
                 const workbook = new ExcelJS.Workbook();
 
                 // Agregar una nueva hoja al libro
-                const worksheet = workbook.addWorksheet('Registro de Egresos');
+                const worksheet = workbook.addWorksheet('Registro de Gastos');
 
                 // Encabezados de la tabla de egresos
                 const headers = [
@@ -2876,7 +2923,7 @@
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
                 // Descargar el archivo Excel
-                saveAs(blob, 'egresos.xlsx');
+                saveAs(blob, 'gastos.xlsx');
 
                 // Mostrar mensaje de éxito
                 showAlertExcel('Archivo de Excel generado correctamente.', 'alert-success');
@@ -2904,7 +2951,7 @@
                 const workbook = new ExcelJS.Workbook();
 
                 // Agregar una nueva hoja al libro
-                const worksheet = workbook.addWorksheet('Registro de Ingresos');
+                const worksheet = workbook.addWorksheet('Facturas');
 
                 // Encabezados de la tabla de ingresos
                 const headers = [
@@ -3227,17 +3274,28 @@
         }
 
         function showAlert(message, alertType) {
-            const alertDiv = document.createElement('div');
-            alertDiv.classList.add('alert', 'alert-dismissible', alertType, 'position-fixed', 'top-50', 'start-50', 'translate-middle');
-            alertDiv.style.zIndex = '1050';  // Asegurar que el z-index sea alto para estar encima de otros elementos
-            alertDiv.innerHTML = `
+            const alertBox = document.createElement('div');
+            alertBox.className = `alert ${alertType} position-fixed top-50 start-50 translate-middle`;
+            alertBox.style.zIndex = '1050'; // Asegurar que el z-index sea alto para estar encima de otros elementos
+
+            let heading;
+            if (alertType === 'alert-success') {
+                heading = '¡Bien hecho!';
+            } else if (alertType === 'alert-danger') {
+                heading = '¡Advertencia!';
+            } else {
+                heading = '¡Atención!';
+            }
+
+            alertBox.innerHTML = `
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        <strong>¡Bien hecho!</strong> ${message}
+        <strong>${heading}</strong> ${message}
     `;
-            document.body.appendChild(alertDiv);
+
+            document.body.appendChild(alertBox);
             setTimeout(() => {
-                alertDiv.remove();
-            }, 5000);
+                alertBox.remove();
+            }, 3000);
         }
 
 
