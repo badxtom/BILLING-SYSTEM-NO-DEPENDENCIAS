@@ -174,14 +174,14 @@
 
 <script>
     window.addEventListener('DOMContentLoaded', () => {
-      const userCreds = sessionStorage.getItem("user-creds");
-      if (!userCreds && window.location.pathname.includes('catalogo-de-cuentas')) {
-        window.location.href = 'login';
-      }
-  
+        const userCreds = sessionStorage.getItem("user-creds");
+        if (!userCreds && window.location.pathname.includes('catalogo-de-cuentas')) {
+            window.location.href = 'login';
+        }
+
     });
-  </script>
-  
+</script>
+
 
 <body data-pc-preset="preset-1" data-pc-sidebar-theme="light" data-pc-sidebar-caption="true" data-pc-direction="ltr"
     data-pc-theme="light">
@@ -676,14 +676,14 @@
                     const factura = facturaDoc.data();
                     if (factura.estatus === 'Cerrada') {
                         if (!factura.pagos) {
-                            montoTotal += parseFloat(factura.total.replace(' DOP', ''));
+                            montoTotal += parseFloat(String(factura.total).replace(' DOP', ''));
                         } else {
                             const pagosRef = collection(db, `facturas/${facturaDoc.id}/pagos`);
                             const pagosSnapshot = await getDocs(pagosRef);
                             for (const pagoDoc of pagosSnapshot.docs) {
                                 const pago = pagoDoc.data();
                                 if (pago.estatus === 'Pagado') {
-                                    montoTotal += parseFloat(pago.total.replace(' DOP', ''));
+                                    montoTotal += parseFloat(String(pago.total).replace(' DOP', ''));
                                 }
                             }
                         }
@@ -693,7 +693,7 @@
                         for (const pagoDoc of pagosSnapshot.docs) {
                             const pago = pagoDoc.data();
                             if (pago.estatus === 'Pagado') {
-                                montoTotal += parseFloat(pago.total.replace(' DOP', ''));
+                                montoTotal += parseFloat(String(pago.total).replace(' DOP', ''));
                             }
                         }
                     }
@@ -731,6 +731,7 @@
 
             return montoTotal;
         }
+
 
         async function calcularMontoRegistroCompras(cuentaId, subcuentaCodigo = null) {
             let montoTotal = 0;

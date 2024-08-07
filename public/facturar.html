@@ -1308,19 +1308,27 @@
                             return;
                         }
 
-                        const totalPorPago = totalFactura / condicionPago;
+                        const totalPorPago = parseFloat((totalFactura / condicionPago).toFixed(2));
+                        const gananciaPorPago = parseFloat((gananciaTotal / condicionPago).toFixed(2));
                         let pagos = [];
                         for (let j = 1; j <= condicionPago; j++) {
                             pagos.push({
                                 numeroPago: j,
-                                total: parseFloat((totalPorPago).toFixed(2)),
+                                total: totalPorPago,
+                                ganancia: gananciaPorPago,
                                 estatus: 'Pendiente'
                             });
                         }
 
-                        const diferencia = totalFactura - pagos.reduce((acc, pago) => acc + pago.total, 0);
-                        if (diferencia !== 0) {
-                            pagos[0].total += diferencia;
+                        const diferenciaTotal = parseFloat((totalFactura - pagos.reduce((acc, pago) => acc + pago.total, 0)).toFixed(2));
+                        const diferenciaGanancia = parseFloat((gananciaTotal - pagos.reduce((acc, pago) => acc + pago.ganancia, 0)).toFixed(2));
+
+                        if (diferenciaTotal !== 0) {
+                            pagos[0].total += diferenciaTotal;
+                        }
+
+                        if (diferenciaGanancia !== 0) {
+                            pagos[0].ganancia += diferenciaGanancia;
                         }
 
                         for (const pagoData of pagos) {
@@ -1357,6 +1365,7 @@
                 doc.save('factura.pdf');
             };
         }
+
 
 
         async function getLastFacturaNumber() {

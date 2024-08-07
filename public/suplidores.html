@@ -927,7 +927,7 @@
             const facturaFile = document.getElementById('facturaFile').files[0];
             const nombreFactura = document.getElementById('nombreFactura').value.trim();
 
-            const allFieldsFilled = suplidor && rnc && fecha && moneda && numeroComprobante && tipoGasto && montoApagar && !isNaN(montoFactura) && facturaFile && nombreFactura;
+            const allFieldsFilled = suplidor && rnc && fecha && moneda && numeroComprobante && tipoGasto && !isNaN(montoFactura) && facturaFile && nombreFactura;
             const itbisChecked = itbisCheckbox || naCheckbox;
 
             if (!allFieldsFilled || !itbisChecked) {
@@ -970,7 +970,7 @@
                     }
                 }
 
-                // Verificar fondos
+                // Verificar fondos solo si el monto a pagar es mayor que 0
                 if (montoApagar > cuentaMonto) {
                     showAlert('No hay suficientes fondos en la cuenta seleccionada.', 'alert-danger');
                     loader.remove();
@@ -1000,23 +1000,23 @@
 
                 if (montoFactura !== montoApagar) {
                     const montoRestante = montoFactura - montoApagar;
-                    const pagoPorCuota = montoRestante / condicionpago;
+                    const pagoPorCuota = parseFloat((montoRestante / condicionpago).toFixed(2));
                     estatus = 'Abierta';
 
                     for (let j = 0; j < condicionpago; j++) {
                         pagos.push({
                             numeroPago: j + 1,
-                            monto: `${pagoPorCuota.toFixed(2)} ${moneda}`,
+                            monto: pagoPorCuota,
                             estatus: 'Pendiente'
                         });
                     }
 
                     // Verificar la sumatoria de los pagos
-                    const sumaPagos = pagos.reduce((total, pago) => total + parseFloat(pago.monto), 0);
-                    const diferencia = montoRestante - sumaPagos;
+                    const sumaPagos = pagos.reduce((total, pago) => total + pago.monto, 0);
+                    const diferencia = parseFloat((montoRestante - sumaPagos).toFixed(2));
 
                     if (diferencia !== 0) {
-                        pagos[0].monto = (parseFloat(pagos[0].monto) + diferencia).toFixed(2) + ` ${moneda}`;
+                        pagos[0].monto = parseFloat((pagos[0].monto + diferencia).toFixed(2));
                     }
                 } else {
                     estatus = 'Cerrada';
@@ -1039,7 +1039,7 @@
                     numeroComprobante,
                     tipoGasto,
                     itbis: itbisCheckbox ? '18%' : naCheckbox ? 'N/A' : '',
-                    montoFactura: `${montoFactura.toFixed(2)} ${moneda} `,
+                    montoFactura: `${montoFactura.toFixed(2)} ${moneda}`,
                     montoApagar: `${montoApagar.toFixed(2)} ${moneda}`,
                     condicionpago,
                     nombreFactura,
@@ -1110,6 +1110,7 @@
                 subirButton.disabled = false;
             }
         });
+
 
 
 
