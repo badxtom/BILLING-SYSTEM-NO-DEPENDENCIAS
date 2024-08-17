@@ -2508,7 +2508,7 @@
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     const option = document.createElement('option');
-                    option.value = doc.id; 
+                    option.value = doc.id;
                     option.text = `Factura ${data.numeroFactura} - ${data.fecha}`;
                     facturaSelect.appendChild(option);
                 });
@@ -2526,7 +2526,7 @@
                 if (facturaDoc.exists()) {
                     const facturaData = facturaDoc.data();
                     document.getElementById('comprobanteFiscalFactura').value = facturaData.comprobante;
-                    document.getElementById('cliente').value = facturaData.paciente; 
+                    document.getElementById('cliente').value = facturaData.paciente;
                 }
             } catch (error) {
                 console.error('Error al obtener los detalles de la factura:', error);
@@ -2941,50 +2941,31 @@
             event.preventDefault();
 
             try {
-                // Consulta para obtener todas las facturas sin filtrar por mes y año
-                const q = collection(dba, "facturas");
-
-                const querySnapshot = await getDocs(q);
+                // Consulta para obtener todas las facturas
+                const facturasSnapshot = await getDocs(collection(dba, "facturas"));
+                const recibosSnapshot = await getDocs(collection(dba, "recibos")); // Consulta para obtener todos los recibos
                 let totalEarnings = 0;
 
                 // Crear una nueva instancia de workbook (libro de Excel)
                 const workbook = new ExcelJS.Workbook();
 
-                // Agregar una nueva hoja al libro
-                const worksheet = workbook.addWorksheet('Facturas');
+                // Agregar una hoja para las facturas
+                const facturaSheet = workbook.addWorksheet('Facturas');
 
-                // Encabezados de la tabla de ingresos
-                const headers = [
-                    'Número de Factura',
-                    'Fecha',
-                    'Estatus',
-                    'Ganancia',
-                    'Comprobante',
-                    'Doctor',
-                    'Paciente',
-                    'Total',
-                    'Pagos',
-                    'Forma de Pago' // Nueva columna para la forma de pago
+                // Encabezados de la tabla de facturas
+                const facturaHeaders = [
+                    'Número de Factura', 'Fecha', 'Estatus', 'Ganancia', 'Comprobante', 'Doctor', 'Paciente', 'Total', 'Pagos', 'Forma de Pago'
                 ];
 
-                // Agregar encabezados a la hoja de Excel
-                worksheet.addRow(headers);
+                facturaSheet.addRow(facturaHeaders);
 
-                // Iterar sobre todas las facturas encontradas
-                for (const doc of querySnapshot.docs) {
+                // Iterar sobre todas las facturas
+                for (const doc of facturasSnapshot.docs) {
                     const data = doc.data();
                     const {
-                        numeroFactura,
-                        fecha,
-                        estatus,
-                        ganancia,
-                        comprobante,
-                        doctor,
-                        paciente,
-                        total,
-                        formaDePago // Obtener la forma de pago
+                        numeroFactura, fecha, estatus, ganancia, comprobante, doctor, paciente, total, formaDePago
                     } = data;
-                    let pagosInfo = 'N/A'; // Valor por defecto para pagos
+                    let pagosInfo = 'N/A';
 
                     // Verificar si la factura tiene pagos
                     const pagosSnapshot = await getDocs(collection(dba, `facturas/${doc.id}/pagos`));
@@ -2999,38 +2980,75 @@
                         pagosInfo = pagosInfo.slice(0, -2); // Eliminar la última coma y espacio
                     }
 
-                    // Filtrar facturas con ganancia válida (mayor que 0 y no estatus Pendiente)
                     if (!(estatus === 'Abierta' && ganancia === 'Pendiente')) {
-                        // Agregar fila a la hoja de Excel
-                        worksheet.addRow([
-                            numeroFactura,
-                            fecha,
-                            estatus,
-                            ganancia,
-                            comprobante ? comprobante : 'N/A',
-                            doctor,
-                            paciente,
-                            total,
-                            pagosInfo,
-                            formaDePago ? formaDePago : 'N/A' // Agregar la forma de pago
+                        facturaSheet.addRow([
+                            numeroFactura, fecha, estatus, ganancia, comprobante ? comprobante : 'N/A', doctor, paciente, total, pagosInfo, formaDePago ? formaDePago : 'N/A'
                         ]);
-
-                        // Sumar la ganancia total
                         totalEarnings += parseFloat(ganancia);
                     }
                 }
 
-                // Establecer estilos para el encabezado
-                const headerRow = worksheet.getRow(1);
-                headerRow.eachCell((cell) => {
+                // Establecer estilos para el encabezado de facturas
+                const facturaHeaderRow = facturaSheet.getRow(1);
+                facturaHeaderRow.eachCell((cell) => {
                     cell.font = { bold: true };
                     cell.alignment = { vertical: 'middle', horizontal: 'center' };
                     cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' } };
                     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0074D9' } };
                 });
 
-                // Ajustar el ancho de las columnas automáticamente
-                worksheet.columns.forEach((column) => {
+                facturaSheet.columns.forEach((column) => {
+                    let maxLength = 0;
+                    column.eachCell({ includeEmpty: true }, (cell) => {
+                        const cellValue = cell.value ? cell.value.toString() : '';
+                        maxLength = Math.max(maxLength, cellValue.length);
+                    });
+                    column.width = maxLength + 2;
+                });
+
+                // Agregar una hoja para los recibos con color verde
+                const reciboSheet = workbook.addWorksheet('Recibos', {
+                    properties: { tabColor: { argb: '00FF00' } } // Color verde para la hoja
+                });
+
+                // Encabezados de la tabla de recibos
+                const reciboHeaders = [
+                    'Doctor', 'Fecha', 'Número de Factura', 'Número de Recibo', 'Paciente', 'Total Pago', 'Forma de Pago', 'Items', 'URL Recibo'
+                ];
+
+                reciboSheet.addRow(reciboHeaders);
+
+                // Iterar sobre todos los recibos
+                for (const doc of recibosSnapshot.docs) {
+                    const data = doc.data();
+                    const {
+                        doctor = 'N/A', fecha = 'N/A', numeroFactura = 'N/A', numeroRecibo = 'N/A', paciente = 'N/A',
+                        totalPago = 'N/A', formaDePago = 'N/A', items = [], urlRecibo = 'N/A', total = 'N/A'
+                    } = data;
+
+                    // Usar `total` si `totalPago` no está disponible
+                    const totalPagoValue = totalPago !== 'N/A' ? totalPago : total;
+
+                    let itemsInfo = 'N/A';
+                    if (items.length > 0) {
+                        itemsInfo = items.map(item => `${item.cantidad}x ${item.descripcion}`).join(', ');
+                    }
+
+                    reciboSheet.addRow([
+                        doctor, fecha, numeroFactura, numeroRecibo, paciente, totalPagoValue, formaDePago, itemsInfo, urlRecibo
+                    ]);
+                }
+
+                // Establecer estilos para el encabezado de recibos
+                const reciboHeaderRow = reciboSheet.getRow(1);
+                reciboHeaderRow.eachCell((cell) => {
+                    cell.font = { bold: true };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '28A745' } }; // Verde oscuro para el encabezado
+                });
+
+                reciboSheet.columns.forEach((column) => {
                     let maxLength = 0;
                     column.eachCell({ includeEmpty: true }, (cell) => {
                         const cellValue = cell.value ? cell.value.toString() : '';
@@ -3043,19 +3061,19 @@
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-                // Descargar el archivo Excel
-                saveAs(blob, 'facturas.xlsx');
+                saveAs(blob, 'facturas-recibos.xlsx');
 
-                // Mostrar mensaje de éxito
                 showAlertExcel('Archivo de Excel generado correctamente.', 'alert-success');
-
-                // Actualizar el total de ganancias en la interfaz
                 document.getElementById('totalEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
             } catch (error) {
                 console.error('Error al generar el archivo de Excel:', error);
                 showAlertExcel(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
             }
         });
+
+
+
+
 
 
 

@@ -1263,20 +1263,29 @@
                 const year = date.getUTCFullYear();
                 return `${day}/${month}/${year}`;
             }
+
             tableBody.innerHTML = '';
 
             const employeesSnapshot = await getDocs(collection(getFirestore(), 'empleados'));
 
-
-            employeesSnapshot.forEach((doc) => {
-                const employeeData = doc.data();
-                const { fname, lname, dni, number, role, roleE, especialidades, location, email, fechaEntrada, exequatur } = employeeData;
-
-                const datePartsE = fechaEntrada.split('/');
-                const formattedfechaEntradaE = `${datePartsE[2]}-${datePartsE[1]}-${datePartsE[0]}`;
-
+            if (employeesSnapshot.empty) {
                 const row = document.createElement('tr');
-                row.innerHTML = `
+                const cell = document.createElement('td');
+                cell.colSpan = 8; // Asegúrate de que coincida con el número de columnas en tu tabla
+                cell.textContent = 'No hay empleados registrados';
+                cell.classList.add('text-center'); // Centrar el texto
+                row.appendChild(cell);
+                tableBody.appendChild(row);
+            } else {
+                employeesSnapshot.forEach((doc) => {
+                    const employeeData = doc.data();
+                    const { fname, lname, dni, number, role, roleE, especialidades, location, email, fechaEntrada, exequatur } = employeeData;
+
+                    const datePartsE = fechaEntrada.split('/');
+                    const formattedfechaEntradaE = `${datePartsE[2]}-${datePartsE[1]}-${datePartsE[0]}`;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
             <td>${fname}</td>
             <td>${lname}</td>
             <td>${number}</td>
@@ -1287,44 +1296,45 @@
             <td>${roleE}</td>
         `;
 
-                row.addEventListener('dblclick', () => {
-                    FnameInpE.value = fname;
-                    LnameInpE.value = lname;
-                    dniInputE.value = dni;
-                    numberInputE.value = number;
-                    locationInputE.value = location;
-                    EmailInpE.value = email;
-                    roleSelectE.value = role;
-                    roleSelectEstE.value = roleE;
-                    fechaEntradaE.value = formattedfechaEntradaE || '';
+                    row.addEventListener('dblclick', () => {
+                        FnameInpE.value = fname;
+                        LnameInpE.value = lname;
+                        dniInputE.value = dni;
+                        numberInputE.value = number;
+                        locationInputE.value = location;
+                        EmailInpE.value = email;
+                        roleSelectE.value = role;
+                        roleSelectEstE.value = roleE;
+                        fechaEntradaE.value = formattedfechaEntradaE || '';
 
-
-                    if (role === 'Doctor') {
-                        document.getElementById('exequaturContainerE').style.display = 'block';
-                        document.getElementById('exequaturInputE').value = exequatur || '';
-                    } else {
-                        document.getElementById('exequaturContainerE').style.display = 'none';
-                    }
-
-                    document.querySelectorAll('#EditarFormulario input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
-
-                    especialidades.forEach(especialidad => {
-                        const checkbox = document.querySelector(`#EditarFormulario input[type="checkbox"][value="${especialidad}"]`);
-                        if (checkbox) {
-                            checkbox.checked = true;
-                        } else if (especialidad !== 'N/A') {
-                            otraEspecialidadContainerE.style.display = 'block';
-                            otraEspecialidadInputE.value = especialidad;
+                        if (role === 'Doctor') {
+                            document.getElementById('exequaturContainerE').style.display = 'block';
+                            document.getElementById('exequaturInputE').value = exequatur || '';
+                        } else {
+                            document.getElementById('exequaturContainerE').style.display = 'none';
                         }
+
+                        document.querySelectorAll('#EditarFormulario input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+
+                        especialidades.forEach(especialidad => {
+                            const checkbox = document.querySelector(`#EditarFormulario input[type="checkbox"][value="${especialidad}"]`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            } else if (especialidad !== 'N/A') {
+                                otraEspecialidadContainerE.style.display = 'block';
+                                otraEspecialidadInputE.value = especialidad;
+                            }
+                        });
+
+                        EditarFormulario.dataset.docId = doc.id;
+                        toggleFormularioE();
                     });
 
-                    EditarFormulario.dataset.docId = doc.id;
-                    toggleFormularioE();
+                    tableBody.appendChild(row);
                 });
-
-                tableBody.appendChild(row);
-            });
+            }
         }
+
 
 
 

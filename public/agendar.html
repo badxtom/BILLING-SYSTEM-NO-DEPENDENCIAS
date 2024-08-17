@@ -469,7 +469,8 @@
                 <input type="hidden" id="docId">
                 <div class="row">
                     <div class="form-floating mb-3">
-                        <input id="searchPatientInputE" class="form-control" type="search" placeholder="Buscar paciente">
+                        <input id="searchPatientInputE" class="form-control" type="search"
+                            placeholder="Buscar paciente">
                         <label for="floatingInput">*Buscar paciente</label>
 
                         <div id="searchPatientResultsE" class="dropdown-menu" style="display: none;"></div>
@@ -989,61 +990,72 @@
 
             const citasSnapshot = await getDocs(collection(getFirestore(), 'CitasAgendas'));
 
-            citasSnapshot.forEach((doc) => {
-                const citaData = doc.data();
-                const { paciente, telefono, email, doctor, fechaEntrada, hora } = citaData;
-
-                const dateParts = fechaEntrada.split('/');
-                const formattedFechaEntrada = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-
+            if (citasSnapshot.empty) {
                 const row = document.createElement('tr');
-                row.innerHTML = `
-            <td>${paciente}</td>
-            <td>${telefono}</td>
-            <td>${email}</td>
-            <td>${doctor}</td>
-            <td>${fechaEntrada}</td>
-            <td>${hora}</td>
-            <td>
-            <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}" ${currentUserRole === 'Asistente' ? 'disabled' : ''}>
-                <i class="fas fa-trash-alt"></i>
-            </button>
-            </td>
-        `;
+                const cell = document.createElement('td');
+                cell.colSpan = 7; // Asegúrate de que coincida con el número de columnas en tu tabla
+                cell.textContent = 'No hay citas registradas';
+                cell.classList.add('text-center'); // Centrar el texto
+                row.appendChild(cell);
+                tableBody.appendChild(row);
+            } else {
+                citasSnapshot.forEach((doc) => {
+                    const citaData = doc.data();
+                    const { paciente, telefono, email, doctor, fechaEntrada, hora } = citaData;
 
-                row.addEventListener('dblclick', () => {
-                    searchPatientInputE.value = paciente;
-                    numberE.value = telefono;
-                    EmailInpE.value = email;
-                    searchDoctorInputE.value = doctor;
-                    fechaEntradaE.value = formattedFechaEntrada;
-                    horaE.value = hora;
+                    const dateParts = fechaEntrada.split('/');
+                    const formattedFechaEntrada = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
 
-                    EditarFormulario.dataset.docId = doc.id;
-                    toggleFormularioE();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${paciente}</td>
+                <td>${telefono}</td>
+                <td>${email}</td>
+                <td>${doctor}</td>
+                <td>${fechaEntrada}</td>
+                <td>${hora}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}" ${currentUserRole === 'Asistente' ? 'disabled' : ''}>
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+
+                    row.addEventListener('dblclick', () => {
+                        searchPatientInputE.value = paciente;
+                        numberE.value = telefono;
+                        EmailInpE.value = email;
+                        searchDoctorInputE.value = doctor;
+                        fechaEntradaE.value = formattedFechaEntrada;
+                        horaE.value = hora;
+
+                        EditarFormulario.dataset.docId = doc.id;
+                        toggleFormularioE();
+                    });
+
+                    tableBody.appendChild(row);
                 });
 
-                tableBody.appendChild(row);
-            });
+                const deleteButtons = document.querySelectorAll('.delete-btn');
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const docId = button.dataset.id;
 
-            const deleteButtons = document.querySelectorAll('.delete-btn');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    const docId = button.dataset.id;
-
-                    showAlert('¿Estás seguro de que deseas eliminar esta cita?', 'alert-warning', true, async () => {
-                        try {
-                            await deleteDoc(doc(getFirestore(), 'CitasAgendas', docId));
-                            showAlert('Cita eliminada correctamente', 'alert-success');
-                            loadCitas();
-                        } catch (error) {
-                            console.error('Error al eliminar la cita:', error);
-                        }
+                        showAlert('¿Estás seguro de que deseas eliminar esta cita?', 'alert-warning', true, async () => {
+                            try {
+                                await deleteDoc(doc(getFirestore(), 'CitasAgendas', docId));
+                                showAlert('Cita eliminada correctamente', 'alert-success');
+                                loadCitas();
+                            } catch (error) {
+                                console.error('Error al eliminar la cita:', error);
+                            }
+                        });
                     });
                 });
-            });
+            }
         }
+
 
 
         function showAlert(message, alertType, isConfirmation = false, onConfirm = null) {

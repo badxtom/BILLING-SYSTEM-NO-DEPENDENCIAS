@@ -1331,6 +1331,11 @@
                             pagos[0].ganancia += diferenciaGanancia;
                         }
 
+                        pagos = pagos.map(pago => ({
+                            ...pago,
+                            total: `${pago.total.toFixed(2)} ${moneda}` // Añadir moneda en esta etapa
+                        }));
+
                         for (const pagoData of pagos) {
                             await addDoc(collection(dba, `facturas/${facturaRef.id}/pagos`), pagoData);
                         }

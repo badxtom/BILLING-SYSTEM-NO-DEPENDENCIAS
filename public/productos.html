@@ -1187,122 +1187,130 @@
                 const precio = parseFloat(precioInputE.value.trim());
 
                 if (!isNaN(precio)) {
-
                     const precioVenta = precio + (precio * 0.4);
-
-
                     precioVentaInputE.value = precioVenta.toFixed(2);
                 } else {
                     precioVentaInputE.value = '';
                 }
             });
 
-            const suplidoresSnapshot = await getDocs(collection(getFirestore(), 'productos'));
+            const productosSnapshot = await getDocs(collection(getFirestore(), 'productos'));
 
-            suplidoresSnapshot.forEach((doc) => {
-                const suplidorData = doc.data();
-                const { descripcion, disponible, fechaVencimiento, precio, suplidorId, categoria, fechaEntrada, itbis, precioVenta, moneda } = suplidorData;
-
-                let formattedFechaVencimiento = '';
-                if (fechaVencimiento !== 'N/A') {
-                    const dateParts = fechaVencimiento.split('/');
-                    formattedFechaVencimiento = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-                }
-
-                const datePartsE = fechaEntrada.split('/');
-                const formattedfechaEntradaE = `${datePartsE[2]}-${datePartsE[1]}-${datePartsE[0]}`;
-
+            if (productosSnapshot.empty) {
                 const row = document.createElement('tr');
-                row.innerHTML = `
-            <td>${descripcion}</td>
-            <td>${disponible}</td>
-            <td>${precio} ${moneda} </td>
-            <td>${precioVenta} ${moneda}</td>
-            <td>${categoria}</td>
-            <td>${itbis}</td>
-            <td>${fechaVencimiento}</td>
-            <td>${fechaEntrada}</td>
-            <td>
-                <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}" ${currentUserRole === 'Asistente' ? 'disabled' : ''}>
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </td>
-        `;
+                const cell = document.createElement('td');
+                cell.colSpan = 9; // Asegúrate de que coincida con el número de columnas en tu tabla
+                cell.textContent = 'No hay productos registrados';
+                cell.classList.add('text-center'); // Centrar el texto
+                row.appendChild(cell);
+                tableBody.appendChild(row);
+            } else {
+                productosSnapshot.forEach((doc) => {
+                    const productoData = doc.data();
+                    const { descripcion, disponible, fechaVencimiento, precio, suplidorId, categoria, fechaEntrada, itbis, precioVenta, moneda } = productoData;
 
-                row.addEventListener('dblclick', () => {
-                    despE.value = descripcion;
-                    dispE.value = disponible;
-                    precioE.value = precio;
-                    MonedaE.value = moneda;
-                    precioventaE.value = precioVenta;
-                    categoriaE.value = categoria;
-                    fechaVencimientoE.value = formattedFechaVencimiento;
-                    fechaEntradaE.value = formattedfechaEntradaE;
-                    roleSelectE.value = suplidorId;
-
-                    if (itbis === '18%') {
-                        document.getElementById('itbisCheckboxE').checked = true;
-                        document.getElementById('naCheckboxIE').checked = false; // Desmarcar N/A si el ITBIS no es N/A
-                    } else {
-                        document.getElementById('naCheckboxIE').checked = true;
-                        document.getElementById('itbisCheckboxE').checked = false;
+                    let formattedFechaVencimiento = '';
+                    if (fechaVencimiento !== 'N/A') {
+                        const dateParts = fechaVencimiento.split('/');
+                        formattedFechaVencimiento = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
                     }
 
-                    if (fechaVencimiento === 'N/A') {
-                        fechaVencimientoE.value = '';
-                        establecerFechaCheckboxE.checked = false;
-                        fechaVencimientoContainerE.style.display = 'none';
-                        naCheckboxE.checked = true;
-                    } else {
+                    const datePartsE = fechaEntrada.split('/');
+                    const formattedfechaEntradaE = `${datePartsE[2]}-${datePartsE[1]}-${datePartsE[0]}`;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${descripcion}</td>
+                <td>${disponible}</td>
+                <td>${precio} ${moneda}</td>
+                <td>${precioVenta} ${moneda}</td>
+                <td>${categoria}</td>
+                <td>${itbis}</td>
+                <td>${fechaVencimiento}</td>
+                <td>${fechaEntrada}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}" ${currentUserRole === 'Asistente' ? 'disabled' : ''}>
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+
+                    row.addEventListener('dblclick', () => {
+                        despE.value = descripcion;
+                        dispE.value = disponible;
+                        precioE.value = precio;
+                        MonedaE.value = moneda;
+                        precioventaE.value = precioVenta;
+                        categoriaE.value = categoria;
                         fechaVencimientoE.value = formattedFechaVencimiento;
-                        establecerFechaCheckboxE.checked = true;
-                        fechaVencimientoContainerE.style.display = 'block';
-                        naCheckboxE.checked = false;
-                    }
+                        fechaEntradaE.value = formattedfechaEntradaE;
+                        roleSelectE.value = suplidorId;
 
-                    if (disponible === 'N/A') {
-                        naDisponibleCheckboxE.checked = true;
-                        dispE.disabled = true;
-                        dispE.value = '';
-                    } else {
-                        naDisponibleCheckboxE.checked = false;
-                        dispE.disabled = false;
-                    }
+                        if (itbis === '18%') {
+                            itbisCheckboxE.checked = true;
+                            naCheckboxIE.checked = false; // Desmarcar N/A si el ITBIS no es N/A
+                        } else {
+                            naCheckboxIE.checked = true;
+                            itbisCheckboxE.checked = false;
+                        }
 
-                    naDisponibleCheckboxE.addEventListener('change', () => {
-                        if (naDisponibleCheckboxE.checked) {
+                        if (fechaVencimiento === 'N/A') {
+                            fechaVencimientoE.value = '';
+                            establecerFechaCheckboxE.checked = false;
+                            fechaVencimientoContainerE.style.display = 'none';
+                            naCheckboxE.checked = true;
+                        } else {
+                            fechaVencimientoE.value = formattedFechaVencimiento;
+                            establecerFechaCheckboxE.checked = true;
+                            fechaVencimientoContainerE.style.display = 'block';
+                            naCheckboxE.checked = false;
+                        }
+
+                        if (disponible === 'N/A') {
+                            naDisponibleCheckboxE.checked = true;
                             dispE.disabled = true;
                             dispE.value = '';
                         } else {
+                            naDisponibleCheckboxE.checked = false;
                             dispE.disabled = false;
                         }
+
+                        naDisponibleCheckboxE.addEventListener('change', () => {
+                            if (naDisponibleCheckboxE.checked) {
+                                dispE.disabled = true;
+                                dispE.value = '';
+                            } else {
+                                dispE.disabled = false;
+                            }
+                        });
+
+                        EditarFormulario.dataset.docId = doc.id;
+                        toggleFormularioE();
                     });
 
-                    EditarFormulario.dataset.docId = doc.id;
-                    toggleFormularioE();
+                    tableBody.appendChild(row);
                 });
 
-                tableBody.appendChild(row);
-            });
+                const deleteButtons = document.querySelectorAll('.delete-btn');
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const docId = button.dataset.id;
 
-            const deleteButtons = document.querySelectorAll('.delete-btn');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    const docId = button.dataset.id;
-
-                    showAlert('¿Estás seguro de que deseas eliminar este producto?', 'alert-warning', true, async () => {
-                        try {
-                            await deleteDoc(doc(getFirestore(), 'productos', docId));
-                            showAlert('Producto eliminado correctamente', 'alert-success');
-                            loadProductos();
-                        } catch (error) {
-                            console.error('Error al eliminar el producto:', error);
-                        }
+                        showAlert('¿Estás seguro de que deseas eliminar este producto?', 'alert-warning', true, async () => {
+                            try {
+                                await deleteDoc(doc(getFirestore(), 'productos', docId));
+                                showAlert('Producto eliminado correctamente', 'alert-success');
+                                loadProductos();
+                            } catch (error) {
+                                console.error('Error al eliminar el producto:', error);
+                            }
+                        });
                     });
                 });
-            });
+            }
         }
+
 
         function showAlert(message, alertType, isConfirmation = false, onConfirm = null) {
             const alertDiv = document.createElement('div');

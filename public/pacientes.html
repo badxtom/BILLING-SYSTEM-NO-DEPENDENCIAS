@@ -1292,54 +1292,65 @@
 
             const pacientesSnapshot = await getDocs(collection(getFirestore(), 'pacientes'));
 
-            pacientesSnapshot.forEach((doc) => {
-                const pacienteData = doc.data();
-                const { fname, lname, number, dni, fechaEntrada, location, medico, email, ars, npoliza, nEmergencia, provincia, edad, fechaNac, cuentaContable } = pacienteData;
-
-                const dateParts = fechaEntrada.split('/');
-                const formattedFechaEntrada = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-
-                const datePartsE = fechaNac.split('/');
-                const formattedFechaNac = `${datePartsE[2]}-${datePartsE[1]}-${datePartsE[0]}`;
-
+            if (pacientesSnapshot.empty) {
                 const row = document.createElement('tr');
-                row.innerHTML = `
-            <td>${fname}</td>
-            <td>${lname}</td>
-            <td>${number}</td>
-            <td>${dni}</td>
-            <td>${location}</td>
-            <td>${medico}</td>
-            <td>${fechaEntrada}</td>
-            <td>
-                <button class="btn btn-primary"  onclick="verHistorial('${doc.id}')">Ver historial</button>
-            </td>
-        `;
-
-                row.addEventListener('dblclick', () => {
-                    fnameInpE.value = fname;
-                    LnameInpE.value = lname
-                    numberE.value = number;
-                    EmailInpE.value = email;
-                    dniE.value = dni;
-                    locationE.value = location;
-                    searchInputME.value = medico;
-                    nEmergenciaE.value = nEmergencia;
-                    ProvinciaE.value = provincia;
-                    EdadE.value = edad;
-                    fechaNacE.value = formattedFechaNac;
-                    ARSE.value = ars;
-                    NpolizaE.value = npoliza;
-                    cuentaContableE.value = cuentaContable;
-                    fechaEntradaE.value = formattedFechaEntrada;
-
-                    EditarFormulario.dataset.docId = doc.id;
-                    toggleFormularioE();
-                });
-
+                const cell = document.createElement('td');
+                cell.colSpan = 8; // Asegúrate de que coincida con el número de columnas en tu tabla
+                cell.textContent = 'No hay pacientes registrados';
+                cell.classList.add('text-center'); // Centrar el texto
+                row.appendChild(cell);
                 tableBody.appendChild(row);
-            });
+            } else {
+                pacientesSnapshot.forEach((doc) => {
+                    const pacienteData = doc.data();
+                    const { fname, lname, number, dni, fechaEntrada, location, medico, email, ars, npoliza, nEmergencia, provincia, edad, fechaNac, cuentaContable } = pacienteData;
+
+                    const dateParts = fechaEntrada.split('/');
+                    const formattedFechaEntrada = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+
+                    const datePartsE = fechaNac.split('/');
+                    const formattedFechaNac = `${datePartsE[2]}-${datePartsE[1]}-${datePartsE[0]}`;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${fname}</td>
+                <td>${lname}</td>
+                <td>${number}</td>
+                <td>${dni}</td>
+                <td>${location}</td>
+                <td>${medico}</td>
+                <td>${fechaEntrada}</td>
+                <td>
+                    <button class="btn btn-primary" onclick="verHistorial('${doc.id}')">Ver historial</button>
+                </td>
+            `;
+
+                    row.addEventListener('dblclick', () => {
+                        fnameInpE.value = fname;
+                        LnameInpE.value = lname;
+                        numberE.value = number;
+                        EmailInpE.value = email;
+                        dniE.value = dni;
+                        locationE.value = location;
+                        searchInputME.value = medico;
+                        nEmergenciaE.value = nEmergencia;
+                        ProvinciaE.value = provincia;
+                        EdadE.value = edad;
+                        fechaNacE.value = formattedFechaNac;
+                        ARSE.value = ars;
+                        NpolizaE.value = npoliza;
+                        cuentaContableE.value = cuentaContable;
+                        fechaEntradaE.value = formattedFechaEntrada;
+
+                        EditarFormulario.dataset.docId = doc.id;
+                        toggleFormularioE();
+                    });
+
+                    tableBody.appendChild(row);
+                });
+            }
         }
+
 
 
         loadPacientes();

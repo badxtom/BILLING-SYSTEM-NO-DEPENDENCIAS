@@ -1304,6 +1304,8 @@
             window.location.href = 'settings';
         });
 
+        SignoutBtn.addEventListener('click', Signout);
+
         function registerData() {
 
             const fname = document.getElementById('fnameInp').value;
@@ -1470,38 +1472,49 @@
 
             const suplidoresSnapshot = await getDocs(collection(getFirestore(), 'suplidores'));
 
-            suplidoresSnapshot.forEach((doc) => {
-                const suplidorData = doc.data();
-                const { nombre, telefono, rnc, direccion, banco, cuentaBanco } = suplidorData;
-
+            if (suplidoresSnapshot.empty) {
                 const row = document.createElement('tr');
-                row.innerHTML = `
-            <td>${nombre}</td>
-            <td>${telefono}</td>
-            <td>${rnc}</td>
-            <td>${banco}</td>
-            <td>${cuentaBanco}</td>
-            <td>${direccion}</td>
-                        <td>
-                <button class="btn btn-primary"  onclick="verHistorial('${doc.id}')">Ver historial</button>
-            </td>
-        `;
-
-                row.addEventListener('dblclick', () => {
-                    fnameInpE.value = nombre;
-                    numberE.value = telefono;
-                    rncE.value = rnc;
-                    BancoE.value = banco;
-                    cuentaBancoE.value = cuentaBanco;
-                    locationE.value = direccion;
-
-                    EditarFormulario.dataset.docId = doc.id;
-                    toggleFormularioE();
-                });
-
+                const cell = document.createElement('td');
+                cell.colSpan = 7; // Asegúrate de que coincida con el número de columnas en tu tabla
+                cell.textContent = 'No hay suplidores registrados';
+                cell.classList.add('text-center'); // Centrar el texto
+                row.appendChild(cell);
                 tableBody.appendChild(row);
-            });
+            } else {
+                suplidoresSnapshot.forEach((doc) => {
+                    const suplidorData = doc.data();
+                    const { nombre, telefono, rnc, direccion, banco, cuentaBanco } = suplidorData;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${nombre}</td>
+                <td>${telefono}</td>
+                <td>${rnc}</td>
+                <td>${banco}</td>
+                <td>${cuentaBanco}</td>
+                <td>${direccion}</td>
+                <td>
+                    <button class="btn btn-primary" onclick="verHistorial('${doc.id}')">Ver historial</button>
+                </td>
+            `;
+
+                    row.addEventListener('dblclick', () => {
+                        fnameInpE.value = nombre;
+                        numberE.value = telefono;
+                        rncE.value = rnc;
+                        BancoE.value = banco;
+                        cuentaBancoE.value = cuentaBanco;
+                        locationE.value = direccion;
+
+                        EditarFormulario.dataset.docId = doc.id;
+                        toggleFormularioE();
+                    });
+
+                    tableBody.appendChild(row);
+                });
+            }
         }
+
 
         loadSuplidores();
 
@@ -1697,7 +1710,7 @@
             prevLink.textContent = '«';
             prevLink.addEventListener('click', () => {
                 if (currentPage > 1) {
-                    listarFacturasDeSuplidores(2, currentPage - 1);
+                    listarFacturasDeSuplidores(8, currentPage - 1);
                 }
             });
             prevButton.appendChild(prevLink);
@@ -1715,7 +1728,7 @@
                 pageLink.href = '#';
                 pageLink.textContent = i;
                 pageLink.addEventListener('click', () => {
-                    listarFacturasDeSuplidores(2, i);
+                    listarFacturasDeSuplidores(8, i);
                 });
                 pageButton.appendChild(pageLink);
                 paginationContainer.appendChild(pageButton);
@@ -1733,7 +1746,7 @@
             nextLink.textContent = '»';
             nextLink.addEventListener('click', () => {
                 if (currentPage < totalPages) {
-                    listarFacturasDeSuplidores(2, currentPage + 1);
+                    listarFacturasDeSuplidores(8, currentPage + 1);
                 }
             });
             nextButton.appendChild(nextLink);
@@ -1857,7 +1870,7 @@
         document.getElementById('cargarFacH').addEventListener('click', async () => {
             toggleFormularioG(); // Oculta el formulario antes de cargar las facturas
 
-            await listarFacturasDeSuplidores(2, 1); // Llama a la función para cargar las facturas con los parámetros deseados
+            await listarFacturasDeSuplidores(8, 1); // Llama a la función para cargar las facturas con los parámetros deseados
         });
 
 
