@@ -448,6 +448,11 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                <div>
+                                    <ul class="pagination" id="paginationProductos">
+                                        <!-- Los botones de paginación serán añadidos dinámicamente -->
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1169,8 +1174,9 @@
         searchInput.addEventListener('input', filterTable)
 
         const tableBody = document.querySelector('tbody');
+        const pageSize = 10; // Número de productos por página
 
-        async function loadProductos() {
+        async function loadProductos(page = 1) {
             tableBody.innerHTML = '';
             const establecerFechaCheckboxE = document.getElementById('establecerFechaCheckboxE');
             const naCheckboxE = document.getElementById('naCheckboxE');
@@ -1194,9 +1200,17 @@
                 }
             });
 
-            const productosSnapshot = await getDocs(collection(getFirestore(), 'productos'));
+            const productosRef = collection(getFirestore(), 'productos');
+            const productosSnapshot = await getDocs(productosRef);
 
-            if (productosSnapshot.empty) {
+            const totalDocs = productosSnapshot.docs.length;
+            const totalPages = Math.ceil(totalDocs / pageSize);
+            const startIndex = (page - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, totalDocs);
+
+            const docsToShow = productosSnapshot.docs.slice(startIndex, endIndex);
+
+            if (docsToShow.length === 0) {
                 const row = document.createElement('tr');
                 const cell = document.createElement('td');
                 cell.colSpan = 9; // Asegúrate de que coincida con el número de columnas en tu tabla
@@ -1205,7 +1219,7 @@
                 row.appendChild(cell);
                 tableBody.appendChild(row);
             } else {
-                productosSnapshot.forEach((doc) => {
+                docsToShow.forEach((doc) => {
                     const productoData = doc.data();
                     const { descripcion, disponible, fechaVencimiento, precio, suplidorId, categoria, fechaEntrada, itbis, precioVenta, moneda } = productoData;
 
@@ -1220,19 +1234,19 @@
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                <td>${descripcion}</td>
-                <td>${disponible}</td>
-                <td>${precio} ${moneda}</td>
-                <td>${precioVenta} ${moneda}</td>
-                <td>${categoria}</td>
-                <td>${itbis}</td>
-                <td>${fechaVencimiento}</td>
-                <td>${fechaEntrada}</td>
-                <td>
-                    <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}" ${currentUserRole === 'Asistente' ? 'disabled' : ''}>
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </td>
+            <td>${descripcion}</td>
+            <td>${disponible}</td>
+            <td>${precio} ${moneda}</td>
+            <td>${precioVenta} ${moneda}</td>
+            <td>${categoria}</td>
+            <td>${itbis}</td>
+            <td>${fechaVencimiento}</td>
+            <td>${fechaEntrada}</td>
+            <td>
+                <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}" ${currentUserRole === 'Asistente' ? 'disabled' : ''}>
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
             `;
 
                     row.addEventListener('dblclick', () => {
@@ -1301,15 +1315,76 @@
                             try {
                                 await deleteDoc(doc(getFirestore(), 'productos', docId));
                                 showAlert('Producto eliminado correctamente', 'alert-success');
-                                loadProductos();
+                                loadProductos(page); // Mantener la página actual después de eliminar
                             } catch (error) {
                                 console.error('Error al eliminar el producto:', error);
                             }
                         });
                     });
                 });
+
+                actualizarPaginacionProductos(totalPages, page); // Actualizar la paginación
             }
         }
+
+        function actualizarPaginacionProductos(totalPages, currentPage) {
+            const paginationContainer = document.getElementById('paginationProductos');
+            paginationContainer.innerHTML = '';
+
+            const prevButton = document.createElement('li');
+            prevButton.classList.add('page-item');
+            if (currentPage === 1) {
+                prevButton.classList.add('disabled');
+            }
+            const prevLink = document.createElement('a');
+            prevLink.classList.add('page-link');
+            prevLink.href = '#';
+            prevLink.textContent = '«';
+            prevLink.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    loadProductos(currentPage - 1);
+                }
+            });
+            prevButton.appendChild(prevLink);
+            paginationContainer.appendChild(prevButton);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('li');
+                pageButton.classList.add('page-item');
+                if (i === currentPage) {
+                    pageButton.classList.add('active');
+                }
+                const pageLink = document.createElement('a');
+                pageLink.classList.add('page-link');
+                pageLink.href = '#';
+                pageLink.textContent = i;
+                pageLink.addEventListener('click', () => {
+                    loadProductos(i);
+                });
+                pageButton.appendChild(pageLink);
+                paginationContainer.appendChild(pageButton);
+            }
+
+            const nextButton = document.createElement('li');
+            nextButton.classList.add('page-item');
+            if (currentPage === totalPages) {
+                nextButton.classList.add('disabled');
+            }
+            const nextLink = document.createElement('a');
+            nextLink.classList.add('page-link');
+            nextLink.href = '#';
+            nextLink.textContent = '»';
+            nextLink.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    loadProductos(currentPage + 1);
+                }
+            });
+            nextButton.appendChild(nextLink);
+            paginationContainer.appendChild(nextButton);
+        }
+
+
+
 
 
         function showAlert(message, alertType, isConfirmation = false, onConfirm = null) {
@@ -1476,27 +1551,152 @@
         });
 
 
-        function filterTable() {
+        async function filterTable() {
             const searchTerm = searchInput.value.toLowerCase();
-            const rows = tableBody.getElementsByTagName('tr');
+            tableBody.innerHTML = ''; // Limpiar la tabla antes de mostrar los resultados filtrados
 
-            for (let i = 0; i < rows.length; i++) {
-                const cells = rows[i].getElementsByTagName('td');
-                let match = false;
+            try {
+                const productosRef = collection(getFirestore(), 'productos');
+                const productosSnapshot = await getDocs(productosRef);
 
-                for (let j = 0; j < cells.length; j++) {
-                    if (cells[j].innerText.toLowerCase().includes(searchTerm)) {
-                        match = true;
-                        break;
-                    }
+                if (productosSnapshot.empty) {
+                    console.log('No hay productos encontrados.');
+                    return;
                 }
 
-                if (match) {
-                    rows[i].style.display = '';
-                } else {
-                    rows[i].style.display = 'none';
-                }
+                // Filtrar los datos por los campos especificados
+                const filteredData = productosSnapshot.docs.filter(doc => {
+                    const data = doc.data();
+                    return (
+                        (data.descripcion && data.descripcion.toLowerCase().includes(searchTerm)) ||
+                        (data.disponible && data.disponible.toString().toLowerCase().includes(searchTerm)) ||
+                        (data.precio && data.precio.toString().includes(searchTerm)) ||
+                        (data.precioVenta && data.precioVenta.toString().includes(searchTerm)) ||
+                        (data.fechaEntrada && data.fechaEntrada.toLowerCase().includes(searchTerm)) ||
+                        (data.fechaVencimiento && data.fechaVencimiento.toLowerCase().includes(searchTerm)) ||
+                        (data.itbis && data.itbis.toLowerCase().includes(searchTerm)) ||
+                        (data.moneda && data.moneda.toLowerCase().includes(searchTerm)) ||
+                        (data.categoria && data.categoria.toLowerCase().includes(searchTerm))
+                    );
+                });
+
+                actualizarTabla(filteredData); // Actualiza la tabla con los datos filtrados
+
+            } catch (error) {
+                console.error('Error al filtrar productos:', error);
             }
+        }
+
+        function actualizarTabla(filteredData) {
+            tableBody.innerHTML = ''; // Limpiar la tabla
+
+            if (filteredData.length === 0) {
+                const noDataMessage = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 9; // Asegúrate de que coincida con el número de columnas en tu tabla
+                cell.textContent = 'No se encontraron productos que coincidan con la búsqueda.';
+                cell.classList.add('text-center'); // Centrar el texto
+                noDataMessage.appendChild(cell);
+                tableBody.appendChild(noDataMessage);
+                return;
+            }
+
+            const pageSize = 10; // Número de productos por página
+            const totalPages = Math.ceil(filteredData.length / pageSize);
+
+            // Implementar la paginación
+            const currentPage = 1; // Empieza en la primera página por defecto
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, filteredData.length);
+            const paginatedData = filteredData.slice(startIndex, endIndex);
+
+            paginatedData.forEach(doc => {
+                const data = doc.data();
+                const { descripcion, disponible, precio, precioVenta, fechaEntrada, fechaVencimiento, itbis, moneda, categoria, suplidorId } = data;
+
+                let formattedFechaVencimiento = '';
+                if (fechaVencimiento !== 'N/A') {
+                    const dateParts = fechaVencimiento.split('/');
+                    formattedFechaVencimiento = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+                }
+
+                const datePartsE = fechaEntrada.split('/');
+                const formattedfechaEntradaE = `${datePartsE[2]}-${datePartsE[1]}-${datePartsE[0]}`;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${descripcion}</td>
+            <td>${disponible}</td>
+            <td>${precio} ${moneda}</td>
+            <td>${precioVenta} ${moneda}</td>
+            <td>${categoria}</td>
+            <td>${itbis}</td>
+            <td>${fechaVencimiento}</td>
+            <td>${fechaEntrada}</td>
+            <td>
+                <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}" ${currentUserRole === 'Asistente' ? 'disabled' : ''}>
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        `;
+
+                row.addEventListener('dblclick', () => {
+                    despE.value = descripcion;
+                    dispE.value = disponible;
+                    precioE.value = precio;
+                    MonedaE.value = moneda;
+                    precioventaE.value = precioVenta;
+                    categoriaE.value = categoria;
+                    fechaVencimientoE.value = formattedFechaVencimiento;
+                    fechaEntradaE.value = formattedfechaEntradaE;
+                    roleSelectE.value = suplidorId;
+
+                    if (itbis === '18%') {
+                        itbisCheckboxE.checked = true;
+                        naCheckboxIE.checked = false; // Desmarcar N/A si el ITBIS no es N/A
+                    } else {
+                        naCheckboxIE.checked = true;
+                        itbisCheckboxE.checked = false;
+                    }
+
+                    if (fechaVencimiento === 'N/A') {
+                        fechaVencimientoE.value = '';
+                        establecerFechaCheckboxE.checked = false;
+                        fechaVencimientoContainerE.style.display = 'none';
+                        naCheckboxE.checked = true;
+                    } else {
+                        fechaVencimientoE.value = formattedFechaVencimiento;
+                        establecerFechaCheckboxE.checked = true;
+                        fechaVencimientoContainerE.style.display = 'block';
+                        naCheckboxE.checked = false;
+                    }
+
+                    if (disponible === 'N/A') {
+                        naDisponibleCheckboxE.checked = true;
+                        dispE.disabled = true;
+                        dispE.value = '';
+                    } else {
+                        naDisponibleCheckboxE.checked = false;
+                        dispE.disabled = false;
+                    }
+
+                    naDisponibleCheckboxE.addEventListener('change', () => {
+                        if (naDisponibleCheckboxE.checked) {
+                            dispE.disabled = true;
+                            dispE.value = '';
+                        } else {
+                            dispE.disabled = false;
+                        }
+                    });
+
+                    EditarFormulario.dataset.docId = doc.id;
+                    toggleFormularioE();
+                });
+
+                tableBody.appendChild(row);
+            });
+
+            actualizarPaginacionProductos(totalPages, currentPage); // Actualizar la paginación con los datos filtrados
         }
 
 
@@ -1525,13 +1725,12 @@
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
 
-
                 const logoImage = new Image();
                 logoImage.src = 'unoin.png';
 
                 logoImage.onload = async () => {
 
-                    const logoWidth = 20;
+                    const logoWidth = 30;
                     const logoHeight = (logoWidth / logoImage.width) * logoImage.height;
                     const marginRight = 15;
                     const marginTop = 5;
@@ -1549,7 +1748,6 @@
                         doc.text(`RNC: ${empresaData.rnc}`, 15, 25);
                         doc.text(`Teléfono: ${empresaData.number}`, 15, 30);
 
-
                         const location = empresaData.location;
                         if (location.length > 15) {
                             const firstLine = location.substring(0, 23);
@@ -1565,24 +1763,39 @@
                             doc.text(`Dirección: ${empresaData.location}`, 15, 35);
                         }
                     }
+
+                    // Obtener datos de la colección 'productos'
+                    const productosRef = collection(getFirestore(), 'productos');
+                    const productosSnapshot = await getDocs(productosRef);
+
+                    const productosData = productosSnapshot.docs.map(doc => doc.data());
+
+                    // Crear el contenido de la tabla
+                    const tableData = productosData.map(producto => [
+                        producto.descripcion || '',
+                        producto.disponible || '',
+                        producto.precio || '',
+                        producto.categoria || '',
+                        producto.itbis || '',
+                        producto.fechaVencimiento || '',
+                        producto.fechaEntrada || ''
+                    ]);
+
                     doc.autoTable({
                         head: [['Descripción', 'Disponible', 'Precio', 'Categoría', 'ITBIS', 'Vencimiento', 'Fecha de Entrada']],
-                        body: Array.from(tableBody.querySelectorAll('tr')).map(row =>
-                            Array.from(row.querySelectorAll('td')).map(cell => cell.innerText)
-                        ),
+                        body: tableData,
                         startY: 50
                     });
 
                     const pdfBlob = await doc.output('blob');
-                    saveAs(pdfBlob, 'productos.pdf');
-
-                    // doc.save('empleados.pdf');
+                    saveAs(pdfBlob, 'Productos.pdf');
                 };
             } catch (error) {
                 console.error('Error al generar el PDF:', error);
                 showAlert('Error al generar el PDF', 'alert-danger');
             }
         });
+
 
         document.getElementById('generateExcelButton').addEventListener('click', async (event) => {
             event.preventDefault();
@@ -1603,7 +1816,8 @@
                 };
 
                 // Obtener datos de la empresa
-                const empresaData = await getEmpresaData();
+                const empresaSnapshot = await get(ref(db, 'datos/'));
+                const empresaData = empresaSnapshot.val();
 
                 if (!empresaData) {
                     throw new Error('No se encontraron datos de la empresa.');
@@ -1622,8 +1836,7 @@
                 const headerRow = worksheet.addRow([
                     'Descripción',
                     'Disponible',
-                    'Precio de compra',
-                    'Precio de venta',
+                    'Precio',
                     'Categoría',
                     'ITBIS',
                     'Vencimiento',
@@ -1635,13 +1848,22 @@
                     cell.style = headerStyle;
                 });
 
+                // Obtener datos de la colección 'productos'
+                const productosRef = collection(getFirestore(), 'productos');
+                const productosSnapshot = await getDocs(productosRef);
+                const productosData = productosSnapshot.docs.map(doc => doc.data());
+
                 // Agregar datos de la tabla de productos
-                const tableRows = await getTableRows();
-                tableRows.forEach((row) => {
-                    const rowData = [];
-                    row.querySelectorAll('td').forEach((cell) => {
-                        rowData.push(cell.innerText);
-                    });
+                productosData.forEach((producto) => {
+                    const rowData = [
+                        producto.descripcion || '',
+                        producto.disponible || '',
+                        producto.precio || '',
+                        producto.categoria || '',
+                        producto.itbis || '',
+                        producto.fechaVencimiento || '',
+                        producto.fechaEntrada || ''
+                    ];
                     worksheet.addRow(rowData);
                 });
 
@@ -1660,7 +1882,7 @@
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
                 // Descargar el archivo Excel
-                saveAs(blob, 'productos.xlsx');
+                saveAs(blob, 'Productos.xlsx');
 
                 // Mostrar mensaje de éxito
                 showAlertExcel('Archivo de Excel generado correctamente.', 'alert-success');

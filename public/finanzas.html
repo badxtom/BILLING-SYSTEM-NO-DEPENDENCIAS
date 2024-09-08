@@ -201,10 +201,11 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            width: 600px;
-
+            width: 90%;
+            /* Ajustado para pantallas más pequeñas */
+            max-width: 800px;
+            /* Máximo ancho para pantallas grandes */
             max-height: 80%;
-
             overflow-y: auto;
         }
 
@@ -400,6 +401,47 @@
 
             100% {
                 background-position: 0% 100%, 100% 100%, 200% 100%;
+            }
+        }
+
+        @media only screen and (max-width: 768px) {
+            #formularioPago {
+                width: 95%;
+                /* Ajusta el ancho para pantallas pequeñas */
+                padding: 10px;
+            }
+
+            .formulario-contenido {
+                padding: 5px;
+            }
+
+            .table th,
+            .table td {
+                font-size: 0.8em;
+                /* Ajusta el tamaño del texto en la tabla */
+                padding: 0.5rem;
+                /* Ajusta el padding en celdas */
+            }
+        }
+
+        /* Adaptaciones para pantallas muy pequeñas */
+        @media only screen and (max-width: 480px) {
+            #formularioPago {
+                width: 100%;
+                /* Ajusta el ancho para pantallas muy pequeñas */
+                padding: 5px;
+            }
+
+            .formulario-contenido {
+                padding: 2px;
+            }
+
+            .table th,
+            .table td {
+                font-size: 0.7em;
+                /* Ajusta el tamaño del texto en la tabla */
+                padding: 0.25rem;
+                /* Ajusta el padding en celdas */
             }
         }
     </style>
@@ -1888,7 +1930,6 @@
                     <th>A Pagar</th>
                     <th>Fecha</th>
                     <th>Estatus</th>
-                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>

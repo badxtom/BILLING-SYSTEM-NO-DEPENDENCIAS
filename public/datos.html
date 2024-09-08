@@ -523,37 +523,41 @@
         }
 
 
-        function registerData() {
-
+        async function registerData() {
             const name = document.getElementById('name').value.trim();
             const rnc = document.getElementById('rnc').value.trim();
             const number = document.getElementById('number').value.trim();
             const location = document.getElementById('location').value.trim();
 
-
+            // Verificar si los campos están completos
             if (name === '' || rnc === '' || number === '' || location === '') {
                 showAlert('Por favor, complete todos los campos', 'alert-warning');
                 return;
             }
 
+            try {
+                // Obtener la URL actual del logo si existe
+                const logoURLSnapshot = await get(ref(db, 'datos/logoURL'));
+                const logoURL = logoURLSnapshot.exists() ? logoURLSnapshot.val() : '';
 
-            const newData = {
-                name: name,
-                rnc: rnc,
-                number: number,
-                location: location
-            };
+                // Crear un objeto con los nuevos datos incluyendo la URL del logo
+                const newData = {
+                    name: name,
+                    rnc: rnc,
+                    number: number,
+                    location: location,
+                    logoURL: logoURL // Mantener la URL del logo
+                };
 
-
-            set(ref(db, 'datos/'), newData)
-                .then(() => {
-
-                    showSuccessAlert('Datos registrados exitosamente', 'alert-success');
-                })
-                .catch((error) => {
-                    console.error('Error al registrar datos: ', error);
-                });
+                // Guardar los nuevos datos en la base de datos
+                await set(ref(db, 'datos/'), newData);
+                showSuccessAlert('Datos registrados exitosamente', 'alert-success');
+            } catch (error) {
+                console.error('Error al registrar datos: ', error);
+                showAlert('Error al registrar datos', 'alert-danger');
+            }
         }
+
 
 
         document.getElementById('updateButton').addEventListener('click', (event) => {
