@@ -926,7 +926,7 @@
             <p>Estatus: <span id="facturaEstatusP"></span></p>
             <p>Fecha: <span id="facturaFechaP"></span></p>
             <p>Total: <span id="facturaTotalP"></span></p>
-            <p>Items: <span id="facturaItemsP"></span></p>
+            <!-- <p>Items: <span id="facturaItemsP"></span></p> -->
             <p>Número de Factura: <span id="facturaNumeroP"></span></p>
             <h3>Pagos</h3>
             <table id="listaPagosCuentasPorPagar" class="table table-striped">
@@ -2304,7 +2304,7 @@
                 document.getElementById('facturaEstatusP').textContent = estatus;
                 document.getElementById('facturaFechaP').textContent = fecha;
                 document.getElementById('facturaTotalP').textContent = montoFactura;
-                document.getElementById('facturaItemsP').textContent = pagos.length;
+                // document.getElementById('facturaItemsP').textContent = pagos.length;
                 document.getElementById('facturaNumeroP').textContent = nombreFactura;
 
                 const totalF = montoFactura;
@@ -2993,9 +2993,9 @@
                 // Agregar una hoja para las facturas
                 const facturaSheet = workbook.addWorksheet('Facturas');
 
-                // Encabezados de la tabla de facturas
+                // Encabezados de la tabla de facturas, agregando la columna "Items"
                 const facturaHeaders = [
-                    'Número de Factura', 'Fecha', 'Estatus', 'Ganancia', 'Comprobante', 'Doctor', 'Paciente', 'Total', 'Pagos', 'Forma de Pago'
+                    'Número de Factura', 'Fecha', 'Estatus', 'Ganancia', 'Comprobante', 'Doctor', 'Paciente', 'Total', 'Pagos', 'Forma de Pago', 'Items'
                 ];
 
                 facturaSheet.addRow(facturaHeaders);
@@ -3004,7 +3004,7 @@
                 for (const doc of facturasSnapshot.docs) {
                     const data = doc.data();
                     const {
-                        numeroFactura, fecha, estatus, ganancia, comprobante, doctor, paciente, total, formaDePago
+                        numeroFactura, fecha, estatus, ganancia, comprobante, doctor, paciente, total, formaDePago, items = []
                     } = data;
                     let pagosInfo = 'N/A';
 
@@ -3021,9 +3021,15 @@
                         pagosInfo = pagosInfo.slice(0, -2); // Eliminar la última coma y espacio
                     }
 
+                    // Formatear los ítems en un solo string para la columna de "Items"
+                    let itemsInfo = 'N/A';
+                    if (items.length > 0) {
+                        itemsInfo = items.map(item => `${item.cantidad}x ${item.descripcion}`).join(', ');
+                    }
+
                     if (!(estatus === 'Abierta' && ganancia === 'Pendiente')) {
                         facturaSheet.addRow([
-                            numeroFactura, fecha, estatus, ganancia, comprobante ? comprobante : 'N/A', doctor, paciente, total, pagosInfo, formaDePago ? formaDePago : 'N/A'
+                            numeroFactura, fecha, estatus, ganancia, comprobante ? comprobante : 'N/A', doctor, paciente, total, pagosInfo, formaDePago ? formaDePago : 'N/A', itemsInfo
                         ]);
                         totalEarnings += parseFloat(ganancia);
                     }
@@ -3111,11 +3117,6 @@
                 showAlertExcel(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
             }
         });
-
-
-
-
-
 
 
         async function generatePDFHorizontal(facturaId, doctorSeleccionado, pacienteSeleccionado, numeroFactura, totalPago) {

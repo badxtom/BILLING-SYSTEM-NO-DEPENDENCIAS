@@ -697,9 +697,25 @@
 
                 for (const doc of querySnapshot.docs) {
                     const data = doc.data();
-                    let montoTotal = data.monto; // Usar el monto existente como punto de partida
+                    let montoTotal = 0; // Iniciar el montoTotal en 0 para calcular desde cero
 
-                    montoTotal = await calcularMontoCuenta(doc.id, data.pacientes);
+                    // Si hay más de 30 pacientes, dividir en grupos
+                    if (data.pacientes && data.pacientes.length > 30) {
+                        const gruposPacientes = [];
+                        for (let i = 0; i < data.pacientes.length; i += 30) {
+                            gruposPacientes.push(data.pacientes.slice(i, i + 30));
+                        }
+
+                        // Procesar cada grupo de pacientes
+                        for (const grupo of gruposPacientes) {
+                            montoTotal += await calcularMontoCuenta(doc.id, grupo);
+                        }
+                    } else {
+                        montoTotal += await calcularMontoCuenta(doc.id, data.pacientes);
+                    }
+
+                    // Guardar el monto total recalculado en Firestore
+                    await updateDoc(doc.ref, { monto: montoTotal });
 
                     const row = document.createElement('tr');
                     row.ondblclick = () => editarCuenta(doc.id);
@@ -715,10 +731,11 @@
             `;
                     catalogoCuentas.appendChild(row);
 
+                    // Procesar las subcuentas, si existen
                     for (const [index, subcuenta] of data.subcuentas.entries()) {
-                        let montoSubcuenta = subcuenta.monto; // Usar el monto existente como punto de partida
+                        let montoSubcuenta = 0; // Iniciar el montoSubcuenta en 0 para calcular desde cero
 
-                        montoSubcuenta = await calcularMontoCuenta(doc.id, subcuenta.pacientes, subcuenta.codigo);
+                        montoSubcuenta += await calcularMontoCuenta(doc.id, subcuenta.pacientes, subcuenta.codigo);
 
                         const subRow = document.createElement('tr');
                         subRow.classList.add('subcuenta');
@@ -743,6 +760,7 @@
                 loaderContainer.style.display = 'none';
             }
         }
+
 
 
         async function calcularMontoCuenta(cuentaId, pacientes, subcuentaCodigo = null) {
@@ -844,15 +862,17 @@
                                 } else {
                                     for (const pago of compra.pagos) {
                                         if (pago.estatus === 'Pagado') {
-                                            montoTotal += parseFloat(pago.monto.replace(' DOP', ''));
+                                            montoTotal += parseFloat(String(pago.monto).replace(' DOP', ''));
                                         }
+
                                     }
                                 }
                             } else if (compra.estatus === 'Abierta' && compra.pagos) {
                                 for (const pago of compra.pagos) {
                                     if (pago.estatus === 'Pagado') {
-                                        montoTotal += parseFloat(pago.monto.replace(' DOP', ''));
+                                        montoTotal += parseFloat(String(pago.monto).replace(' DOP', ''));
                                     }
+
                                 }
                             }
                         }
@@ -885,7 +905,7 @@
                 document.getElementById('codigoCuenta').value = cuentaData.codigo;
                 document.getElementById('nombreCuenta').value = cuentaData.nombre;
                 document.getElementById('origenCuenta').value = cuentaData.origen;
-                document.getElementById('montoCuenta').value = cuentaData.monto;
+                document.getElementById('montoCuenta').value = parseFloat(cuentaData.monto).toFixed(2);
                 document.getElementById('montoCuenta').disabled = true;
 
                 currentEditingId = cuentaId;
