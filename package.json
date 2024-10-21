@@ -36,6 +36,7 @@
     "feather-icons": "^4.25.0",
     "gulp-file-include": "^2.3.0",
     "gulp-sourcemaps": "^3.0.0",
+    "ical-generator": "^8.0.1",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
     "simplebar": "^6.2.5"

@@ -2298,7 +2298,7 @@
                 }
 
                 const facturaData = facturaSnap.data();
-                const { suplidorNombre, estatus, fecha, montoFactura, pagos, numeroComprobante, nombreFactura } = facturaData;
+                const { suplidorNombre, estatus, fecha, montoFactura, pagos, numeroComprobante, nombreFactura, moneda } = facturaData;
 
                 document.getElementById('facturaSuplidor').textContent = suplidorNombre;
                 document.getElementById('facturaEstatusP').textContent = estatus;

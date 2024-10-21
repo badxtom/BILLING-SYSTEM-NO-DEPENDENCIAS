@@ -894,7 +894,7 @@
             document.getElementById('tipoGasto').value = '';
             document.getElementById('itbisCheckbox').checked = false;
             document.getElementById('naCheckbox').checked = true;
-            document.getElementById('cuenta').value = '';
+            document.getElementById('cuentaSelect').value = '';
             document.getElementById('montoFactura').value = '';
             document.getElementById('facturaFile').value = '';
             document.getElementById('nombreFactura').value = '';
@@ -995,6 +995,7 @@
                 const suplidorNombre = await obtenerNombreSuplidor(suplidor);
 
                 // Calcular el estatus y dividir el monto restante
+                // Calcular el estatus y dividir el monto restante
                 let estatus;
                 let pagos = [];
 
@@ -1006,7 +1007,7 @@
                     for (let j = 0; j < condicionpago; j++) {
                         pagos.push({
                             numeroPago: j + 1,
-                            monto: pagoPorCuota,
+                            monto: pagoPorCuota, // Guardamos el monto como número, la moneda se añade más tarde
                             estatus: 'Pendiente'
                         });
                     }
@@ -1016,11 +1017,18 @@
                     const diferencia = parseFloat((montoRestante - sumaPagos).toFixed(2));
 
                     if (diferencia !== 0) {
-                        pagos[0].monto = parseFloat((pagos[0].monto + diferencia).toFixed(2));
+                        pagos[0].monto += diferencia; // Ajuste en el primer pago si hay diferencia
                     }
+
+                    // Formatear los montos con la moneda después de los cálculos
+                    pagos = pagos.map(pago => ({
+                        ...pago,
+                        monto: `${pago.monto.toFixed(2)} ${moneda}`
+                    }));
                 } else {
                     estatus = 'Cerrada';
                 }
+
 
                 const formatToSpanishDate = (dateString) => {
                     const dateParts = dateString.split('-');
@@ -1045,7 +1053,7 @@
                     nombreFactura,
                     estatus,
                     pagos,
-                    cuenta: nombreCuenta
+                    cuenta: cuentaId
                 };
 
                 const docRef = await addDoc(collection(dba, 'RegistroDeCompras'), registroDeCompra);
@@ -1652,10 +1660,26 @@
                     }
                 }
 
+                async function obtenerNombreCuenta(cuentaId) {
+                    try {
+                        const cuentaDoc = await getDoc(doc(dba, 'CatalogoCuentas', cuentaId));
+                        if (cuentaDoc.exists()) {
+                            return cuentaDoc.data().nombre; // Devuelve el nombre de la cuenta
+                        } else {
+                            return 'Cuenta desconocida'; // Si no se encuentra la cuenta
+                        }
+                    } catch (error) {
+                        console.error('Error al obtener el nombre de la cuenta:', error);
+                        return 'Error al obtener cuenta';
+                    }
+                }
+
                 // Iterar sobre cada factura y crear filas de tabla
                 await Promise.all(docsToShow.map(async (doc) => {
                     const data = doc.data();
                     const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor, suplidorNombre, pagos } = data;
+
+                    const nombreCuenta = await obtenerNombreCuenta(cuenta);
 
                     let reciboDePago = 'N/A';
                     if (pagos && pagos.length > 0) {
@@ -1670,7 +1694,7 @@
                 <td>${numeroComprobante}</td>
                 <td>${tipoGasto}</td>
                 <td>${itbis}</td>
-                <td>${cuenta}</td>
+                <td>${nombreCuenta}</td>
                 <td>${montoFactura}</td>
                 <td>${nombreFactura}</td>
                 <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>

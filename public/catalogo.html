@@ -212,6 +212,18 @@
 
         }
 
+        #fondoDesenfocado3 {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+
+        }
+
         /* Contenedor del loader */
         #loaderContainer {
             position: fixed;
@@ -227,11 +239,44 @@
             display: none;
             /* Inicialmente oculto */
         }
+
+        #historialTableContainer {
+            display: none;
+        }
+
+        /* HTML: <div class="loader"></div> */
+        .loaderR {
+            width: 40px;
+            padding: 8px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: #20c4ab;
+            --_m:
+                conic-gradient(#0000 10%, #000),
+                linear-gradient(#000 0 0) content-box;
+            -webkit-mask: var(--_m);
+            mask: var(--_m);
+            -webkit-mask-composite: source-out;
+            mask-composite: subtract;
+            animation: l3 1s infinite linear;
+        }
+
+        @keyframes l3 {
+            to {
+                transform: rotate(1turn)
+            }
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx-style/0.8.13/xlsx-style.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.1/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+
 </head>
 
 <script>
@@ -367,6 +412,10 @@
                                     <span class="pc-micon"><i class="ti ti-crosshair"></i></span>
                                     <span class="pc-mtext">Nueva Cuenta</span>
                                 </a>
+                                <a href="#" class="pc-link" id="transferir" style="margin-left: 10px;">
+                                    <span class="pc-micon"><i class="ti ti-arrow-right"></i></span>
+                                    <span class="pc-mtext">Transferir Monto</span>
+                                </a>
                             </div>
                             <!-- <div class="card-header">
                                 <form id="MainFormSE" class="d-flex" style="max-width: 400px;">
@@ -395,6 +444,76 @@
                 </div>
             </div>
         </div>
+        <div id="HistorialTransacciones" class="formulario-container"
+            style="display: none; width: 50%; max-width: 1400px; margin: auto;">
+            <h3 class="mb-3">Historial de Transacciones</h3>
+
+            <!-- Filtro por Mes -->
+            <div class="filter-container d-flex align-items-center mb-4 p-3"
+                style="background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
+
+                <label for="filterMonth" class="form-label mb-0 me-2">Filtrar por mes:</label>
+                <input type="month" id="filterMonth" class="form-control me-2" style="max-width: 200px;">
+                <button id="applyFilter" class="btn btn-primary">Aplicar Filtro</button>
+            </div>
+
+            <!-- Generar Reporte en Excel -->
+            <div class="report-container p-3"
+                style="background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
+
+                <h5 class="mb-3">Generar Reporte en Excel</h5>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center me-3">
+                        <label for="startMonth" class="form-label mb-0 me-2">Mes de inicio:</label>
+                        <input type="month" id="startMonth" class="form-control" style="max-width: 200px;">
+                    </div>
+                    <div class="d-flex align-items-center me-3">
+                        <label for="endMonth" class="form-label mb-0 me-2">Mes de fin:</label>
+                        <input type="month" id="endMonth" class="form-control" style="max-width: 200px;">
+                    </div>
+                    <button id="generateExcel" class="btn btn-success" style="max-width: 100px;">Generar
+                        Reporte</button>
+                </div>
+            </div>
+
+
+            <!-- Lista de Transacciones -->
+            <div id="listaTransacciones" class="lista-transacciones mt-3">
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Desde</th>
+                            <th>Hacia</th>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                            <th>Documento de referencia</th>
+                            <th>Tipo</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historialTable">
+                        <!-- Transacciones se mostrarán aquí -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            <div>
+                <ul class="pagination" id="paginationTransacciones">
+                    <!-- Botones de paginación dinámicos -->
+                </ul>
+            </div>
+
+            <!-- Botón de Cerrar -->
+            <div class="d-grid mt-2">
+                <button type="button" class="btn btn-danger" id="closeHistorialButton">Cerrar</button>
+            </div>
+        </div>
+
+
+
+
         <div id="nuevoFormulario" class="formulario-container" style="display: none;">
             <h3 class="mb-3" id="formularioTitulo">Crear Nueva Cuenta</h3>
             <form id="MainForm">
@@ -422,7 +541,42 @@
                 </div>
             </form>
         </div>
+        <div id="transferenciaContainer" class="formulario-container" style="display: none;">
+            <h3>Transferir Monto entre Cuentas</h3>
+            <form id="transferenciaForm">
+                <div class="form-floating mb-3">
+                    <select id="cuentaOrigen" class="form-control">
+                        <option value="">Seleccionar cuenta de origen</option>
+                        <!-- Las cuentas contables se agregarán dinámicamente -->
+                    </select>
+                    <label for="cuentaOrigen">*Cuenta Origen</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <select id="cuentaDestino" class="form-control">
+                        <option value="">Seleccionar cuenta de destino</option>
+                        <!-- Las cuentas contables se agregarán dinámicamente -->
+                    </select>
+                    <label for="cuentaDestino">*Cuenta Destino</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input type="number" class="form-control" id="montoTransferencia" placeholder="Monto a transferir">
+                    <label for="montoTransferencia">*Monto</label>
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-success">Transferir</button>
+                </div>
+
+                <div class="d-grid mt-2">
+                    <button type="button" class="btn btn-danger" id="closeTransferenciaButton">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
         <div id="fondoDesenfocado2"></div>
+        <div id="fondoDesenfocado3"></div>
         <div id="fondoDesenfocado"></div>
         <div id="loaderContainer">
             <div class="loader"></div>
@@ -439,12 +593,12 @@
     </footer>
     <script type="module">
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, deleteDoc, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable, listAll } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-        import { getDatabase, set, ref, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
+        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, deleteDoc, updateDoc, where, runTransaction, writeBatch, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable, listAll } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
+        import { getDatabase, set, ref, get, child } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCknSaxVHB10B_v-4yD9UtNj1dmZZKVRe4",
@@ -693,11 +847,15 @@
             loaderContainer.style.display = 'block';
 
             try {
+
                 const querySnapshot = await getDocs(collection(db, 'CatalogoCuentas'));
+                const transaccionesSnapshot = await getDocs(collection(db, 'transacciones'));
+                const transacciones = transaccionesSnapshot.docs.map(doc => doc.data());
 
                 for (const doc of querySnapshot.docs) {
                     const data = doc.data();
                     let montoTotal = 0; // Iniciar el montoTotal en 0 para calcular desde cero
+
 
                     // Si hay más de 30 pacientes, dividir en grupos
                     if (data.pacientes && data.pacientes.length > 30) {
@@ -714,6 +872,16 @@
                         montoTotal += await calcularMontoCuenta(doc.id, data.pacientes);
                     }
 
+                    for (const transaccion of transacciones) {
+                        if (transaccion.cuentaOrigen === doc.id) {
+                            montoTotal -= transaccion.monto;
+                        }
+                        if (transaccion.cuentaDestino === doc.id) {
+                            montoTotal += transaccion.monto;
+                        }
+                    }
+
+
                     // Guardar el monto total recalculado en Firestore
                     await updateDoc(doc.ref, { monto: montoTotal });
 
@@ -724,10 +892,26 @@
                 <td>${data.nombre}</td>
                 <td>${data.origen}</td>
                 <td>${montoTotal.toFixed(2)}</td>
-                <td>
-                    <button class="btn btn-sm btn-warning" onclick="agregarSubcuenta('${doc.id}')"><i class="ti ti-circle-plus" style="font-size: 1.2rem;"></i></button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarCuenta('${doc.id}')"><i class="ti ti-trash" style="font-size: 1.2rem;"></i></button>
-                </td>
+<td>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button class="btn btn-sm btn-warning" onclick="agregarSubcuenta('${doc.id}')">
+            <i class="ti ti-circle-plus" style="font-size: 1.2rem;"></i>
+        </button>
+
+        <div id="transaccionesContainer-${doc.id}" style="position: relative;">
+            <button class="btn btn-sm btn-info" id="transaccionesButton-${doc.id}" onclick="mostrarTransacciones('${doc.id}', 'loaderContainerR-${doc.id}')">
+                <i class="ti ti-list" style="font-size: 1.2rem;"></i> Transacciones
+            </button>
+            <div id="loaderContainerR-${doc.id}" class="loaderR" style="display: none;"></div>
+        </div>
+
+        <button class="btn btn-sm btn-danger" onclick="eliminarCuenta('${doc.id}')">
+            <i class="ti ti-trash" style="font-size: 1.2rem;"></i>
+        </button>
+    </div>
+</td>
+
+
             `;
                     catalogoCuentas.appendChild(row);
 
@@ -737,6 +921,23 @@
 
                         montoSubcuenta += await calcularMontoCuenta(doc.id, subcuenta.pacientes, subcuenta.codigo);
 
+                        for (const transaccion of transacciones) {
+                            if (transaccion.cuentaOrigen === `${doc.id}-${index}`) {
+                                montoSubcuenta -= transaccion.monto;
+                            }
+                            if (transaccion.cuentaDestino === `${doc.id}-${index}`) {
+                                montoSubcuenta += transaccion.monto;
+                            }
+                        }
+
+                        const cuentaQuerySnapshot = await getDocs(collection(db, 'CatalogoCuentas'));
+                        const cuentaDoc = cuentaQuerySnapshot.docs.find(doc => doc.id === doc.id);
+                        if (cuentaDoc) {
+                            const cuentaData = cuentaDoc.data();
+                            cuentaData.subcuentas[index].monto = montoSubcuenta;
+                            await updateDoc(cuentaDoc.ref, { subcuentas: cuentaData.subcuentas });
+                        }
+
                         const subRow = document.createElement('tr');
                         subRow.classList.add('subcuenta');
                         subRow.ondblclick = () => editarSubcuenta(doc.id, index);
@@ -745,9 +946,27 @@
                     <td>${subcuenta.nombre}</td>
                     <td>${subcuenta.origen}</td>
                     <td>${montoSubcuenta.toFixed(2)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-danger" onclick="eliminarSubcuenta('${doc.id}', ${index})"><i class="ti ti-trash" style="font-size: 1.2rem;"></i></button>
-                    </td>
+<td>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <!-- Contenedor para el botón de transacciones y el loader -->
+        <div id="transaccionesContainer-${doc.id}-${subcuenta.codigo}" style="position: relative;">
+            <!-- Botón de transacciones -->
+            <button class="btn btn-sm btn-info" id="transaccionesButton-${doc.id}-${subcuenta.codigo}" onclick="mostrarTransaccionesSubcuenta('${doc.id}', '${subcuenta.codigo}', 'loaderContainerR-${doc.id}-${subcuenta.codigo}')">
+                <i class="ti ti-list" style="font-size: 1.2rem;"></i> Transacciones
+            </button>
+
+            <!-- Loader que aparece durante la carga de las transacciones -->
+            <div id="loaderContainerR-${doc.id}-${subcuenta.codigo}" class="loaderR" style="display: none;"></div>
+        </div>
+
+        <!-- Botón para eliminar la subcuenta, ahora ubicado a la derecha -->
+        <button class="btn btn-sm btn-danger" onclick="eliminarSubcuenta('${doc.id}', ${index})">
+            <i class="ti ti-trash" style="font-size: 1.2rem;"></i>
+        </button>
+    </div>
+</td>
+
+
                 `;
                         catalogoCuentas.appendChild(subRow);
                     }
@@ -1028,6 +1247,1200 @@
             currentEditingSubIndex = null;
             isAddingSubcuenta = false;
         }
+
+        async function obtenerCuentaContable(compraId) {
+            const catalogoCuentasSnapshot = await getDocs(collection(db, "CatalogoCuentas"));
+
+            let nombreCuenta = 'Cuenta desconocida'; // Valor por defecto en caso de que no se encuentre
+
+            catalogoCuentasSnapshot.forEach((doc) => {
+                const cuenta = doc.data();
+                const compras = cuenta.compras || [];
+
+                // Verificar si la compraId está dentro del array 'compras' de la cuenta
+                if (compras.includes(compraId)) {
+                    nombreCuenta = cuenta.nombre; // Asignar el nombre de la cuenta contable
+                }
+            });
+
+            return nombreCuenta;
+        }
+
+        async function obtenerCuentaPorPaciente(pacienteNombre) {
+            const catalogoCuentasSnapshot = await getDocs(collection(db, "CatalogoCuentas"));
+
+            let nombreCuenta = 'Cuenta desconocida'; // Valor por defecto en caso de que no se encuentre el paciente
+
+            catalogoCuentasSnapshot.forEach((doc) => {
+                const cuenta = doc.data();
+                const pacientes = cuenta.pacientes || [];
+
+                // Verificar si el nombre del paciente está en el array 'pacientes' de la cuenta
+                if (pacientes.includes(pacienteNombre)) {
+                    nombreCuenta = cuenta.nombre; // Asignar el nombre de la cuenta contable asociada al paciente
+                }
+            });
+
+            return nombreCuenta;
+        }
+
+        let transacciones = [];
+
+        window.mostrarTransacciones = async function (cuentaId, loaderId) {
+            document.getElementById(`transaccionesButton-${cuentaId}`).style.display = 'none';
+            document.getElementById(loaderId).style.display = 'block';
+
+
+            transacciones = [];
+
+            try {
+                const cuentaDoc = await getDoc(doc(db, "CatalogoCuentas", cuentaId));
+                if (!cuentaDoc.exists()) {
+                    throw new Error("Cuenta no encontrada");
+                }
+
+                const cuentaData = cuentaDoc.data();
+                const pacientes = cuentaData.pacientes || [];
+
+                const generateExcelButton = document.getElementById('generateExcel');
+                generateExcelButton.setAttribute('data-cuenta-id', cuentaId); // Atributo de datos
+
+                async function obtenerNombreCuenta(cuentaId) {
+                    if (cuentaId.includes('-')) {
+                        const [cuentaPrincipalId, subcuentaIndex] = cuentaId.split('-');
+                        const cuentaPrincipalDoc = await getDoc(doc(db, "CatalogoCuentas", cuentaPrincipalId));
+                        if (cuentaPrincipalDoc.exists()) {
+                            const subcuentas = cuentaPrincipalDoc.data().subcuentas || [];
+                            return subcuentas[subcuentaIndex]?.nombre || 'Subcuenta desconocida';
+                        }
+                    } else {
+                        const cuentaDoc = await getDoc(doc(db, "CatalogoCuentas", cuentaId));
+                        return cuentaDoc.exists() ? cuentaDoc.data().nombre : 'Cuenta desconocida';
+                    }
+                }
+
+
+
+                if (pacientes.length > 0) {
+                    // Obtener facturas relacionadas con los pacientes de esta cuenta contable
+                    const facturasSnapshot = await getDocs(query(collection(db, "facturas"), where("paciente", "in", pacientes)));
+                    for (const doc of facturasSnapshot.docs) {
+                        const factura = doc.data();
+                        if (factura.estatus === 'Cerrada') {
+                            const pagosSnapshot = await getDocs(collection(db, `facturas/${doc.id}/pagos`));
+                            if (pagosSnapshot.empty) {
+                                transacciones.push({
+                                    desde: factura.paciente,
+                                    hacia: cuentaData.nombre,
+                                    concepto: `Pago total a la Factura No. ${factura.numeroFactura}`,
+                                    monto: factura.total,
+                                    documento: factura.numeroFactura,
+                                    tipo: 'Ingreso',
+                                    fecha: factura.fecha
+                                });
+                            }
+                        }
+                    }
+
+                    // Obtener recibos relacionados con los pacientes de esta cuenta contable
+                    const recibosSnapshot = await getDocs(query(collection(db, "recibos"), where("paciente", "in", pacientes)));
+                    for (const doc of recibosSnapshot.docs) {
+                        const recibo = doc.data();
+                        if (!recibo.items || recibo.items.length === 0) {
+                            transacciones.push({
+                                desde: recibo.paciente,
+                                hacia: cuentaData.nombre,
+                                concepto: `Pago parcial a la Factura No. ${recibo.numeroFactura}`,
+                                monto: recibo.totalPago,
+                                documento: recibo.numeroFactura,
+                                tipo: 'Ingreso',
+                                fecha: recibo.fecha
+                            });
+                        }
+                    }
+                }
+
+                // Obtener compras relacionadas con esta cuenta contable
+                const comprasSnapshot = await getDocs(query(collection(db, "RegistroDeCompras"), where("cuenta", "==", cuentaId)));
+                for (const doc of comprasSnapshot.docs) {
+                    const compra = doc.data();
+                    const pagos = compra.pagos || [];
+
+                    if (pagos.length === 0) {
+                        transacciones.push({
+                            desde: cuentaData.nombre,
+                            hacia: compra.suplidorNombre,
+                            concepto: compra.tipoGasto,
+                            monto: compra.montoApagar,
+                            documento: compra.nombreFactura,
+                            tipo: 'Gasto',
+                            fecha: compra.fecha
+                        });
+                    } else if (compra.estatus === 'Abierta' && pagos.length > 0) {
+                        pagos.forEach(pago => {
+                            if (pago.estatus === 'Pagado') {
+                                transacciones.push({
+                                    desde: cuentaData.nombre,
+                                    hacia: compra.suplidorNombre,
+                                    concepto: `${compra.tipoGasto} - Pago No. ${pago.numeroPago}`,
+                                    monto: pago.monto,
+                                    documento: compra.nombreFactura,
+                                    tipo: 'Gasto',
+                                    fecha: pago.fechapago
+                                });
+                            }
+                        });
+                    }
+                }
+
+                const transaccionesSnapshot = await getDocs(query(collection(db, "transacciones"),
+                    where("cuentaOrigen", "==", cuentaId)));
+                for (const doc of transaccionesSnapshot.docs) {
+                    const transaccion = doc.data();
+                    const nombreCuentaDestino = await obtenerNombreCuenta(transaccion.cuentaDestino);
+                    transacciones.push({
+                        desde: cuentaData.nombre,
+                        hacia: nombreCuentaDestino,
+                        concepto: `Transferencia a ${nombreCuentaDestino}`,
+                        monto: transaccion.monto,
+                        documento: 'N/A',
+                        tipo: 'Gasto',
+                        fecha: transaccion.fecha
+                    });
+                }
+
+                // Obtener transacciones de transferencia donde la cuenta es destino
+                const transaccionesDestinoSnapshot = await getDocs(query(collection(db, "transacciones"),
+                    where("cuentaDestino", "==", cuentaId)));
+                for (const doc of transaccionesDestinoSnapshot.docs) {
+                    const transaccion = doc.data();
+                    const nombreCuentaOrigen = await obtenerNombreCuenta(transaccion.cuentaOrigen);
+                    transacciones.push({
+                        desde: nombreCuentaOrigen,
+                        hacia: cuentaData.nombre,
+                        concepto: `Transferencia desde ${nombreCuentaOrigen}`,
+                        monto: transaccion.monto,
+                        documento: 'N/A',
+                        tipo: 'Ingreso',
+                        fecha: transaccion.fecha
+                    });
+                }
+
+                filtrarTransaccionesPorMes();
+
+            } catch (error) {
+                console.error("Error al cargar transacciones:", error);
+            } finally {
+                // Ocultar el loader y mostrar el botón de "Transacciones" nuevamente
+                document.getElementById(loaderId).style.display = 'none';
+                document.getElementById(`transaccionesButton-${cuentaId}`).style.display = 'inline-block';
+            }
+
+            // Mostrar el historial de transacciones
+            document.getElementById('HistorialTransacciones').style.display = 'block';
+            document.getElementById('fondoDesenfocado3').style.display = 'block';
+        };
+
+        window.mostrarTransaccionesSubcuenta = async function (cuentaId, subcuentaCodigo, loaderId) {
+            document.getElementById(`transaccionesButton-${cuentaId}-${subcuentaCodigo}`).style.display = 'none';
+            document.getElementById(loaderId).style.display = 'block';
+            const tableBody = document.getElementById('historialTable');
+
+
+            tableBody.innerHTML = '';
+
+            transacciones = [];
+
+            try {
+                const cuentaDoc = await getDoc(doc(db, "CatalogoCuentas", cuentaId));
+                if (!cuentaDoc.exists()) {
+                    throw new Error("Cuenta no encontrada");
+                }
+
+                const cuentaData = cuentaDoc.data();
+                const subcuentaIndex = cuentaData.subcuentas.findIndex(s => s.codigo === subcuentaCodigo);
+                if (subcuentaIndex === -1) {
+                    throw new Error("Subcuenta no encontrada");
+                }
+                const subcuenta = cuentaData.subcuentas[subcuentaIndex];
+
+                const pacientes = subcuenta.pacientes || [];
+
+                const generateExcelButton = document.getElementById('generateExcel');
+                generateExcelButton.setAttribute('data-cuenta-id', cuentaId);
+                generateExcelButton.setAttribute('data-subcuenta-codigo', subcuentaCodigo);
+
+
+                async function obtenerNombreCuenta(cuentaId) {
+                    if (cuentaId.includes('-')) {
+                        const [cuentaPrincipalId, subcuentaIndex] = cuentaId.split('-');
+                        const cuentaPrincipalDoc = await getDoc(doc(db, "CatalogoCuentas", cuentaPrincipalId));
+                        if (cuentaPrincipalDoc.exists()) {
+                            const subcuentas = cuentaPrincipalDoc.data().subcuentas || [];
+                            return subcuentas[parseInt(subcuentaIndex)]?.nombre || 'Subcuenta desconocida';
+                        }
+                    } else {
+                        const cuentaDoc = await getDoc(doc(db, "CatalogoCuentas", cuentaId));
+                        return cuentaDoc.exists() ? cuentaDoc.data().nombre : 'Cuenta desconocida';
+                    }
+                }
+
+                if (pacientes.length > 0) {
+                    // Obtener facturas relacionadas con los pacientes de esta subcuenta
+                    const facturasSnapshot = await getDocs(query(collection(db, "facturas"), where("paciente", "in", pacientes)));
+                    for (const doc of facturasSnapshot.docs) {
+                        const factura = doc.data();
+                        if (factura.estatus === 'Cerrada') {
+                            const pagosSnapshot = await getDocs(collection(db, `facturas/${doc.id}/pagos`));
+                            if (pagosSnapshot.empty) {
+                                transacciones.push({
+                                    desde: factura.paciente,
+                                    hacia: subcuenta.nombre,
+                                    concepto: `Pago total a la Factura No. ${factura.numeroFactura}`,
+                                    monto: factura.total,
+                                    documento: factura.numeroFactura,
+                                    tipo: 'Ingreso',
+                                    fecha: factura.fecha
+                                });
+                            }
+                        }
+                    }
+
+                    // Obtener recibos relacionados con los pacientes de esta subcuenta
+                    const recibosSnapshot = await getDocs(query(collection(db, "recibos"), where("paciente", "in", pacientes)));
+                    for (const doc of recibosSnapshot.docs) {
+                        const recibo = doc.data();
+                        if (!recibo.items || recibo.items.length === 0) {
+                            transacciones.push({
+                                desde: recibo.paciente,
+                                hacia: subcuenta.nombre,
+                                concepto: `Pago parcial a la Factura No. ${recibo.numeroFactura}`,
+                                monto: recibo.totalPago,
+                                documento: recibo.numeroFactura,
+                                tipo: 'Ingreso',
+                                fecha: recibo.fecha
+                            });
+                        }
+                    }
+                }
+
+                // Obtener compras relacionadas con esta subcuenta
+                const comprasSnapshot = await getDocs(query(collection(db, "RegistroDeCompras"), where("cuenta", "==", cuentaId)));
+                for (const doc of comprasSnapshot.docs) {
+                    const compra = doc.data();
+                    const pagos = compra.pagos || [];
+
+                    // Verificar si la compra pertenece a la subcuenta
+                    if (compra.subcuenta && compra.subcuenta.codigo === subcuentaCodigo) {
+                        if (pagos.length === 0) {
+                            transacciones.push({
+                                desde: subcuenta.nombre,
+                                hacia: compra.suplidorNombre,
+                                concepto: compra.tipoGasto,
+                                monto: compra.montoApagar,
+                                documento: compra.nombreFactura,
+                                tipo: 'Gasto',
+                                fecha: compra.fecha
+                            });
+                        } else if (compra.estatus === 'Abierta' && pagos.length > 0) {
+                            pagos.forEach(pago => {
+                                if (pago.estatus === 'Pagado') {
+                                    transacciones.push({
+                                        desde: subcuenta.nombre,
+                                        hacia: compra.suplidorNombre,
+                                        concepto: `${compra.tipoGasto} - Pago No. ${pago.numeroPago}`,
+                                        monto: pago.monto,
+                                        documento: compra.nombreFactura,
+                                        tipo: 'Gasto',
+                                        fecha: pago.fechapago
+                                    });
+                                }
+                            });
+                        }
+                    }
+                }
+
+                const transaccionesSnapshot = await getDocs(query(collection(db, "transacciones"),
+                    where("cuentaOrigen", "==", `${cuentaId}-${subcuentaIndex}`)));
+                for (const doc of transaccionesSnapshot.docs) {
+                    const transaccion = doc.data();
+                    const nombreCuentaDestino = await obtenerNombreCuenta(transaccion.cuentaDestino);
+                    transacciones.push({
+                        desde: subcuenta.nombre,
+                        hacia: nombreCuentaDestino,
+                        concepto: `Transferencia a ${nombreCuentaDestino}`,
+                        monto: transaccion.monto,
+                        documento: '',
+                        tipo: 'Gasto',
+                        fecha: transaccion.fecha
+                    });
+                }
+
+                // Obtener transacciones de transferencia donde la subcuenta es destino
+                const transaccionesDestinoSnapshot = await getDocs(query(collection(db, "transacciones"),
+                    where("cuentaDestino", "==", `${cuentaId}-${subcuentaIndex}`)));
+                for (const doc of transaccionesDestinoSnapshot.docs) {
+                    const transaccion = doc.data();
+                    const nombreCuentaOrigen = await obtenerNombreCuenta(transaccion.cuentaOrigen);
+                    transacciones.push({
+                        desde: nombreCuentaOrigen,
+                        hacia: subcuenta.nombre,
+                        concepto: `Transferencia desde ${nombreCuentaOrigen}`,
+                        monto: transaccion.monto,
+                        documento: 'N/A',
+                        tipo: 'Ingreso',
+                        fecha: transaccion.fecha
+                    });
+                }
+
+                filtrarTransaccionesPorMes();
+
+            } catch (error) {
+                console.error("Error al cargar transacciones:", error);
+            } finally {
+                // Ocultar el loader y mostrar el botón de "Transacciones" nuevamente
+                document.getElementById(loaderId).style.display = 'none';
+                document.getElementById(`transaccionesButton-${cuentaId}-${subcuentaCodigo}`).style.display = 'inline-block';
+            }
+
+            // Mostrar el historial de transacciones
+            document.getElementById('HistorialTransacciones').style.display = 'block';
+            document.getElementById('fondoDesenfocado3').style.display = 'block';
+        };
+
+
+
+
+        const pageSize = 10; // Número de transacciones por página
+        let currentPage = 1; // Página actual
+
+        async function mostrarHistorial(transacciones) {
+            const transaccionesTableBody = document.getElementById('historialTable');
+            const paginationContainer = document.getElementById('paginationTransacciones');
+
+            // Limpiar la tabla y la paginación antes de actualizar
+            transaccionesTableBody.innerHTML = '';
+            paginationContainer.innerHTML = '';
+
+            // Calcular el número total de páginas
+            const totalPages = Math.ceil(transacciones.length / pageSize);
+
+            // Calcular el índice de inicio y fin para la página actual
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, transacciones.length);
+
+            // Mostrar solo las transacciones de la página actual
+            const transaccionesPagina = transacciones.slice(startIndex, endIndex);
+
+            transaccionesPagina.forEach((transaccion) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${transaccion.desde}</td>
+            <td>${transaccion.hacia}</td>
+            <td>${transaccion.concepto}</td>
+            <td>${parseFloat(transaccion.monto).toFixed(2)} DOP</td>
+            <td>${transaccion.documento}</td>
+            <td>${transaccion.tipo}</td>
+            <td>${transaccion.fecha}</td>
+        `;
+                transaccionesTableBody.appendChild(row);
+            });
+
+            // Crear botones de paginación
+            actualizarPaginacionTransacciones(totalPages);
+        }
+
+        function actualizarPaginacionTransacciones(totalPages) {
+            const paginationContainer = document.getElementById('paginationTransacciones');
+            paginationContainer.innerHTML = '';
+
+            // Botón anterior
+            const prevButton = document.createElement('li');
+            prevButton.classList.add('page-item');
+            if (currentPage === 1) {
+                prevButton.classList.add('disabled'); // Deshabilitar si es la primera página
+            }
+            const prevLink = document.createElement('a');
+            prevLink.classList.add('page-link');
+            prevLink.href = '#';
+            prevLink.textContent = '«';
+            prevLink.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (currentPage > 1) {
+                    currentPage--;
+                    mostrarHistorial(transacciones); // Actualiza la tabla con la página anterior
+                }
+            });
+            prevButton.appendChild(prevLink);
+            paginationContainer.appendChild(prevButton);
+
+            // Botones de páginas numeradas
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('li');
+                pageButton.classList.add('page-item');
+                if (i === currentPage) {
+                    pageButton.classList.add('active');
+                }
+                const pageLink = document.createElement('a');
+                pageLink.classList.add('page-link');
+                pageLink.href = '#';
+                pageLink.textContent = i;
+                pageLink.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    currentPage = i; // Cambiar la página actual
+                    mostrarHistorial(transacciones); // Actualizar la tabla con la página seleccionada
+                });
+                pageButton.appendChild(pageLink);
+                paginationContainer.appendChild(pageButton);
+            }
+
+            // Botón siguiente
+            const nextButton = document.createElement('li');
+            nextButton.classList.add('page-item');
+            if (currentPage === totalPages) {
+                nextButton.classList.add('disabled'); // Deshabilitar si es la última página
+            }
+            const nextLink = document.createElement('a');
+            nextLink.classList.add('page-link');
+            nextLink.href = '#';
+            nextLink.textContent = '»';
+            nextLink.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    mostrarHistorial(transacciones); // Actualizar la tabla con la página siguiente
+                }
+            });
+            nextButton.appendChild(nextLink);
+            paginationContainer.appendChild(nextButton);
+        }
+        // Función para cerrar el historial
+        document.getElementById('closeHistorialButton').addEventListener('click', function () {
+            document.getElementById('HistorialTransacciones').style.display = 'none';
+            document.getElementById('fondoDesenfocado3').style.display = 'none';
+            document.getElementById('historialTable').innerHTML = '';
+            currentPage = 1;
+            transacciones = [];
+            const fechaActual = new Date();
+            const mesActual = fechaActual.toISOString().slice(0, 7); // Formato YYYY-MM
+            document.getElementById('filterMonth').value = mesActual;
+            document.getElementById('endMonth').value = mesActual;
+            document.getElementById('startMonth').value = mesActual;
+
+            const generateExcelButton = document.getElementById('generateExcel');
+            generateExcelButton.removeAttribute('data-cuenta-id');
+            generateExcelButton.removeAttribute('data-subcuenta-codigo');
+        });
+
+        document.getElementById('transferenciaForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const cuentaOrigenId = document.getElementById('cuentaOrigen').value;
+            const cuentaDestinoId = document.getElementById('cuentaDestino').value;
+            const monto = parseFloat(document.getElementById('montoTransferencia').value);
+
+            // Validaciones iniciales
+            if (!cuentaOrigenId || !cuentaDestinoId || isNaN(monto) || monto <= 0) {
+                showAlert2('Por favor, complete todos los campos.', 'alert-warning');
+                return;
+            }
+
+            if (cuentaOrigenId === cuentaDestinoId) {
+                showAlert2('La cuenta de origen no puede ser igual a la cuenta de destino.', 'alert-warning');
+                return;
+            }
+
+            try {
+                // Iniciar la transacción
+                await runTransaction(db, async (transaction) => {
+                    
+                    const origenEsSubcuenta = cuentaOrigenId.includes('-');
+                    const destinoEsSubcuenta = cuentaDestinoId.includes('-');
+
+                    let cuentaOrigenData, cuentaDestinoData, subcuentaOrigen, subcuentaDestino;
+
+                    // Manejo de la cuenta origen
+                    const [cuentaOrigenRealId, subcuentaOrigenIndex] = origenEsSubcuenta ? cuentaOrigenId.split('-') : [cuentaOrigenId, null];
+                    const cuentaOrigenRef = doc(db, 'CatalogoCuentas', cuentaOrigenRealId);
+                    const cuentaOrigenDoc = await transaction.get(cuentaOrigenRef);
+
+                    if (!cuentaOrigenDoc.exists()) {
+                        throw new Error('No se encontró la cuenta origen.');
+                    }
+
+                    cuentaOrigenData = cuentaOrigenDoc.data();
+                    console.log('Datos de la cuenta de origen:', cuentaOrigenData);
+
+                    // Verificar el monto en la subcuenta o cuenta madre
+                    if (origenEsSubcuenta) {
+                        subcuentaOrigen = cuentaOrigenData.subcuentas[parseInt(subcuentaOrigenIndex)];
+
+                        // Verificar si la subcuenta existe y tiene fondos suficientes
+                        if (!subcuentaOrigen) {
+                            throw new Error('La subcuenta de origen no existe.');
+                        }
+
+                        if (subcuentaOrigen.monto < monto) {
+                            throw new Error('La subcuenta de origen no tiene suficientes fondos.');
+                        }
+
+                        // Restar el monto de la subcuenta
+                        subcuentaOrigen.monto -= monto;
+                    } else {
+                        // Verificar si la cuenta madre tiene fondos suficientes
+                        if (cuentaOrigenData.monto < monto) {
+                            throw new Error('La cuenta de origen no tiene suficientes fondos.');
+                        }
+
+                        // Restar el monto de la cuenta madre
+                        cuentaOrigenData.monto -= monto;
+                    }
+
+
+                    // Manejo de la cuenta destino
+                    const [cuentaDestinoRealId, subcuentaDestinoIndex] = destinoEsSubcuenta ? cuentaDestinoId.split('-') : [cuentaDestinoId, null];
+                    const cuentaDestinoRef = doc(db, 'CatalogoCuentas', cuentaDestinoRealId);
+                    const cuentaDestinoDoc = await transaction.get(cuentaDestinoRef);
+
+                    if (!cuentaDestinoDoc.exists()) {
+                        throw new Error('No se encontró la cuenta destino.');
+                    }
+
+                    cuentaDestinoData = cuentaDestinoDoc.data();
+                    console.log('Datos de la cuenta de destino:', cuentaDestinoData);
+
+                    // Sumar el monto a la subcuenta o cuenta madre
+                    if (destinoEsSubcuenta) {
+                        subcuentaDestino = cuentaDestinoData.subcuentas[subcuentaDestinoIndex];
+                        if (!subcuentaDestino) {
+                            throw new Error('La subcuenta de destino no existe.');
+                        }
+                        subcuentaDestino.monto += monto; // Sumar el monto a la subcuenta
+                    } else {
+                        cuentaDestinoData.monto += monto; // Sumar el monto a la cuenta madre
+                    }
+
+                    // Actualizar las cuentas en Firestore
+                    if (origenEsSubcuenta) {
+                        transaction.update(cuentaOrigenRef, {
+                            subcuentas: cuentaOrigenData.subcuentas
+                        });
+                    } else {
+                        transaction.update(cuentaOrigenRef, {
+                            monto: cuentaOrigenData.monto
+                        });
+                    }
+
+                    if (destinoEsSubcuenta) {
+                        transaction.update(cuentaDestinoRef, {
+                            subcuentas: cuentaDestinoData.subcuentas
+                        });
+                    } else {
+                        transaction.update(cuentaDestinoRef, {
+                            monto: cuentaDestinoData.monto
+                        });
+                    }
+
+                    const fechaActual = obtenerFechaActual();
+
+                    // Create a new transaction document
+                    const transaccionData = {
+                        cuentaOrigen: cuentaOrigenId,
+                        cuentaDestino: cuentaDestinoId,
+                        monto: monto,
+                        fecha: fechaActual
+                    };
+
+                    const transaccionRef = collection(db, 'transacciones');
+                    await addDoc(transaccionRef, transaccionData);
+
+                    showAlert2('Transferencia realizada con éxito.', 'alert-success');
+                    document.getElementById('transferenciaForm').reset();
+                });
+            } catch (error) {
+                console.error(error);
+                showAlert2('Error al realizar la transferencia: ' + error.message, 'alert-danger');
+            }
+        });
+
+
+        // Función para cargar las cuentas y subcuentas en los dropdowns
+        async function cargarCuentasEnDropdowns() {
+            const cuentasSnapshot = await getDocs(collection(db, 'CatalogoCuentas'));
+            const cuentaOrigenDropdown = document.getElementById('cuentaOrigen');
+            const cuentaDestinoDropdown = document.getElementById('cuentaDestino');
+
+            cuentasSnapshot.forEach((doc) => {
+                const cuentaData = doc.data();
+                // Agregar cuentas principales
+                const optionOrigen = document.createElement('option');
+                const optionDestino = document.createElement('option');
+
+                optionOrigen.value = doc.id;
+                optionOrigen.textContent = `${cuentaData.codigo} - ${cuentaData.nombre}`;
+                optionDestino.value = doc.id;
+                optionDestino.textContent = `${cuentaData.codigo} - ${cuentaData.nombre}`;
+
+                cuentaOrigenDropdown.appendChild(optionOrigen);
+                cuentaDestinoDropdown.appendChild(optionDestino);
+
+                // Agregar subcuentas si existen
+                if (cuentaData.subcuentas && cuentaData.subcuentas.length > 0) {
+                    cuentaData.subcuentas.forEach((subcuenta, index) => {
+                        const optionSubOrigen = document.createElement('option');
+                        const optionSubDestino = document.createElement('option');
+
+                        optionSubOrigen.value = `${doc.id}-${index}`;
+                        optionSubOrigen.textContent = `${subcuenta.codigo} - ${subcuenta.nombre} (Subcuenta)`;
+                        optionSubDestino.value = `${doc.id}-${index}`;
+                        optionSubDestino.textContent = `${subcuenta.codigo} - ${subcuenta.nombre} (Subcuenta)`;
+
+                        cuentaOrigenDropdown.appendChild(optionSubOrigen);
+                        cuentaDestinoDropdown.appendChild(optionSubDestino);
+                    });
+                }
+            });
+        }
+
+        // Llamar a la función para cargar las cuentas y subcuentas
+        cargarCuentasEnDropdowns();
+
+
+
+        document.getElementById('transferir').addEventListener('click', () => {
+            document.getElementById('transferenciaContainer').style.display = 'block';
+            document.getElementById('fondoDesenfocado2').style.display = 'block';
+        });
+
+        document.getElementById('closeTransferenciaButton').addEventListener('click', () => {
+            document.getElementById('transferenciaContainer').style.display = 'none';
+            document.getElementById('fondoDesenfocado2').style.display = 'none';
+            document.getElementById('transferenciaForm').reset();
+        });
+
+
+
+        function showAlert2(message, alertType) {
+            const alertBox = document.createElement('div');
+            alertBox.className = `alert ${alertType} position-fixed top-50 start-50 translate-middle`;
+            alertBox.style.zIndex = '1050'; // Asegurar que el z-index sea alto para estar encima de otros elementos
+
+            let heading;
+            if (alertType === 'alert-success') {
+                heading = '¡Bien hecho!';
+            } else if (alertType === 'alert-danger') {
+                heading = '¡Advertencia!';
+            } else {
+                heading = '¡Atención!';
+            }
+
+            alertBox.innerHTML = `
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <strong>${heading}</strong> ${message}
+    `;
+
+            document.body.appendChild(alertBox);
+            setTimeout(() => {
+                alertBox.remove();
+            }, 3000);
+        }
+
+        function obtenerFechaActual() {
+            const fecha = new Date();
+            const dia = String(fecha.getDate()).padStart(2, '0'); // Obtener el día, y asegurarse de que tenga 2 dígitos
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // Obtener el mes (los meses van de 0 a 11 en JavaScript)
+            const año = fecha.getFullYear(); // Obtener el año
+
+            return `${dia}/${mes}/${año}`;
+        }
+
+        function obtenerMesActual() {
+            const fecha = new Date();
+            const year = fecha.getFullYear();
+            const month = String(fecha.getMonth() + 1).padStart(2, '0'); // Mes actual
+            return `${year}-${month}`;
+        }
+
+
+        document.getElementById('applyFilter').addEventListener('click', filtrarTransaccionesPorMes);
+
+        // Al cargar la página, se aplicará automáticamente el filtro por el mes actual
+        document.addEventListener('DOMContentLoaded', () => {
+            const fechaActual = new Date();
+            const mesActual = fechaActual.toISOString().slice(0, 7); // Formato YYYY-MM
+            document.getElementById('filterMonth').value = mesActual;
+            document.getElementById('endMonth').value = mesActual;
+            document.getElementById('startMonth').value = mesActual;
+            filtrarTransaccionesPorMes();
+        });
+
+        function filtrarTransaccionesPorMes() {
+            const filterMonth = document.getElementById('filterMonth').value; // Obtener mes en formato YYYY-MM
+            const [year, month] = filterMonth.split('-'); // Extraer año y mes
+            const transaccionesFiltradas = transacciones.filter(transaccion => {
+                const [dia, mes, año] = transaccion.fecha.split('/'); // Convertir la fecha a dd/mm/yyyy
+                return año === year && mes === month;
+            });
+
+            // Ordenar transacciones de forma descendente por fecha
+            transaccionesFiltradas.sort((a, b) => {
+                const [diaA, mesA, añoA] = a.fecha.split('/');
+                const [diaB, mesB, añoB] = b.fecha.split('/');
+                const fechaA = new Date(`${añoA}-${mesA}-${diaA}`);
+                const fechaB = new Date(`${añoB}-${mesB}-${diaB}`);
+                return fechaB - fechaA;
+            });
+
+            mostrarHistorial(transaccionesFiltradas); // Mostrar las transacciones filtradas
+        }
+
+        // Función para convertir un mes (YYYY-MM) a un objeto Date
+        // Función para convertir una fecha en formato dd/mm/yyyy a un objeto Date
+        function convertirFecha(fechaStr) {
+            const [dia, mes, año] = fechaStr.split('/').map(Number);
+            return new Date(año, mes - 1, dia); // Crear un objeto Date
+        }
+
+        // Función para convertir un mes (YYYY-MM) a un objeto Date
+        function convertirMesAFecha(mesStr) {
+            const [year, month] = mesStr.split('-').map(Number);
+            return new Date(year, month - 1, 1); // Primer día del mes
+        }
+
+        document.getElementById('generateExcel').addEventListener('click', async () => {
+            const startMonth = document.getElementById('startMonth').value;
+            const endMonth = document.getElementById('endMonth').value;
+
+            if (!startMonth || !endMonth) {
+                showAlert2('Por favor, selecciona un rango de meses.', 'alert-danger');
+                return;
+            }
+
+            // Obtener cuentaId y subcuentaCodigo desde los atributos del botón
+            const cuentaId = document.getElementById('generateExcel').getAttribute('data-cuenta-id');
+            const subcuentaCodigo = document.getElementById('generateExcel').getAttribute('data-subcuenta-codigo');
+
+            // Convertir los meses seleccionados a fechas
+            const fechaInicio = convertirMesAFecha(startMonth);
+            const fechaFin = new Date(convertirMesAFecha(endMonth).setMonth(convertirMesAFecha(endMonth).getMonth() + 1));
+
+            try {
+                // Obtener el nombre de la cuenta o subcuenta
+                const cuentaNombre = await obtenerNombreCuenta(cuentaId, subcuentaCodigo);
+
+                // Seleccionar la función de transacciones según sea una cuenta o subcuenta
+                const transacciones = subcuentaCodigo
+                    ? await obtenerTransaccionesFiltradasSUBCUENTA(cuentaId, subcuentaCodigo, fechaInicio, fechaFin)
+                    : await obtenerTransaccionesFiltradas(cuentaId, fechaInicio, fechaFin);
+
+                if (transacciones.length === 0) {
+                    showAlert2('No se encontraron transacciones en el rango de meses seleccionado.', 'alert-danger');
+                    return;
+                }
+
+                // Generar y descargar el reporte Excel
+                generarExcel(transacciones, cuentaNombre);
+            } catch (error) {
+                console.error('Error al generar el reporte:', error);
+                alert(`Error al generar el reporte: ${error.message}`);
+            }
+        });
+
+        async function obtenerTransaccionesFiltradas(cuentaId, fechaInicio, fechaFin) {
+            const transacciones = [];
+
+            const cuentaDoc = await getDoc(doc(db, "CatalogoCuentas", cuentaId));
+            if (!cuentaDoc.exists()) {
+                throw new Error("Cuenta no encontrada");
+            }
+
+            const cuentaData = cuentaDoc.data();
+            const pacientes = cuentaData.pacientes || [];
+
+            async function obtenerNombreCuenta(cuentaId) {
+                if (cuentaId.includes('-')) {
+                    const [cuentaPrincipalId, subcuentaIndex] = cuentaId.split('-');
+                    const cuentaPrincipalDoc = await getDoc(doc(db, "CatalogoCuentas", cuentaPrincipalId));
+                    if (cuentaPrincipalDoc.exists()) {
+                        const subcuentas = cuentaPrincipalDoc.data().subcuentas || [];
+                        return subcuentas[subcuentaIndex]?.nombre || 'Subcuenta desconocida';
+                    }
+                } else {
+                    const cuentaDoc = await getDoc(doc(db, "CatalogoCuentas", cuentaId));
+                    return cuentaDoc.exists() ? cuentaDoc.data().nombre : 'Cuenta desconocida';
+                }
+            }
+
+            // Facturas relacionadas con los pacientes
+            if (pacientes.length > 0) {
+                const facturasSnapshot = await getDocs(
+                    query(collection(db, "facturas"), where("paciente", "in", pacientes))
+                );
+                for (const doc of facturasSnapshot.docs) {
+                    const factura = doc.data();
+                    const fechaFactura = convertirFecha(factura.fecha);
+                    if (factura.estatus === 'Cerrada' && fechaFactura >= fechaInicio && fechaFactura < fechaFin) {
+                        const pagosSnapshot = await getDocs(collection(db, `facturas/${doc.id}/pagos`));
+                        if (pagosSnapshot.empty) {
+                            transacciones.push({
+                                desde: factura.paciente,
+                                hacia: cuentaData.nombre,
+                                concepto: `Pago total a la Factura No. ${factura.numeroFactura}`,
+                                monto: factura.total,
+                                documento: factura.numeroFactura,
+                                tipo: 'Ingreso',
+                                fecha: factura.fecha
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Recibos relacionados con los pacientes
+            const recibosSnapshot = await getDocs(
+                query(collection(db, "recibos"), where("paciente", "in", pacientes))
+            );
+            for (const doc of recibosSnapshot.docs) {
+                const recibo = doc.data();
+                const fechaRecibo = convertirFecha(recibo.fecha);
+                if ((!recibo.items || recibo.items.length === 0) && fechaRecibo >= fechaInicio && fechaRecibo < fechaFin) {
+                    transacciones.push({
+                        desde: recibo.paciente,
+                        hacia: cuentaData.nombre,
+                        concepto: `Pago parcial a la Factura No. ${recibo.numeroFactura}`,
+                        monto: recibo.totalPago,
+                        documento: recibo.numeroFactura,
+                        tipo: 'Ingreso',
+                        fecha: recibo.fecha
+                    });
+                }
+            }
+
+            // Compras relacionadas con la cuenta
+            const comprasSnapshot = await getDocs(
+                query(collection(db, "RegistroDeCompras"), where("cuenta", "==", cuentaId))
+            );
+            for (const doc of comprasSnapshot.docs) {
+                const compra = doc.data();
+                const fechaCompra = convertirFecha(compra.fecha);
+                if (fechaCompra >= fechaInicio && fechaCompra < fechaFin) {
+                    const pagos = compra.pagos || [];
+                    if (pagos.length === 0) {
+                        transacciones.push({
+                            desde: cuentaData.nombre,
+                            hacia: compra.suplidorNombre,
+                            concepto: compra.tipoGasto,
+                            monto: compra.montoApagar,
+                            documento: compra.nombreFactura,
+                            tipo: 'Gasto',
+                            fecha: compra.fecha
+                        });
+                    } else {
+                        pagos.forEach(pago => {
+                            if (pago.estatus === 'Pagado') {
+                                transacciones.push({
+                                    desde: cuentaData.nombre,
+                                    hacia: compra.suplidorNombre,
+                                    concepto: `${compra.tipoGasto} - Pago No. ${pago.numeroPago}`,
+                                    monto: pago.monto,
+                                    documento: compra.nombreFactura,
+                                    tipo: 'Gasto',
+                                    fecha: pago.fechapago
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Transacciones de la cuenta como origen
+            const transaccionesSnapshot = await getDocs(
+                query(collection(db, "transacciones"), where("cuentaOrigen", "==", cuentaId))
+            );
+            for (const doc of transaccionesSnapshot.docs) {
+                const transaccion = doc.data();
+                const fechaTransaccion = convertirFecha(transaccion.fecha);
+                if (fechaTransaccion >= fechaInicio && fechaTransaccion < fechaFin) {
+                    const nombreCuentaDestino = await obtenerNombreCuenta(transaccion.cuentaDestino);
+                    transacciones.push({
+                        desde: cuentaData.nombre,
+                        hacia: nombreCuentaDestino,
+                        concepto: `Transferencia a ${nombreCuentaDestino}`,
+                        monto: transaccion.monto.toFixed(2) + ' DOP',
+                        documento: 'N/A',
+                        tipo: 'Gasto',
+                        fecha: transaccion.fecha
+                    });
+                }
+            }
+
+            // Transacciones de la cuenta como destino
+            const transaccionesDestinoSnapshot = await getDocs(
+                query(collection(db, "transacciones"), where("cuentaDestino", "==", cuentaId))
+            );
+            for (const doc of transaccionesDestinoSnapshot.docs) {
+                const transaccion = doc.data();
+                const fechaTransaccion = convertirFecha(transaccion.fecha);
+                if (fechaTransaccion >= fechaInicio && fechaTransaccion < fechaFin) {
+                    const nombreCuentaOrigen = await obtenerNombreCuenta(transaccion.cuentaOrigen);
+                    transacciones.push({
+                        desde: nombreCuentaOrigen,
+                        hacia: cuentaData.nombre,
+                        concepto: `Transferencia desde ${nombreCuentaOrigen}`,
+                        monto: transaccion.monto.toFixed(2) + ' DOP',
+                        documento: 'N/A',
+                        tipo: 'Ingreso',
+                        fecha: transaccion.fecha
+                    });
+                }
+            }
+
+            return transacciones;
+        }
+
+        async function obtenerNombreCuenta(cuentaId, subcuentaCodigo = null) {
+            const cuentaDoc = await getDoc(doc(db, "CatalogoCuentas", cuentaId));
+            if (!cuentaDoc.exists()) {
+                throw new Error("Cuenta no encontrada");
+            }
+
+            const cuentaData = cuentaDoc.data();
+
+            if (subcuentaCodigo) {
+                const subcuenta = cuentaData.subcuentas.find(s => s.codigo === subcuentaCodigo);
+                if (!subcuenta) {
+                    throw new Error("Subcuenta no encontrada");
+                }
+                return subcuenta.nombre;
+            } else {
+                return cuentaData.nombre;
+            }
+        }
+
+        async function obtenerTransaccionesFiltradasSUBCUENTA(cuentaId, subcuentaCodigo, fechaInicio, fechaFin) {
+            const transacciones = [];
+
+            const cuentaDoc = await getDoc(doc(db, "CatalogoCuentas", cuentaId));
+            if (!cuentaDoc.exists()) {
+                throw new Error("Cuenta no encontrada");
+            }
+
+            const cuentaData = cuentaDoc.data();
+            const subcuentaIndex = cuentaData.subcuentas.findIndex(s => s.codigo === subcuentaCodigo);
+            if (subcuentaIndex === -1) {
+                throw new Error("Subcuenta no encontrada");
+            }
+            const subcuenta = cuentaData.subcuentas[subcuentaIndex];
+            const pacientes = subcuenta.pacientes || [];
+
+            // Obtener facturas relacionadas con los pacientes de la subcuenta
+            if (pacientes.length > 0) {
+                const facturasSnapshot = await getDocs(
+                    query(collection(db, "facturas"), where("paciente", "in", pacientes))
+                );
+                for (const doc of facturasSnapshot.docs) {
+                    const factura = doc.data();
+                    const fechaFactura = convertirFecha(factura.fecha);
+                    if (factura.estatus === 'Cerrada' && fechaFactura >= fechaInicio && fechaFactura < fechaFin) {
+                        const pagosSnapshot = await getDocs(collection(db, `facturas/${doc.id}/pagos`));
+                        if (pagosSnapshot.empty) {
+                            transacciones.push({
+                                desde: factura.paciente,
+                                hacia: subcuenta.nombre,
+                                concepto: `Pago total a la Factura No. ${factura.numeroFactura}`,
+                                monto: factura.total,
+                                documento: factura.numeroFactura,
+                                tipo: 'Ingreso',
+                                fecha: factura.fecha
+                            });
+                        }
+                    }
+                }
+
+                // Obtener recibos relacionados con los pacientes de la subcuenta
+                const recibosSnapshot = await getDocs(
+                    query(collection(db, "recibos"), where("paciente", "in", pacientes))
+                );
+                for (const doc of recibosSnapshot.docs) {
+                    const recibo = doc.data();
+                    const fechaRecibo = convertirFecha(recibo.fecha);
+                    if ((!recibo.items || recibo.items.length === 0) && fechaRecibo >= fechaInicio && fechaRecibo < fechaFin) {
+                        transacciones.push({
+                            desde: recibo.paciente,
+                            hacia: subcuenta.nombre,
+                            concepto: `Pago parcial a la Factura No. ${recibo.numeroFactura}`,
+                            monto: recibo.totalPago,
+                            documento: recibo.numeroFactura,
+                            tipo: 'Ingreso',
+                            fecha: recibo.fecha
+                        });
+                    }
+                }
+            }
+
+            // Obtener compras relacionadas con la subcuenta
+            const comprasSnapshot = await getDocs(
+                query(collection(db, "RegistroDeCompras"), where("cuenta", "==", cuentaId))
+            );
+            for (const doc of comprasSnapshot.docs) {
+                const compra = doc.data();
+                const pagos = compra.pagos || [];
+                const fechaCompra = convertirFecha(compra.fecha);
+
+                if (compra.subcuenta?.codigo === subcuentaCodigo && fechaCompra >= fechaInicio && fechaCompra < fechaFin) {
+                    if (pagos.length === 0) {
+                        transacciones.push({
+                            desde: subcuenta.nombre,
+                            hacia: compra.suplidorNombre,
+                            concepto: compra.tipoGasto,
+                            monto: compra.montoApagar,
+                            documento: compra.nombreFactura,
+                            tipo: 'Gasto',
+                            fecha: compra.fecha
+                        });
+                    } else {
+                        pagos.forEach(pago => {
+                            if (pago.estatus === 'Pagado') {
+                                transacciones.push({
+                                    desde: subcuenta.nombre,
+                                    hacia: compra.suplidorNombre,
+                                    concepto: `${compra.tipoGasto} - Pago No. ${pago.numeroPago}`,
+                                    monto: pago.monto,
+                                    documento: compra.nombreFactura,
+                                    tipo: 'Gasto',
+                                    fecha: pago.fechapago
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Obtener transacciones de origen de la subcuenta
+            const transaccionesSnapshot = await getDocs(
+                query(collection(db, "transacciones"), where("cuentaOrigen", "==", `${cuentaId}-${subcuentaIndex}`))
+            );
+            for (const doc of transaccionesSnapshot.docs) {
+                const transaccion = doc.data();
+                const nombreCuentaDestino = await obtenerNombreCuenta(transaccion.cuentaDestino);
+                const fechaTransaccion = convertirFecha(transaccion.fecha);
+                if (fechaTransaccion >= fechaInicio && fechaTransaccion < fechaFin) {
+                    transacciones.push({
+                        desde: subcuenta.nombre,
+                        hacia: nombreCuentaDestino,
+                        concepto: `Transferencia a ${nombreCuentaDestino}`,
+                        monto: transaccion.monto.toFixed(2) + ' DOP',
+                        documento: 'N/A',
+                        tipo: 'Gasto',
+                        fecha: transaccion.fecha
+                    });
+                }
+            }
+
+            // Obtener transacciones de destino de la subcuenta
+            const transaccionesDestinoSnapshot = await getDocs(
+                query(collection(db, "transacciones"), where("cuentaDestino", "==", `${cuentaId}-${subcuentaIndex}`))
+            );
+            for (const doc of transaccionesDestinoSnapshot.docs) {
+                const transaccion = doc.data();
+                const nombreCuentaOrigen = await obtenerNombreCuenta(transaccion.cuentaOrigen);
+                const fechaTransaccion = convertirFecha(transaccion.fecha);
+                if (fechaTransaccion >= fechaInicio && fechaTransaccion < fechaFin) {
+                    transacciones.push({
+                        desde: nombreCuentaOrigen,
+                        hacia: subcuenta.nombre,
+                        concepto: `Transferencia desde ${nombreCuentaOrigen}`,
+                        monto: transaccion.monto.toFixed(2) + ' DOP',
+                        documento: 'N/A',
+                        tipo: 'Ingreso',
+                        fecha: transaccion.fecha
+                    });
+                }
+            }
+
+            return transacciones;
+        }
+
+
+        async function generarExcel(transacciones, cuentaNombre) {
+            try {
+                const workbook = new ExcelJS.Workbook();
+
+                // Crear hoja para transacciones
+                const transaccionesSheet = workbook.addWorksheet('Transacciones', {
+                    properties: { tabColor: { argb: 'FFFF00' } } // Color amarillo para la hoja
+                });
+
+                // Definir encabezados de las transacciones
+                const headers = [
+                    'Desde', 'Hacia', 'Concepto', 'Monto', 'Documento', 'Tipo', 'Fecha'
+                ];
+                transaccionesSheet.addRow(headers);
+
+                // Ordenar las transacciones por fecha de forma ASCENDENTE
+                transacciones.sort((a, b) => {
+                    const fechaA = new Date(a.fecha.split('/').reverse().join('-')); // Convertir dd/mm/yyyy a yyyy-mm-dd
+                    const fechaB = new Date(b.fecha.split('/').reverse().join('-')); // Convertir dd/mm/yyyy a yyyy-mm-dd
+                    return fechaA - fechaB; // Orden ascendente
+                });
+
+                // Agregar filas de transacciones
+                transacciones.forEach((transaccion) => {
+                    const {
+                        desde, hacia, concepto, monto, documento, tipo, fecha
+                    } = transaccion;
+
+                    transaccionesSheet.addRow([desde, hacia, concepto, monto, documento, tipo, fecha]);
+                });
+
+                // Aplicar estilo al encabezado
+                const headerRow = transaccionesSheet.getRow(1);
+                headerRow.eachCell((cell) => {
+                    cell.font = { bold: true };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0074D9' } }; // Azul
+                });
+
+                // Aplicar estilo a las filas de contenido
+                transaccionesSheet.eachRow((row, rowNumber) => {
+                    if (rowNumber > 1) { // Evitar el encabezado
+                        row.eachCell((cell) => {
+                            cell.alignment = { horizontal: 'left', vertical: 'middle' }; // Justificado a la izquierda
+                            cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' } };
+                        });
+                    }
+                });
+
+                // Ajustar ancho de columnas dinámicamente
+                transaccionesSheet.columns.forEach((column) => {
+                    let maxLength = 0;
+                    column.eachCell({ includeEmpty: true }, (cell) => {
+                        const cellValue = cell.value ? cell.value.toString() : '';
+                        maxLength = Math.max(maxLength, cellValue.length);
+                    });
+                    column.width = maxLength + 2;
+                });
+
+                // Generar el buffer y descargar el archivo Excel
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                });
+
+                const nombreArchivo = `reporte_transacciones_${cuentaNombre}.xlsx`;
+                saveAs(blob, nombreArchivo);
+
+                // Mostrar alerta de éxito
+                showAlert2('Archivo de Excel generado correctamente.', 'alert-success');
+            } catch (error) {
+                console.error('Error al generar el archivo de Excel:', error);
+                showAlert2(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
+            }
+        }
+
+
+
 
 
 

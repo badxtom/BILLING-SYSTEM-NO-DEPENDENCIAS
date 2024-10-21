@@ -1001,9 +1001,9 @@
             } else {
                 citasSnapshot.forEach((doc) => {
                     const citaData = doc.data();
-                    const { paciente, telefono, email, doctor, fechaEntrada, hora } = citaData;
+                    const { paciente, telefono, email, doctor, fecha, hora } = citaData;
 
-                    const dateParts = fechaEntrada.split('/');
+                    const dateParts = fecha.split('/');
                     const formattedFechaEntrada = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
 
                     const row = document.createElement('tr');
@@ -1012,7 +1012,7 @@
                 <td>${telefono}</td>
                 <td>${email}</td>
                 <td>${doctor}</td>
-                <td>${fechaEntrada}</td>
+                <td>${fecha}</td>
                 <td>${hora}</td>
                 <td>
                     <button class="btn btn-danger btn-sm delete-btn" data-id="${doc.id}" ${currentUserRole === 'Asistente' ? 'disabled' : ''}>
@@ -1121,7 +1121,7 @@
                 telefono: numberE.value,
                 email: EmailInpE.value,
                 doctor: searchDoctorInputE.value,
-                fechaEntrada: fechaEntradaValue,
+                fecha: fechaEntradaValue,
                 hora: horaE.value
             };
 

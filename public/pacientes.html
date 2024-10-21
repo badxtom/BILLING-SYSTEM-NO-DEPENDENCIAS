@@ -618,12 +618,12 @@
 
         });
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-        import { getDatabase, set, ref, get, child, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, setDoc, serverTimestamp, deleteDoc, Timestamp, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable, listAll, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
+        import { getDatabase, set, ref, get, child, update } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, setDoc, serverTimestamp, deleteDoc, Timestamp, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable, listAll, deleteObject } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCknSaxVHB10B_v-4yD9UtNj1dmZZKVRe4",
@@ -633,6 +633,7 @@
             messagingSenderId: "906484441227",
             appId: "1:906484441227:web:7b486131ad930a7b03b48e"
         };
+
         const app = initializeApp(firebaseConfig);
         const db = getDatabase();
         const auth = getAuth();
@@ -1169,10 +1170,11 @@
                 const data = doc.data();
                 const { fname, lname, number, dni, fechaEntrada, location, medico, email, ars, npoliza, nEmergencia, provincia, edad, fechaNac, cuentaContable } = data;
 
-                const dateParts = fechaEntrada.split('/');
+                const dateParts = fechaEntrada ? fechaEntrada.split('/') : [];
+
                 const formattedFechaEntrada = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
 
-                const datePartsE = fechaNac.split('/');
+                const datePartsE = fechaNac ? fechaNac.split('/') : [];
                 const formattedFechaNac = `${datePartsE[2]}-${datePartsE[1]}-${datePartsE[0]}`;
 
                 const row = document.createElement('tr');
@@ -1344,7 +1346,7 @@
 
             try {
                 // Guardar los datos del formulario en Firestore
-                await addDoc(collection(getFirestore(), 'pacientes'), {
+                const pacienteRef = await addDoc(collection(getFirestore(), 'pacientes'), {
                     fname: fname,
                     lname: lname,
                     dni: dni,
@@ -1359,8 +1361,9 @@
                     ars: ARS,
                     npoliza: Npoliza,
                     fechaEntrada: fechaEntradaValue
-
                 });
+
+                const pacienteId = pacienteRef.id;
 
                 await asociarCuentaContable(`${fname} ${lname}`, cuentaContable);
 
@@ -1373,11 +1376,8 @@
                 // Mostrar una alerta si ocurre un error al guardar los datos
                 console.error('Error al guardar los datos:', error);
                 showAlert('Se produjo un error al guardar los datos. Inténtelo de nuevo más tarde.', 'alert-danger');
-
-
             }
         });
-
 
         searchInput.addEventListener('input', filterTable)
 
@@ -1425,10 +1425,11 @@
                 pacientesPagina.forEach(doc => {
                     const { fname, lname, number, dni, fechaEntrada, location, medico, email, ars, npoliza, nEmergencia, provincia, edad, fechaNac, cuentaContable } = doc;
 
-                    const dateParts = fechaEntrada.split('/');
+                    const dateParts = fechaEntrada ? fechaEntrada.split('/') : [];
+
                     const formattedFechaEntrada = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
 
-                    const datePartsE = fechaNac.split('/');
+                    const datePartsE = fechaNac ? fechaNac.split('/') : [];
                     const formattedFechaNac = `${datePartsE[2]}-${datePartsE[1]}-${datePartsE[0]}`;
 
                     const row = document.createElement('tr');
@@ -1636,6 +1637,8 @@
                 alertDiv.remove();
             }, 5000);
         }
+
+        
 
 
 
