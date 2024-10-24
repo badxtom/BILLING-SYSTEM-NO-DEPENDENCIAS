@@ -2001,7 +2001,6 @@
             try {
                 // Consulta para obtener todas las facturas de la colección RegistroDeCompras
                 const q = collection(dba, "RegistroDeCompras");
-
                 const querySnapshot = await getDocs(q);
 
                 // Crear una nueva instancia de workbook (libro de Excel)
@@ -2027,6 +2026,21 @@
                 // Agregar encabezados a la hoja de Excel
                 worksheet.addRow(headers);
 
+                // Función para obtener el nombre de la cuenta por su ID
+                const obtenerNombreCuenta = async (cuentaId) => {
+                    try {
+                        const cuentaDoc = await getDoc(doc(dba, "CatalogoCuentas", cuentaId));
+                        if (cuentaDoc.exists()) {
+                            return cuentaDoc.data().nombre || 'Cuenta desconocida';
+                        } else {
+                            return 'Cuenta desconocida';
+                        }
+                    } catch (error) {
+                        console.error('Error al obtener la cuenta:', error);
+                        return 'Error al obtener cuenta';
+                    }
+                };
+
                 // Iterar sobre todas las facturas encontradas
                 for (const doc of querySnapshot.docs) {
                     const data = doc.data();
@@ -2036,14 +2050,17 @@
                         numeroComprobante,
                         tipoGasto,
                         itbis,
-                        cuenta,
+                        cuenta, // ID de la cuenta
                         montoFactura,
                         montoApagar,
                         nombreFactura,
                         pagos // Obtener el array de pagos
                     } = data;
-                    let pagosInfo = 'N/A'; // Valor por defecto para pagos
 
+                    // Obtener el nombre de la cuenta con el ID almacenado en 'cuenta'
+                    const cuentaNombre = await obtenerNombreCuenta(cuenta);
+
+                    let pagosInfo = 'N/A'; // Valor por defecto para pagos
                     if (Array.isArray(pagos) && pagos.length > 0) {
                         pagosInfo = ''; // Reiniciar pagosInfo si hay pagos
                         pagos.forEach((pago) => {
@@ -2054,14 +2071,14 @@
                         pagosInfo = pagosInfo.slice(0, -2); // Eliminar la última coma y espacio
                     }
 
-                    // Agregar fila a la hoja de Excel
+                    // Agregar fila a la hoja de Excel con el nombre de la cuenta
                     worksheet.addRow([
                         fecha,
                         moneda,
                         numeroComprobante ? numeroComprobante : 'N/A',
                         tipoGasto,
                         itbis,
-                        cuenta,
+                        cuentaNombre, // Nombre de la cuenta en lugar del ID
                         montoFactura,
                         montoApagar,
                         nombreFactura,
@@ -2099,7 +2116,6 @@
                 console.error('Error al generar el archivo de Excel:', error);
             }
         });
-
 
 
 

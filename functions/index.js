@@ -21,7 +21,10 @@ const formatDateToSpanish = (date) => {
 const sendReminderEmail = async (email, subject, message, icsContent) => {
     const msg = {
         to: email,
-        from: 'info@unoin.do',
+        from: {
+            email: 'info@unoin.do',
+            name: 'Unidad Oncológica Integral'
+        },
         subject: subject,
         text: message,
         attachments: [
@@ -108,8 +111,10 @@ exports.sendAppointmentReminders = functions.pubsub.schedule('0 4 * * *').onRun(
                 await sendReminderEmail(email, subject, message, icsContent);
             }
 
+            const dayAfterAppointment = new Date(appointmentDate);
+            dayAfterAppointment.setDate(appointmentDate.getDate() + 1);
 
-            if (appointmentDate < currentDate) {
+            if (currentDate >= dayAfterAppointment) {
                 const historialRef = db.collection('HistorialCitasAgendas').doc(doc.id);
                 batch.set(historialRef, appointment);
                 batch.delete(doc.ref);

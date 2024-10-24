@@ -1638,7 +1638,7 @@
             }, 5000);
         }
 
-        
+
 
 
 
@@ -1685,7 +1685,7 @@
                 logoImage.src = 'unoin.png';
 
                 logoImage.onload = async () => {
-                    const logoWidth = 20;
+                    const logoWidth = 30;
                     const logoHeight = (logoWidth / logoImage.width) * logoImage.height;
                     const marginRight = 15;
                     const marginTop = 5;
@@ -1723,22 +1723,46 @@
                     // Obtener datos de la colección 'pacientes'
                     const pacientesRef = collection(getFirestore(), 'pacientes');
                     const pacientesSnapshot = await getDocs(pacientesRef);
-                    const pacientesData = pacientesSnapshot.docs.map(doc => doc.data());
+                    const pacientesData = pacientesSnapshot.docs.map((doc, index) => ({
+                        no: index + 1, // Enumerar los pacientes
+                        ...doc.data()
+                    }));
 
-                    // Agregar tabla de pacientes al PDF
+                    // Crear el contenido de la tabla con la nueva columna "No."
+                    const tableData = pacientesData.map(paciente => [
+                        paciente.no,
+                        paciente.fname || '',
+                        paciente.lname || '',
+                        paciente.number || '',
+                        paciente.dni || '',
+                        paciente.location || '',
+                        paciente.medico || '',
+                        paciente.fechaEntrada || ''
+                    ]);
+
+                    // Configuración de la tabla
                     doc.autoTable({
-                        head: [['Nombre', 'Apellido', 'Teléfono', 'Cédula', 'Dirección', 'Especialista(s)', 'Fecha de Registro']],
-                        body: pacientesData.map(paciente => [
-                            paciente.fname || '',
-                            paciente.lname || '',
-                            paciente.number || '',
-                            paciente.dni || '',
-                            paciente.location || '',
-                            paciente.medico || '',
-                            paciente.fechaEntrada || ''
-                        ]),
-                        startY: 50
+                        head: [['No.', 'Nombre', 'Apellido', 'Teléfono', 'Cédula', 'Dirección', 'Especialista(s)', 'Fecha de Registro']],
+                        body: tableData,
+                        startY: 50,
+                        styles: {
+                            fontSize: 9,  // Establecer tamaño de letra a 12 puntos
+                            halign: 'left', // Alinear el contenido a la izquierda
+                            cellPadding: 3
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 'auto' }, // No.
+                            1: { cellWidth: 'auto' }, // Nombre
+                            2: { cellWidth: 'auto' }, // Apellido
+                            3: { cellWidth: 'auto' }, // Teléfono
+                            4: { cellWidth: 'auto' }, // Cédula
+                            5: { cellWidth: 'auto' }, // Dirección
+                            6: { cellWidth: 'auto' }, // Especialista(s)
+                            7: { cellWidth: 'auto' }  // Fecha de Registro
+                        },
+                        theme: 'striped', // Tema de la tabla
                     });
+
 
                     // Guardar el PDF
                     const pdfBlob = await doc.output('blob');
@@ -1749,6 +1773,7 @@
                 showAlert('Error al generar el PDF', 'alert-danger');
             }
         });
+
 
 
 

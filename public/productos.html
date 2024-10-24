@@ -1729,7 +1729,6 @@
                 logoImage.src = 'unoin.png';
 
                 logoImage.onload = async () => {
-
                     const logoWidth = 30;
                     const logoHeight = (logoWidth / logoImage.width) * logoImage.height;
                     const marginRight = 15;
@@ -1739,6 +1738,7 @@
                     doc.setFontSize(20);
                     doc.text('Registro de Productos', 15, 10);
 
+                    // Obtener los datos de la empresa
                     const empresaSnapshot = await get(ref(db, 'datos/'));
                     const empresaData = empresaSnapshot.val();
 
@@ -1767,26 +1767,49 @@
                     // Obtener datos de la colección 'productos'
                     const productosRef = collection(getFirestore(), 'productos');
                     const productosSnapshot = await getDocs(productosRef);
+                    const productosData = productosSnapshot.docs.map((doc, index) => ({
+                        no: index + 1, // Enumerar los productos
+                        ...doc.data()
+                    }));
 
-                    const productosData = productosSnapshot.docs.map(doc => doc.data());
-
-                    // Crear el contenido de la tabla
-                    const tableData = productosData.map(producto => [
+                    // Crear el contenido de la tabla con la nueva columna "No."
+                    const tableData = productosData.map((producto) => [
+                        producto.no,
                         producto.descripcion || '',
-                        producto.disponible || '',
-                        producto.precio || '',
+                        producto.disponible || 'N/A',
+                        `${producto.precio || '0'} ${producto.moneda || 'DOP'}`,
+                        `${producto.precioVenta || '0'} ${producto.moneda || 'DOP'}`,
                         producto.categoria || '',
-                        producto.itbis || '',
-                        producto.fechaVencimiento || '',
-                        producto.fechaEntrada || ''
+                        producto.itbis || 'N/A',
+                        producto.fechaVencimiento || 'N/A',
+                        producto.fechaEntrada || 'N/A'
                     ]);
 
+                    // Configuración de la tabla con estilo y ajuste dinámico de columnas
                     doc.autoTable({
-                        head: [['Descripción', 'Disponible', 'Precio', 'Categoría', 'ITBIS', 'Vencimiento', 'Fecha de Entrada']],
+                        head: [['No.', 'Descripción', 'Disponible', 'Precio', 'Precio Venta', 'Categoría', 'ITBIS', 'Vencimiento', 'Fecha de Entrada']],
                         body: tableData,
-                        startY: 50
+                        startY: 50,
+                        styles: {
+                            fontSize: 8,    // Establecer tamaño de letra a 12 puntos
+                            halign: 'left',  // Alinear el contenido de las columnas a la izquierda
+                            cellPadding: 3
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 'auto' },  // No.
+                            1: { cellWidth: 'auto' },  // Descripción
+                            2: { cellWidth: 'auto' },  // Disponible
+                            3: { cellWidth: 'auto' },  // Precio
+                            4: { cellWidth: 'auto' },  // Precio Venta
+                            5: { cellWidth: 'auto' },  // Categoría
+                            6: { cellWidth: 'auto' },  // ITBIS
+                            7: { cellWidth: 'auto' },  // Vencimiento
+                            8: { cellWidth: 'auto' }   // Fecha de Entrada
+                        },
+                        theme: 'striped',  // Tema de la tabla
                     });
 
+                    // Generar y descargar el PDF
                     const pdfBlob = await doc.output('blob');
                     saveAs(pdfBlob, 'Productos.pdf');
                 };
@@ -1795,6 +1818,8 @@
                 showAlert('Error al generar el PDF', 'alert-danger');
             }
         });
+
+
 
 
         document.getElementById('generateExcelButton').addEventListener('click', async (event) => {
@@ -1815,32 +1840,18 @@
                     fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '0074D9' } }
                 };
 
-                // Obtener datos de la empresa
-                const empresaSnapshot = await get(ref(db, 'datos/'));
-                const empresaData = empresaSnapshot.val();
-
-                if (!empresaData) {
-                    throw new Error('No se encontraron datos de la empresa.');
-                }
-
-                // Agregar datos de la empresa al inicio del archivo
-                worksheet.addRow(['Nombre', empresaData.name]);
-                worksheet.addRow(['RNC', empresaData.rnc]);
-                worksheet.addRow(['Teléfono', empresaData.number]);
-                worksheet.addRow(['Dirección', empresaData.location]);
-
-                // Espacio en blanco entre empresa y tabla de productos
-                worksheet.addRow([]);
-
-                // Encabezado de la tabla de productos
+                // Encabezado de la tabla de productos, incluyendo la columna No.
                 const headerRow = worksheet.addRow([
+                    'No.',
+                    'Categoría',
                     'Descripción',
                     'Disponible',
-                    'Precio',
-                    'Categoría',
+                    'Fecha de Entrada',
+                    'Fecha de Vencimiento',
                     'ITBIS',
-                    'Vencimiento',
-                    'Fecha de Entrada'
+                    'Precio',
+                    'Precio Venta',
+                    'Suplidor'
                 ]);
 
                 // Aplicar estilo al encabezado
@@ -1848,33 +1859,55 @@
                     cell.style = headerStyle;
                 });
 
+                // Función para obtener el nombre del suplidor por su ID
+                const obtenerNombreSuplidor = async (suplidorId) => {
+                    try {
+                        const suplidorDoc = await getDoc(doc(getFirestore(), 'suplidores', suplidorId));
+                        if (suplidorDoc.exists()) {
+                            return suplidorDoc.data().nombre || 'Suplidor desconocido';
+                        } else {
+                            return 'N/A';
+                        }
+                    } catch (error) {
+                        console.error('Error al obtener el suplidor:', error);
+                        return 'Error al obtener suplidor';
+                    }
+                };
+
                 // Obtener datos de la colección 'productos'
                 const productosRef = collection(getFirestore(), 'productos');
                 const productosSnapshot = await getDocs(productosRef);
                 const productosData = productosSnapshot.docs.map(doc => doc.data());
 
-                // Agregar datos de la tabla de productos
-                productosData.forEach((producto) => {
+                // Agregar datos a la hoja de Excel
+                let numeroProducto = 1;
+                for (const producto of productosData) {
+                    const suplidorNombre = await obtenerNombreSuplidor(producto.suplidorId || '');
+
                     const rowData = [
-                        producto.descripcion || '',
-                        producto.disponible || '',
-                        producto.precio || '',
+                        numeroProducto++,
                         producto.categoria || '',
-                        producto.itbis || '',
-                        producto.fechaVencimiento || '',
-                        producto.fechaEntrada || ''
+                        producto.descripcion || '',
+                        producto.disponible || 'N/A',
+                        producto.fechaEntrada || 'N/A',
+                        producto.fechaVencimiento || 'N/A',
+                        producto.itbis || 'N/A',
+                        `${producto.precio || '0'} ${producto.moneda || 'DOP'}`,
+                        `${producto.precioVenta || '0.00'} ${producto.moneda || 'DOP'}`,
+                        suplidorNombre
                     ];
                     worksheet.addRow(rowData);
-                });
+                }
 
-                // Establecer anchos de columna automático
+                // Ajustar el ancho de las columnas según el contenido más amplio
                 worksheet.columns.forEach((column) => {
-                    let maxWidth = 0;
+                    let maxLength = 0;
                     column.eachCell({ includeEmpty: true }, (cell) => {
-                        const cellLength = cell.value ? cell.value.toString().length : 10;
-                        maxWidth = Math.max(maxWidth, cellLength);
+                        const cellValue = cell.value ? cell.value.toString() : '';
+                        maxLength = Math.max(maxLength, cellValue.length);
                     });
-                    column.width = maxWidth < 20 ? 20 : maxWidth;
+                    column.width = maxLength + 2; // Ajuste adicional para un mejor espaciado
+                    column.alignment = { horizontal: 'left' }; // Alinear contenido a la izquierda
                 });
 
                 // Guardar el archivo Excel
@@ -1885,12 +1918,14 @@
                 saveAs(blob, 'Productos.xlsx');
 
                 // Mostrar mensaje de éxito
-                showAlertExcel('Archivo de Excel generado correctamente.', 'alert-success');
+                showAlert('Archivo de Excel generado correctamente.', 'alert-success');
             } catch (error) {
                 console.error('Error al generar el archivo de Excel:', error);
-                showAlertExcel(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
+                showAlert(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
             }
         });
+
+
 
         // Función para obtener datos de la empresa desde Firestore
         async function getEmpresaData() {
@@ -1907,15 +1942,6 @@
             return Array.from(tableBody.querySelectorAll('tr'));
         }
 
-        function showAlertExcel(message, alertType) {
-            const alertBox = document.createElement('div');
-            alertBox.className = `alert ${alertType}`;
-            alertBox.textContent = message;
-            document.body.appendChild(alertBox);
-            setTimeout(() => {
-                alertBox.remove();
-            }, 3000);
-        }
 
     </script>
 
