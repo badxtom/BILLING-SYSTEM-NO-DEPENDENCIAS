@@ -444,6 +444,30 @@
                 /* Ajusta el padding en celdas */
             }
         }
+
+        /* HTML: <div class="loader"></div> */
+        .loaderr {
+            width: 40px;
+            padding: 8px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: #25b09b;
+            --_m:
+                conic-gradient(#0000 10%, #000),
+                linear-gradient(#000 0 0) content-box;
+            -webkit-mask: var(--_m);
+            mask: var(--_m);
+            -webkit-mask-composite: source-out;
+            mask-composite: subtract;
+            animation: l3 1s infinite linear;
+        }
+
+        @keyframes l3 {
+            to {
+                transform: rotate(1turn)
+            }
+        }
+        
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
@@ -738,6 +762,7 @@
                                     <button id="generateExcelButtonI" type="button"
                                         class="btn btn-dark-green btn-sm fa-solid fa-file-excel"
                                         style="padding: 10px 20px;"></button>
+                                    <div id="loaderExcel" class="loaderr" style="display: none;"></div>
                                 </div>
                             </div>
                             <div class="rounded bg-light-secondary overflow-hidden mb-3">
@@ -778,6 +803,7 @@
                                     <button id="generateExcelButtonE" type="button"
                                         class="btn btn-dark-green btn-sm fa-solid fa-file-excel"
                                         style="padding: 10px 20px;"></button>
+                                    <div id="loaderExcel2" class="loaderr" style="display: none;"></div>
                                 </div>
                             </div>
                             <div class="rounded bg-light-secondary overflow-hidden mb-3">
@@ -821,6 +847,7 @@
                 <div class="col-auto">
                     <button id="generateExcelButtonF" type="button"
                         class="btn btn-dark-green btn-sm fa-solid fa-file-excel" style="padding: 10px 20px;"></button>
+                    <div id="loaderExcel1" class="loaderr" style="display: none;"></div>
                 </div>
             </form>
         </div>
@@ -1012,12 +1039,12 @@
 
 
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-        import { getDatabase, set, ref, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, setDoc, serverTimestamp, deleteDoc, Timestamp, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable, listAll } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-analytics.js";
+        import { getDatabase, set, ref, get, child } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, setDoc, serverTimestamp, deleteDoc, Timestamp, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable, listAll } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCknSaxVHB10B_v-4yD9UtNj1dmZZKVRe4",
@@ -1919,6 +1946,9 @@
                 // Obtener y listar los pagos de la subcolección 'pagos'
                 const pagosRef = collection(dba, `facturas/${docId}/pagos`);
                 const pagosSnapshot = await getDocs(pagosRef);
+                const pagos = pagosSnapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .sort((a, b) => a.numeroPago - b.numeroPago); // Orden ascendente
 
                 const totalF = total;
 
@@ -1935,9 +1965,8 @@
             <tbody>
         `;
 
-                pagosSnapshot.forEach((doc, index) => {
-                    const pagoData = doc.data();
-                    const { estatus, fechapago, monto = 0, numeroPago, total } = pagoData;
+                pagos.forEach((pago, index) => {
+                    const { estatus, fechapago, monto = 0, numeroPago, total } = pago;
 
                     tableContent += `
                 <tr>
@@ -1947,7 +1976,7 @@
                     <td>${fechapago || 'Pendiente'}</td>
                     <td>${estatus}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="pagar('${doc.id}', '${docId}', ${monto})" ${estatus === 'Pagado' ? 'disabled' : ''}>Pagar</button>
+                        <button class="btn btn-sm btn-primary" onclick="pagar('${pago.id}', '${docId}', ${monto})" ${estatus === 'Pagado' ? 'disabled' : ''}>Pagar</button>
                     </td>
                 </tr>
             `;
@@ -2669,7 +2698,7 @@
             logoImage.src = 'unoin.png';
 
             logoImage.onload = async () => {
-                const logoWidth = 20;
+                const logoWidth = 30;
                 const logoHeight = (logoWidth / logoImage.width) * logoImage.height;
                 const marginRight = 15;
                 const marginTop = 5;
@@ -2778,6 +2807,12 @@
 
         document.getElementById('generateExcelButtonI').addEventListener('click', async (event) => {
             event.preventDefault();
+            const excelButton = document.getElementById('generateExcelButtonI');
+            const loader = document.getElementById('loaderExcel');
+
+            // Ocultar el botón y mostrar el loader
+            excelButton.style.display = 'none';
+            loader.style.display = 'block';
 
             try {
                 // Consulta para obtener todas las facturas sin filtrar por mes y año
@@ -2821,7 +2856,7 @@
                         pagosSnapshot.forEach((pagoDoc) => {
                             const pagoData = pagoDoc.data();
                             const pagoGananciaStr = pagoData.ganancia || "0.00 DOP";
-                            const pagoGanancia = parseFloat(pagoGananciaStr.split(' ')[0]); // Extraer y convertir el valor a número
+                            const pagoGanancia = parseFloat(String(pagoGananciaStr).split(' ')[0]);
                             const fechaPago = pagoData.fechapago ? pagoData.fechapago : 'Pendiente';
                             pagosInfo += `Pago ${pagoData.numeroPago} (Fecha: ${fechaPago}): $${pagoGanancia}, `;
                         });
@@ -2872,6 +2907,10 @@
             } catch (error) {
                 console.error('Error al generar el archivo de Excel:', error);
                 showAlertExcel(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
+            } finally {
+                // Restaurar el botón y ocultar el loader
+                loader.style.display = 'none';
+                excelButton.style.display = 'block';
             }
         });
 
@@ -2880,6 +2919,13 @@
 
         document.getElementById('generateExcelButtonE').addEventListener('click', async (event) => {
             event.preventDefault();
+
+            const excelButton = document.getElementById('generateExcelButtonE');
+            const loader = document.getElementById('loaderExcel2');
+
+            // Ocultar el botón y mostrar el loaderSS
+            excelButton.style.display = 'none';
+            loader.style.display = 'block';
 
             try {
                 // Consulta para obtener todas las facturas de RegistroDeCompras sin filtrar por mes y año
@@ -2974,12 +3020,23 @@
             } catch (error) {
                 console.error('Error al generar el archivo de Excel:', error);
                 showAlertExcel(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
+            } finally {
+                // Restaurar el botón y ocultar el loader
+                loader.style.display = 'none';
+                excelButton.style.display = 'block';
             }
         });
 
 
         document.getElementById('generateExcelButtonF').addEventListener('click', async (event) => {
             event.preventDefault();
+
+            const excelButton = document.getElementById('generateExcelButtonF');
+            const loader = document.getElementById('loaderExcel1');
+
+            // Ocultar el botón y mostrar el loaderS
+            excelButton.style.display = 'none';
+            loader.style.display = 'block';
 
             try {
                 // Consulta para obtener todas las facturas
@@ -3115,6 +3172,10 @@
             } catch (error) {
                 console.error('Error al generar el archivo de Excel:', error);
                 showAlertExcel(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
+            } finally {
+                // Restaurar el botón y ocultar el loader
+                loader.style.display = 'none';
+                excelButton.style.display = 'block';
             }
         });
 
@@ -3134,7 +3195,7 @@
             logoImage.src = 'unoin.png';
 
             logoImage.onload = async () => {
-                const logoWidth = 20;
+                const logoWidth = 30;
                 const logoHeight = (logoWidth / logoImage.width) * logoImage.height;
                 const marginRight = 15;
                 const marginTop = 5;
@@ -3232,6 +3293,7 @@
 
                     const reciboData = {
                         paciente: pacienteSeleccionado,
+                        pacienteUID: pacienteId,
                         doctor: doctorSeleccionado,
                         numeroRecibo: numeroRecibo,
                         numeroFactura: numeroFactura,

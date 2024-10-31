@@ -8,9 +8,27 @@ mail.setApiKey(
 );
 
 const db = admin.firestore();
+const rtdb = admin.database();
+
 
 // Función personalizada para formato de fecha en español
 const formatDateToSpanish = (date) => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
+
+function obtenerFechaActual() {
+    const fecha = new Date();
+    const dia = String(fecha.getDate()).padStart(2, '0'); // Obtener el día, y asegurarse de que tenga 2 dígitos
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // Obtener el mes (los meses van de 0 a 11 en JavaScript)
+    const año = fecha.getFullYear(); // Obtener el año
+
+    return `${dia}/${mes}/${año}`;
+}
+
+const formatDate = (date) => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
@@ -127,4 +145,131 @@ exports.sendAppointmentReminders = functions.pubsub.schedule('0 4 * * *').onRun(
         console.error('Error processing appointments:', error);
     }
 
+});
+
+
+// Función para obtener el rango de fechas desde el lunes pasado hasta el lunes actual
+const getDateRange = () => {
+    const today = new Date();
+    const currentMonday = new Date(today.setHours(0, 0, 0, 0));
+    currentMonday.setDate(currentMonday.getDate() - currentMonday.getDay() + 1);
+
+    const previousMonday = new Date(currentMonday);
+    previousMonday.setDate(previousMonday.getDate() - 7);
+
+    return { previousMonday, currentMonday };
+};
+
+// Función para generar el contenido del PDF como HTML
+const generatePDFContent = (ventas, previousMonday, currentMonday) => {
+    let content = `
+    <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #dddddd; text-align: left; padding: 8px; }
+                th { background-color: #f2f2f2; }
+            </style>
+        </head>
+        <body>
+            <h1>Unidad Oncológica Integral</h1>
+            <h2>Reporte Semanal de Ventas</h2>
+            <p>Fecha de Generación: ${obtenerFechaActual()}</p>
+            <p>Rango de Fechas: ${formatDate(previousMonday)} - ${formatDate(currentMonday)}</p>
+            <table>
+                <tr>
+                    <th>No.</th>
+                    <th>Número Factura</th>
+                    <th>Número Recibo</th>
+                    <th>Paciente</th>
+                    <th>Doctor</th>
+                    <th>Total</th>
+                    <th>Forma de Pago</th>
+                    <th>Fecha</th>
+                </tr>`;
+
+    ventas.forEach((venta, index) => {
+        content += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${venta.numeroFactura || 'N/A'}</td>
+                    <td>${venta.numeroRecibo || 'N/A'}</td>
+                    <td>${venta.paciente || 'N/A'}</td>
+                    <td>${venta.doctor || 'N/A'}</td>
+                    <td>${venta.totalPago || venta.total || '0'} DOP</td>
+                    <td>${venta.formaDePago || 'N/A'}</td>
+                    <td>${venta.fecha}</td>
+                </tr>`;
+    });
+
+    content += `
+            </table>
+        </body>
+    </html>`;
+    return content;
+};
+
+// Función para enviar el reporte por correo
+const sendPDFReport = async (email, htmlContent) => {
+    const msg = {
+        to: email,
+        from: {
+            email: 'info@unoin.do',
+            name: 'Unidad Oncológica Integral'
+        },
+        subject: 'Reporte Semanal de Ventas',
+        text: 'Adjunto se encuentra el reporte semanal de ventas.',
+        html: htmlContent, // Enviar el HTML como contenido del correo
+    };
+
+    try {
+        await mail.send(msg);
+        console.log(`Correo enviado a: ${email}`);
+    } catch (error) {
+        console.error('Error enviando el correo:', error);
+    }
+};
+
+// Función principal para generar y enviar el reporte semanal
+exports.generateAndSendWeeklyReport = functions.pubsub.schedule('0 4 * * 1').onRun(async (context) => {
+    const { previousMonday, currentMonday } = getDateRange();
+
+    try {
+        const facturasSnapshot = await db.collection('facturas')
+            .where('estatus', '==', 'Cerrada')
+            .get();
+
+        const facturas = facturasSnapshot.docs
+            .filter(doc => doc.ref.collection('pagos').size === 0)
+            .map(doc => doc.data());
+
+        const recibosSnapshot = await db.collection('recibos').get();
+        const recibos = recibosSnapshot.docs.map(doc => doc.data());
+
+        const ventas = [...facturas, ...recibos].filter(venta => {
+            const ventaDate = new Date(venta.fecha.split('/').reverse().join('-'));
+            return ventaDate >= previousMonday && ventaDate < currentMonday;
+        });
+
+        if (ventas.length === 0) {
+            console.log('No hay ventas en el rango de fechas.');
+            return;
+        }
+
+        const htmlContent = generatePDFContent(ventas, previousMonday, currentMonday);
+
+        const usersSnapshot = await rtdb.ref('UsersAuthList').once('value');
+        const admins = usersSnapshot.val();
+
+        const adminEmails = Object.values(admins)
+            .filter(user => user.roleselect === 'Administrador' || user.roleselect === 'Administrador Web')
+            .map(user => user.email);
+
+        await Promise.all(adminEmails.map(email => sendPDFReport(email, htmlContent)));
+
+        console.log('Reporte semanal enviado correctamente.');
+    } catch (error) {
+        console.error('Error generando o enviando el reporte:', error);
+    }
 });

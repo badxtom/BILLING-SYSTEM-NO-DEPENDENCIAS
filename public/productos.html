@@ -211,6 +211,29 @@
                 padding: 10px;
             }
         }
+
+        /* HTML: <div class="loader"></div> */
+        .loader {
+            width: 50px;
+            padding: 8px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: #25b09b;
+            --_m:
+                conic-gradient(#0000 10%, #000),
+                linear-gradient(#000 0 0) content-box;
+            -webkit-mask: var(--_m);
+            mask: var(--_m);
+            -webkit-mask-composite: source-out;
+            mask-composite: subtract;
+            animation: l3 1s infinite linear;
+        }
+
+        @keyframes l3 {
+            to {
+                transform: rotate(1turn)
+            }
+        }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
@@ -426,6 +449,7 @@
                                         style="margin-right: 10px;"></button>
                                     <button id="generateExcelButton" type="button"
                                         class="btn btn-dark-green fa-solid fa-file-excel"></button>
+                                    <div id="loaderExcel" class="loader" style="display: none;"></div>
 
                                 </form>
                             </div>
@@ -672,12 +696,12 @@
             }
         });
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-        import { getDatabase, set, ref, get, child, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, setDoc, serverTimestamp, deleteDoc, Timestamp, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-analytics.js";
+        import { getDatabase, set, ref, get, child, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getFirestore, collection, orderBy, addDoc, query, limit, getDocs, getDoc, doc, setDoc, serverTimestamp, deleteDoc, Timestamp, where } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
 
 
         const firebaseConfig = {
@@ -1825,6 +1849,13 @@
         document.getElementById('generateExcelButton').addEventListener('click', async (event) => {
             event.preventDefault();
 
+            const excelButton = document.getElementById('generateExcelButton');
+            const loader = document.getElementById('loaderExcel');
+
+            // Ocultar el botón y mostrar el loader
+            excelButton.style.display = 'none';
+            loader.style.display = 'block';
+
             try {
                 // Crear una nueva instancia de workbook (libro de Excel)
                 const workbook = new ExcelJS.Workbook();
@@ -1922,6 +1953,10 @@
             } catch (error) {
                 console.error('Error al generar el archivo de Excel:', error);
                 showAlert(`Error al generar el archivo de Excel: ${error.message}`, 'alert-danger');
+            } finally {
+                // Restaurar el botón y ocultar el loader
+                loader.style.display = 'none';
+                excelButton.style.display = 'block';
             }
         });
 
