@@ -467,7 +467,6 @@
                 transform: rotate(1turn)
             }
         }
-        
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
@@ -849,7 +848,16 @@
                         class="btn btn-dark-green btn-sm fa-solid fa-file-excel" style="padding: 10px 20px;"></button>
                     <div id="loaderExcel1" class="loaderr" style="display: none;"></div>
                 </div>
+
             </form>
+
+            <div class="filter-container d-flex align-items-center mb-4 p-3"
+                style="background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
+                <label for="filterMonthFacturas" class="form-label mb-0 me-2">Filtrar por mes:</label>
+                <input type="month" id="filterMonthFacturas" class="form-control me-2" style="max-width: 200px;">
+                <button id="applyFilterFacturas" class="btn btn-primary">Aplicar Filtro</button>
+            </div>
+
         </div>
         <div id="listaFacturasG" class="lista-facturas"></div>
         <div>
@@ -879,6 +887,14 @@
                         class="btn btn-dark-green btn-sm fa-solid fa-file-excel" style="padding: 10px 20px;"></button> -->
                 </div>
             </form>
+
+            <div class="filter-container d-flex align-items-center mb-4 p-3"
+                style="background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
+                <label for="filterMonthCobrar" class="form-label mb-0 me-2">Filtrar por mes:</label>
+                <input type="month" id="filterMonthCobrar" class="form-control me-2" style="max-width: 200px;">
+                <button id="applyFilterCobrar" class="btn btn-primary">Aplicar Filtro</button>
+            </div>
+
         </div>
         <div id="listaCuentasPorCobrar" class="lista-facturas"></div>
         <div>
@@ -927,6 +943,14 @@
                         class="btn btn-dark-green btn-sm fa-solid fa-file-excel" style="padding: 10px 20px;"></button> -->
                 </div>
             </form>
+
+            <div class="filter-container d-flex align-items-center mb-4 p-3"
+                style="background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
+                <label for="filterMonthPagar" class="form-label mb-0 me-2">Filtrar por mes:</label>
+                <input type="month" id="filterMonthPagar" class="form-control me-2" style="max-width: 200px;">
+                <button id="applyFilterPagar" class="btn btn-primary">Aplicar Filtro</button>
+            </div>
+
         </div>
         <div id="listaCuentasPorPagar" class="lista-facturas" style="max-height: 300px; overflow-y: auto;"></div>
         <div>
@@ -1054,7 +1078,6 @@
             messagingSenderId: "906484441227",
             appId: "1:906484441227:web:7b486131ad930a7b03b48e"
         };
-
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase();
@@ -1238,6 +1261,13 @@
 
             // Cargar los egresos por defecto al inicio
             loadExpenses();
+
+            const mesActual = obtenerMesActual(); // Formato YYYY-MM
+            document.getElementById('filterMonthFacturas').value = mesActual;
+            document.getElementById('filterMonthCobrar').value = mesActual;
+            document.getElementById('filterMonthPagar').value = mesActual;
+
+
         });
 
         async function loadEarnings() {
@@ -1460,9 +1490,20 @@
         // Evento para cerrar el formulario de facturas
         document.getElementById('closeHistorialButtonG').addEventListener('click', () => {
             toggleFormularioG();
+            const mesActual = obtenerMesActual(); // Formato YYYY-MM
+            document.getElementById('filterMonthFacturas').value = mesActual;
+
         });
 
-        // Función para listar facturas con estatus "Abierta"
+
+        // Función para obtener el mes actual en formato YYYY-MM
+        function obtenerMesActual() {
+            const fecha = new Date();
+            const year = fecha.getFullYear();
+            const month = String(fecha.getMonth() + 1).padStart(2, '0'); // Mes actual
+            return `${year}-${month}`;
+        }
+
         async function listarFacturas(pageSize = 10, page = 1) {
             listaFacturasG.innerHTML = '';
 
@@ -1477,54 +1518,74 @@
                     return;
                 }
 
-                const totalDocs = snapshot.docs.length;
+                // Filtrar las facturas por el mes seleccionado
+                const filterMonth = document.getElementById('filterMonthFacturas').value; // Formato YYYY-MM
+                const [year, month] = filterMonth.split('-');
+
+                const transaccionesFiltradas = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(transaccion => {
+                        const [dia, mes, año] = transaccion.fecha.split('/'); // Convertir la fecha a dd/mm/yyyy
+                        return año === year && mes === month;
+                    });
+
+
+                if (transaccionesFiltradas.length === 0) {
+                    const noDataMessage = document.createElement('p');
+                    noDataMessage.textContent = 'No se encontraron facturas para el mes seleccionado.';
+                    listaFacturasG.appendChild(noDataMessage);
+                    return;
+                }
+
+                transaccionesFiltradas.sort((a, b) => {
+                    const fechaA = convertirFecha(a.fecha);
+                    const fechaB = convertirFecha(b.fecha);
+                    return fechaA - fechaB; // Orden ascendente
+                });
+
+                const totalDocs = transaccionesFiltradas.length;
                 const totalPages = Math.ceil(totalDocs / pageSize);
                 const startIndex = (page - 1) * pageSize;
                 const endIndex = startIndex + pageSize;
+                const docsToShow = transaccionesFiltradas.slice(startIndex, endIndex);
 
-                const docsToShow = snapshot.docs.slice(startIndex, endIndex);
-
+                // Crear tabla para mostrar las transacciones
                 const table = document.createElement('table');
                 table.classList.add('table', 'table-striped');
-
-                // Crear encabezados de tabla
-                const tableHeader = document.createElement('thead');
-                tableHeader.innerHTML = `
-        <tr>
-            <th>Cliente</th>
-            <th>Estatus</th>
-            <th>Fecha</th>
-            <th>Total</th>
-            <th>Items</th>
-            <th>Número de Factura</th>
-            <th>Factura</th>
-        </tr>`;
-                table.appendChild(tableHeader);
-
+                const tableHeader = `
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Estatus</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Items</th>
+                    <th>Número de Factura</th>
+                    <th>Factura</th>
+                </tr>
+            </thead>`;
+                table.innerHTML = tableHeader;
                 const tableBody = document.createElement('tbody');
 
-                // Iterar sobre cada factura y crear filas de tabla
-                docsToShow.forEach(doc => {
-                    const data = doc.data();
-                    const { doctor, estatus, fecha, total, items, numeroFactura, urlFactura, paciente } = data;
-
+                // Llenar las filas de la tabla con las facturas filtradas
+                transaccionesFiltradas.forEach(transaccion => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-            <td>${paciente}</td>
-            <td>${estatus}</td>
-            <td>${fecha}</td>
-            <td>${total}</td>
-            <td>${items.length}</td>
-            <td>${numeroFactura}</td>
-            <td><a href="${urlFactura}" target="_blank">Ver factura</a></td>`;
-
+                <td>${transaccion.paciente || 'N/A'}</td>
+                <td>${transaccion.estatus || 'N/A'}</td>
+                <td>${transaccion.fecha || 'N/A'}</td>
+                <td>${transaccion.total || 'N/A'}</td>
+                <td>${transaccion.items ? transaccion.items.length : 0}</td>
+                <td>${transaccion.numeroFactura || 'N/A'}</td>
+                <td><a href="${transaccion.urlFactura || '#'}" target="_blank">Ver factura</a></td>
+            `;
                     tableBody.appendChild(row);
                 });
 
                 table.appendChild(tableBody);
                 listaFacturasG.appendChild(table);
 
-                // Actualizar la paginación
+
                 actualizarPaginacion(totalPages, page, 'paginationG');
 
             } catch (error) {
@@ -1534,6 +1595,19 @@
                 listaFacturasG.appendChild(errorMessage);
             }
         }
+
+
+        // Función para convertir una fecha en formato dd/mm/yyyy a un objeto Date
+        function convertirFecha(fechaStr) {
+            const [dia, mes, año] = fechaStr.split('/').map(Number);
+            return new Date(año, mes - 1, dia); // Crear un objeto Date
+        }
+
+        // Event listener para aplicar el filtro manualmente
+        document.getElementById('applyFilterFacturas').addEventListener('click', () => listarFacturas(10, 1, true));
+
+
+
 
         // Función para actualizar la paginación
         function actualizarPaginacion(totalPages, currentPage, paginationId) {
@@ -1552,7 +1626,7 @@
             prevLink.textContent = '«';
             prevLink.addEventListener('click', () => {
                 if (currentPage > 1) {
-                    listarFacturas(5, currentPage - 1);
+                    listarFacturas(10, currentPage - 1);
                 }
             });
             prevButton.appendChild(prevLink);
@@ -1570,7 +1644,7 @@
                 pageLink.href = '#';
                 pageLink.textContent = i;
                 pageLink.addEventListener('click', () => {
-                    listarFacturas(5, i);
+                    listarFacturas(10, i);
                 });
                 pageButton.appendChild(pageLink);
                 paginationContainer.appendChild(pageButton);
@@ -1588,7 +1662,7 @@
             nextLink.textContent = '»';
             nextLink.addEventListener('click', () => {
                 if (currentPage < totalPages) {
-                    listarFacturas(5, currentPage + 1);
+                    listarFacturas(10, currentPage + 1);
                 }
             });
             nextButton.appendChild(nextLink);
@@ -1679,7 +1753,7 @@
         openHistorialFacturas.addEventListener('click', async () => {
             toggleFormularioG(); // Mostrar el formulario antes de cargar las facturas
 
-            await listarFacturas(5, 1); // Llama a la función para cargar las facturas con los parámetros deseados
+            await listarFacturas(10, 1); // Llama a la función para cargar las facturas con los parámetros deseados
         });
 
 
@@ -1702,6 +1776,8 @@
         // Evento para cerrar el formulario de cuentas por cobrar
         document.getElementById('closeHistorialButtonCuentasPorCobrar').addEventListener('click', () => {
             toggleFormularioCuentasPorCobrar();
+            const mesActual = obtenerMesActual(); // Formato YYYY-MM
+            document.getElementById('filterMonthCobrar').value = mesActual;;
         });
 
         // Función para listar facturas con estatus "Abierta"
@@ -1719,48 +1795,69 @@
                     return;
                 }
 
-                const totalDocs = snapshot.docs.length;
+                // Filtrar las facturas por el mes seleccionado
+                const filterMonth = document.getElementById('filterMonthCobrar').value; // Formato YYYY-MM
+                const [year, month] = filterMonth.split('-');
+
+                const transaccionesFiltradas = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(transaccion => {
+                        const [dia, mes, año] = transaccion.fecha.split('/'); // Convertir la fecha a dd/mm/yyyy
+                        return año === year && mes === month;
+                    });
+
+                if (transaccionesFiltradas.length === 0) {
+                    const noDataMessage = document.createElement('p');
+                    noDataMessage.textContent = 'No se encontraron facturas abiertas para el mes seleccionado.';
+                    listaCuentasPorCobrar.appendChild(noDataMessage);
+                    return;
+                }
+
+                // Ordenar las transacciones por fecha de manera ascendente
+                transaccionesFiltradas.sort((a, b) => {
+                    const fechaA = convertirFecha(a.fecha);
+                    const fechaB = convertirFecha(b.fecha);
+                    return fechaA - fechaB; // Orden ascendente
+                });
+
+                const totalDocs = transaccionesFiltradas.length;
                 const totalPages = Math.ceil(totalDocs / pageSize);
                 const startIndex = (page - 1) * pageSize;
                 const endIndex = startIndex + pageSize;
+                const docsToShow = transaccionesFiltradas.slice(startIndex, endIndex);
 
-                const docsToShow = snapshot.docs.slice(startIndex, endIndex);
-
+                // Crear tabla para mostrar las transacciones
                 const table = document.createElement('table');
                 table.classList.add('table', 'table-striped');
-
-                // Crear encabezados de tabla
-                const tableHeader = document.createElement('thead');
-                tableHeader.innerHTML = `
-        <tr>
-            <th>Cliente</th>
-            <th>Estatus</th>
-            <th>Fecha</th>
-            <th>Total</th>
-            <th>Items</th>
-            <th>Número de Factura</th>
-            <th>Factura</th>
-        </tr>`;
-                table.appendChild(tableHeader);
-
+                const tableHeader = `
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Estatus</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Items</th>
+                    <th>Número de Factura</th>
+                    <th>Factura</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>`;
+                table.innerHTML = tableHeader;
                 const tableBody = document.createElement('tbody');
 
-                // Iterar sobre cada factura y crear filas de tabla
-                docsToShow.forEach(doc => {
-                    const data = doc.data();
-                    const { doctor, estatus, fecha, total, items, numeroFactura, urlFactura, paciente } = data;
-
+                // Llenar las filas de la tabla con las facturas filtradas y ordenadas
+                docsToShow.forEach(transaccion => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-            <td>${paciente}</td>
-            <td>${estatus}</td>
-            <td>${fecha}</td>
-            <td>${total}</td>
-            <td>${items.length}</td>
-            <td>${numeroFactura}</td>
-            <td><a href="${urlFactura}" target="_blank">Ver factura</a></td>
-            <td><button class="btn btn-sm btn-primary" onclick="aplicarPago('${doc.id}')">Aplicar Pago</button></td>`;
-
+                <td>${transaccion.paciente || 'N/A'}</td>
+                <td>${transaccion.estatus || 'N/A'}</td>
+                <td>${transaccion.fecha || 'N/A'}</td>
+                <td>${transaccion.total || 'N/A'}</td>
+                <td>${transaccion.items ? transaccion.items.length : 0}</td>
+                <td>${transaccion.numeroFactura || 'N/A'}</td>
+                <td><a href="${transaccion.urlFactura || '#'}" target="_blank">Ver factura</a></td>
+                <td><button class="btn btn-sm btn-primary" onclick="aplicarPago('${transaccion.id}')">Aplicar Pago</button></td>
+            `;
                     tableBody.appendChild(row);
                 });
 
@@ -1777,6 +1874,8 @@
                 listaCuentasPorCobrar.appendChild(errorMessage);
             }
         }
+
+        document.getElementById('applyFilterCobrar').addEventListener('click', () => listarCuentasPorCobrar(10, 1, true));
 
         // Función para actualizar la paginación
         function actualizarPaginacionC(totalPages, currentPage, paginationId) {
@@ -1795,7 +1894,7 @@
             prevLink.textContent = '«';
             prevLink.addEventListener('click', () => {
                 if (currentPage > 1) {
-                    listarCuentasPorCobrar(5, currentPage - 1);
+                    listarCuentasPorCobrar(10, currentPage - 1);
                 }
             });
             prevButton.appendChild(prevLink);
@@ -1813,7 +1912,7 @@
                 pageLink.href = '#';
                 pageLink.textContent = i;
                 pageLink.addEventListener('click', () => {
-                    listarCuentasPorCobrar(5, i);
+                    listarCuentasPorCobrar(10, i);
                 });
                 pageButton.appendChild(pageLink);
                 paginationContainer.appendChild(pageButton);
@@ -1831,7 +1930,7 @@
             nextLink.textContent = '»';
             nextLink.addEventListener('click', () => {
                 if (currentPage < totalPages) {
-                    listarCuentasPorCobrar(5, currentPage + 1);
+                    listarCuentasPorCobrar(10, currentPage + 1);
                 }
             });
             nextButton.appendChild(nextLink);
@@ -2055,6 +2154,8 @@
         // Añadir el evento para cerrar el formulario de pagos
         document.getElementById('closeFormularioPago').addEventListener('click', () => {
             toggleFormularioPago();
+            const mesActual = obtenerMesActual(); // Formato YYYY-MM
+            document.getElementById('filterMonthPagar').value = mesActual;
         });
 
 
@@ -2065,7 +2166,7 @@
         openHistorialCuentasPorCobrar.addEventListener('click', async () => {
             toggleFormularioCuentasPorCobrar(); // Mostrar el formulario antes de cargar las facturas
 
-            await listarCuentasPorCobrar(5, 1); // Llama a la función para cargar las facturas con los parámetros deseados
+            await listarCuentasPorCobrar(10, 1); // Llama a la función para cargar las facturas con los parámetros deseados
         });
 
         function obtenerFechaActual() {
@@ -2099,7 +2200,6 @@
             toggleFormularioCuentasPorPagar();
         });
 
-        // Función para listar facturas con estatus "Abierta"
         async function listarCuentasPorPagar(pageSize = 10, page = 1) {
             listaCuentasPorPagar.innerHTML = '';
 
@@ -2114,50 +2214,71 @@
                     return;
                 }
 
-                const totalDocs = snapshot.docs.length;
+                // Filtrar las facturas por el mes seleccionado
+                const filterMonth = document.getElementById('filterMonthPagar').value; // Formato YYYY-MM
+                const [year, month] = filterMonth.split('-');
+
+                const transaccionesFiltradas = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(transaccion => {
+                        const [dia, mes, año] = transaccion.fecha.split('/'); // Convertir la fecha a dd/mm/yyyy
+                        return año === year && mes === month;
+                    });
+
+                if (transaccionesFiltradas.length === 0) {
+                    const noDataMessage = document.createElement('p');
+                    noDataMessage.textContent = 'No se encontraron facturas abiertas para el mes seleccionado.';
+                    listaCuentasPorPagar.appendChild(noDataMessage);
+                    return;
+                }
+
+                // Ordenar las transacciones por fecha de manera ascendente
+                transaccionesFiltradas.sort((a, b) => {
+                    const fechaA = convertirFecha(a.fecha);
+                    const fechaB = convertirFecha(b.fecha);
+                    return fechaA - fechaB; // Orden ascendente
+                });
+
+                const totalDocs = transaccionesFiltradas.length;
                 const totalPages = Math.ceil(totalDocs / pageSize);
                 const startIndex = (page - 1) * pageSize;
                 const endIndex = startIndex + pageSize;
+                const docsToShow = transaccionesFiltradas.slice(startIndex, endIndex);
 
-                const docsToShow = snapshot.docs.slice(startIndex, endIndex);
-
+                // Crear tabla para mostrar las transacciones
                 const table = document.createElement('table');
                 table.classList.add('table', 'table-striped');
-
-                // Crear encabezados de tabla
-                const tableHeader = document.createElement('thead');
-                tableHeader.innerHTML = `
-            <tr>
-                <th>Suplidor</th>
-                <th>Estatus</th>
-                <th>Fecha</th>
-                <th>Monto pagado en el momento de la compra</th>
-                <th>Total</th>
-                <th>Número de comprobante fiscal</th>
-                <th>Número de Factura</th>
-                <th>Factura</th>
-            </tr>`;
-                table.appendChild(tableHeader);
-
+                const tableHeader = `
+            <thead>
+                <tr>
+                    <th>Suplidor</th>
+                    <th>Estatus</th>
+                    <th>Fecha</th>
+                    <th>Monto pagado en el momento de la compra</th>
+                    <th>Total</th>
+                    <th>Número de comprobante fiscal</th>
+                    <th>Número de Factura</th>
+                    <th>Factura</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>`;
+                table.innerHTML = tableHeader;
                 const tableBody = document.createElement('tbody');
 
-                // Iterar sobre cada factura y crear filas de tabla
-                docsToShow.forEach(doc => {
-                    const data = doc.data();
-                    const { suplidorNombre, estatus, fecha, montoFactura, nombreFactura, numeroComprobante, facturaURL, pagos, montoApagar } = data;
-
+                // Llenar las filas de la tabla con las facturas filtradas y ordenadas
+                docsToShow.forEach(transaccion => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                <td>${suplidorNombre}</td>
-                <td>${estatus}</td>
-                <td>${fecha}</td>
-                <td>${montoApagar}</td>
-                <td>${montoFactura}</td>
-                <td>${numeroComprobante}</td>
-                <td>${nombreFactura}</td>
-                <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>
-                <td><button class="btn btn-sm btn-primary" onclick="aplicarPagoCuentasPorPagar('${doc.id}')">Aplicar Pago</button></td>`;
-
+                <td>${transaccion.suplidorNombre || 'N/A'}</td>
+                <td>${transaccion.estatus || 'N/A'}</td>
+                <td>${transaccion.fecha || 'N/A'}</td>
+                <td>${transaccion.montoApagar || 'N/A'}</td>
+                <td>${transaccion.montoFactura || 'N/A'}</td>
+                <td>${transaccion.numeroComprobante || 'N/A'}</td>
+                <td>${transaccion.nombreFactura || 'N/A'}</td>
+                <td><a href="${transaccion.facturaURL || '#'}" target="_blank">Ver factura</a></td>
+                <td><button class="btn btn-sm btn-primary" onclick="aplicarPagoCuentasPorPagar('${transaccion.id}')">Aplicar Pago</button></td>
+            `;
                     tableBody.appendChild(row);
                 });
 
@@ -2174,6 +2295,8 @@
                 listaCuentasPorPagar.appendChild(errorMessage);
             }
         }
+
+        document.getElementById('applyFilterPagar').addEventListener('click', () => listarCuentasPorPagar(10, 1, true));
 
         // Función para actualizar la paginación
         function actualizarPaginacionCuentasPorPagar(totalPages, currentPage, paginationId) {
@@ -2192,7 +2315,7 @@
             prevLink.textContent = '«';
             prevLink.addEventListener('click', () => {
                 if (currentPage > 1) {
-                    listarCuentasPorPagar(5, currentPage - 1);
+                    listarCuentasPorPagar(10, currentPage - 1);
                 }
             });
             prevButton.appendChild(prevLink);
@@ -2210,7 +2333,7 @@
                 pageLink.href = '#';
                 pageLink.textContent = i;
                 pageLink.addEventListener('click', () => {
-                    listarCuentasPorPagar(5, i);
+                    listarCuentasPorPagar(10, i);
                 });
                 pageButton.appendChild(pageLink);
                 paginationContainer.appendChild(pageButton);
@@ -2228,7 +2351,7 @@
             nextLink.textContent = '»';
             nextLink.addEventListener('click', () => {
                 if (currentPage < totalPages) {
-                    listarCuentasPorPagar(5, currentPage + 1);
+                    listarCuentasPorPagar(10, currentPage + 1);
                 }
             });
             nextButton.appendChild(nextLink);
@@ -2250,7 +2373,7 @@
 
                 const filteredData = snapshot.docs.filter(doc => {
                     const data = doc.data();
-                    return data.numeroComprobante.toString().includes(searchTerm);
+                    return data.nombreFactura.toString().includes(searchTerm);
                 });
 
                 actualizarTablaCuentasPorPagar(filteredData); // Actualiza la tabla con los datos filtrados
@@ -2282,6 +2405,7 @@
         <th>Estatus</th>
         <th>Fecha</th>
         <th>Total</th>
+        <th>Número de comprobante fiscal</th>
         <th>Número de Factura</th>
         <th>Factura</th>
     </tr>`;
@@ -2301,6 +2425,7 @@
         <td>${fecha}</td>
         <td>${montoFactura}</td>
         <td>${numeroComprobante}</td>
+        <td>${nombreFactura}</td>
         <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>
         <td><button class="btn btn-sm btn-primary" onclick="aplicarPagoCuentasPorPagar('${doc.id}')">Aplicar Pago</button></td>`;
 
@@ -2538,7 +2663,7 @@
         openHistorialCuentasPorPagar.addEventListener('click', async () => {
             toggleFormularioCuentasPorPagar(); // Mostrar el formulario antes de cargar las facturas
 
-            await listarCuentasPorPagar(5, 1); // Llama a la función para cargar las facturas con los parámetros deseados
+            await listarCuentasPorPagar(10, 1); // Llama a la función para cargar las facturas con los parámetros deseados
         });
 
 

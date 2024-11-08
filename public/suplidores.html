@@ -710,6 +710,12 @@
                         <div id="loaderExcel" class="loaderr" style="display: none;"></div>
                     </div>
                 </form>
+                <div class="filter-container d-flex align-items-center mb-4 p-3"
+                    style="background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
+                    <label for="filterMonthSuplidor" class="form-label mb-0 me-2">Filtrar por mes:</label>
+                    <input type="month" id="filterMonthSuplidor" class="form-control me-2" style="max-width: 200px;">
+                    <button id="applyFilterSuplidor" class="btn btn-primary">Aplicar Filtro</button>
+                </div>
             </div>
             <div id="listaFacturasG" class="lista-facturas"></div>
             <div>
@@ -1193,6 +1199,9 @@
         window.addEventListener('DOMContentLoaded', () => {
             loadSuppliers().catch(error => console.error('Error al cargar suplidores:', error));
             loadCuentas().catch(error => console.error('Error al cargar cuentas:', error));
+
+            const mesActual = obtenerMesActual(); // Formato YYYY-MM
+            document.getElementById('filterMonthSuplidor').value = mesActual;
         });
 
 
@@ -1622,6 +1631,14 @@
         };
 
 
+        function obtenerMesActual() {
+            const fecha = new Date();
+            const year = fecha.getFullYear();
+            const month = String(fecha.getMonth() + 1).padStart(2, '0'); // Mes actual
+            return `${year}-${month}`;
+        }
+
+
         const listaFacturasG = document.getElementById('listaFacturasG');
 
         async function listarFacturasDeSuplidores(pageSize = 10, page = 1) {
@@ -1639,45 +1656,64 @@
                     return;
                 }
 
-                const totalDocs = snapshot.docs.length;
+                // Obtener el valor del filtro de mes
+                const filterMonth = document.getElementById('filterMonthSuplidor').value; // Formato YYYY-MM
+                const [year, month] = filterMonth.split('-');
+
+                // Filtrar por mes y año seleccionado
+                const transaccionesFiltradas = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(transaccion => {
+                        const [dia, mes, año] = transaccion.fecha.split('/'); // Convertir la fecha a dd/mm/yyyy
+                        return año === year && mes === month;
+                    });
+
+                if (transaccionesFiltradas.length === 0) {
+                    const noDataMessage = document.createElement('p');
+                    noDataMessage.textContent = 'No se encontraron registros de compras para el mes seleccionado.';
+                    listaFacturas.appendChild(noDataMessage);
+                    return;
+                }
+
+                // Ordenar las transacciones por fecha de manera ascendente
+                transaccionesFiltradas.sort((a, b) => {
+                    const fechaA = convertirFecha(a.fecha);
+                    const fechaB = convertirFecha(b.fecha);
+                    return fechaA - fechaB; // Orden ascendente
+                });
+
+                const totalDocs = transaccionesFiltradas.length;
                 const totalPages = Math.ceil(totalDocs / pageSize);
                 const startIndex = (page - 1) * pageSize;
                 const endIndex = startIndex + pageSize;
-
-                const docsToShow = snapshot.docs.slice(startIndex, endIndex);
+                const docsToShow = transaccionesFiltradas.slice(startIndex, endIndex);
 
                 const table = document.createElement('table');
                 table.classList.add('table', 'table-striped');
-
-                // Crear encabezados de tabla
-                const tableHeader = document.createElement('thead');
-                tableHeader.innerHTML = `
-            <tr>
-                <th>Suplidor</th>
-                <th>Fecha</th>
-                <th>Moneda</th>
-                <th>Número de Comprobante</th>
-                <th>Tipo de Gasto</th>
-                <th>ITBIS</th>
-                <th>Cuenta</th>
-                <th>Monto en Factura</th>
-                <th>No. Factura</th>
-                <th>Factura</th>
-                <th>Recibo de Pago</th>
-            </tr>`;
-                table.appendChild(tableHeader);
-
+                const tableHeader = `
+            <thead>
+                <tr>
+                    <th>Suplidor</th>
+                    <th>Fecha</th>
+                    <th>Moneda</th>
+                    <th>Número de Comprobante</th>
+                    <th>Tipo de Gasto</th>
+                    <th>ITBIS</th>
+                    <th>Cuenta</th>
+                    <th>Monto en Factura</th>
+                    <th>No. Factura</th>
+                    <th>Factura</th>
+                    <th>Recibo de Pago</th>
+                </tr>
+            </thead>`;
+                table.innerHTML = tableHeader;
                 const tableBody = document.createElement('tbody');
 
                 // Función para obtener el nombre del suplidor
                 async function obtenerNombreSuplidor(suplidorId) {
                     try {
                         const suplidorDoc = await getDoc(doc(dba, 'suplidores', suplidorId));
-                        if (suplidorDoc.exists()) {
-                            return suplidorDoc.data().nombre; // Devuelve el nombre del suplidor
-                        } else {
-                            return 'Desconocido'; // Si no se encuentra el suplidor
-                        }
+                        return suplidorDoc.exists() ? suplidorDoc.data().nombre : 'Desconocido';
                     } catch (error) {
                         console.error('Error al obtener el nombre del suplidor:', error);
                         return 'Desconocido';
@@ -1687,22 +1723,16 @@
                 async function obtenerNombreCuenta(cuentaId) {
                     try {
                         const cuentaDoc = await getDoc(doc(dba, 'CatalogoCuentas', cuentaId));
-                        if (cuentaDoc.exists()) {
-                            return cuentaDoc.data().nombre; // Devuelve el nombre de la cuenta
-                        } else {
-                            return 'Cuenta desconocida'; // Si no se encuentra la cuenta
-                        }
+                        return cuentaDoc.exists() ? cuentaDoc.data().nombre : 'Cuenta desconocida';
                     } catch (error) {
                         console.error('Error al obtener el nombre de la cuenta:', error);
                         return 'Error al obtener cuenta';
                     }
                 }
 
-                // Iterar sobre cada factura y crear filas de tabla
-                await Promise.all(docsToShow.map(async (doc) => {
-                    const data = doc.data();
-                    const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor, suplidorNombre, pagos } = data;
-
+                // Iterar sobre cada factura filtrada y crear filas de tabla
+                await Promise.all(docsToShow.map(async (transaccion) => {
+                    const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor, suplidorNombre, pagos } = transaccion;
                     const nombreCuenta = await obtenerNombreCuenta(cuenta);
 
                     let reciboDePago = 'N/A';
@@ -1723,7 +1753,6 @@
                 <td>${nombreFactura}</td>
                 <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>
                 <td>${reciboDePago}</td>`;
-
                     tableBody.appendChild(row);
                 }));
 
@@ -1740,6 +1769,15 @@
                 listaFacturas.appendChild(errorMessage);
             }
         }
+
+        // Función para convertir una fecha en formato dd/mm/yyyy a un objeto Date
+        function convertirFecha(fechaStr) {
+            const [dia, mes, año] = fechaStr.split('/').map(Number);
+            return new Date(año, mes - 1, dia); // Crear un objeto Date
+        }
+
+        // Event listener para aplicar el filtro manualmente
+        document.getElementById('applyFilterSuplidor').addEventListener('click', () => listarFacturasDeSuplidores(10, 1, true));
 
 
         function actualizarPaginacion(totalPages, currentPage, paginationId) {
@@ -1855,6 +1893,16 @@
                 }
             }
 
+            async function obtenerNombreCuenta(cuentaId) {
+                    try {
+                        const cuentaDoc = await getDoc(doc(dba, 'CatalogoCuentas', cuentaId));
+                        return cuentaDoc.exists() ? cuentaDoc.data().nombre : 'Cuenta desconocida';
+                    } catch (error) {
+                        console.error('Error al obtener el nombre de la cuenta:', error);
+                        return 'Error al obtener cuenta';
+                    }
+                }
+
             const table = document.createElement('table');
             table.classList.add('table', 'table-striped');
 
@@ -1883,6 +1931,7 @@
                 const { fecha, moneda, numeroComprobante, tipoGasto, itbis, cuenta, montoFactura, nombreFactura, facturaURL, suplidor, pagos } = data;
 
                 const suplidorNombre = await obtenerNombreSuplidor(suplidor);
+                const nombreCuenta = await obtenerNombreCuenta(cuenta);
 
                 let reciboDePago = 'N/A';
                 if (pagos && pagos.length > 0) {
@@ -1897,7 +1946,7 @@
             <td>${numeroComprobante}</td>
             <td>${tipoGasto}</td>
             <td>${itbis}</td>
-            <td>${cuenta}</td>
+            <td>${nombreCuenta}</td>
             <td>${montoFactura}</td>
             <td>${nombreFactura}</td>
             <td><a href="${facturaURL}" target="_blank">Ver factura</a></td>
